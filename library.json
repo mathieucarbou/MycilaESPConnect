@@ -46,5 +46,14 @@
         "espressif32"
       ]
     }
-  ]
+  ],
+  "export": {
+    "exclude": [
+      ".pio",
+      ".vscode",
+      "logs",
+      "portal/node_modules",
+      "portal/public/build"
+    ]
+  }
 }
