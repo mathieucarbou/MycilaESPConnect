@@ -9,12 +9,18 @@
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 
-#ifndef DEFAULT_CONNECTION_TIMEOUT
-#define DEFAULT_CONNECTION_TIMEOUT 15
+#define ESPCONNECT_VERSION "2.1.0"
+#define ESPCONNECT_VERSION_MAJOR 2
+#define ESPCONNECT_VERSION_MINOR 1
+#define ESPCONNECT_VERSION_REVISION 0
+#define ESPCONNECT_FORK_mathieucarbou
+
+#ifndef ESPCONNECT_CONNECTION_TIMEOUT
+#define ESPCONNECT_CONNECTION_TIMEOUT 15
 #endif
 
-#ifndef DEFAULT_PORTAL_TIMEOUT
-#define DEFAULT_PORTAL_TIMEOUT 180
+#ifndef ESPCONNECT_PORTAL_TIMEOUT
+#define ESPCONNECT_PORTAL_TIMEOUT 180
 #endif
 
 enum class ESPConnectState {
@@ -160,8 +166,8 @@ class ESPConnectClass {
     String _hostname = emptyString;
     String _apSSID = emptyString;
     String _apPassword = emptyString;
-    uint32_t _wifiConnectTimeout = DEFAULT_CONNECTION_TIMEOUT;
-    uint32_t _portalTimeout = DEFAULT_PORTAL_TIMEOUT;
+    uint32_t _wifiConnectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
+    uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
     ESPConnectConfig _config;
     wifi_event_id_t _wifiEventListenerId = 0;
     bool _blocking = true;
