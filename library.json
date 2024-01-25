@@ -48,12 +48,13 @@
     }
   ],
   "export": {
-    "exclude": [
-      ".pio",
-      ".vscode",
-      "logs",
-      "portal/node_modules",
-      "portal/public/build"
+    "include": [
+      "examples",
+      "src",
+      "library.json",
+      "library.properties",
+      "LICENSE",
+      "README.md"
     ]
   }
 }
