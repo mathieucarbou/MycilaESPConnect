@@ -79,7 +79,11 @@ void setup() {
   ESPConnect.setWiFiConnectTimeout(10);
 
   Serial.println("====> Load config from elsewhere...");
-  config = {"IoT", "", false};
+  config.wifiSSID = "arduino";
+  config = {
+    .wifiSSID = "IoT",
+    .wifiPassword = "",
+    .apMode = false};
 
   Serial.println("====> Trying to connect to saved WiFi or will start captive portal in the background...");
   ESPConnect.begin(&server, "arduino", "Captive Portal SSID", "", config);
