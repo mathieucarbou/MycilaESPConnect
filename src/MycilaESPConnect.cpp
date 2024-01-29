@@ -129,7 +129,7 @@ void ESPConnectClass::begin(AsyncWebServer* httpd, const String& hostname, const
   _hostname = hostname;
   _apSSID = apSSID;
   _apPassword = apPassword;
-  _config = config;
+  _config = config; // copy values
 
   _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnectClass::_onWiFiEvent, this, std::placeholders::_1));
 
