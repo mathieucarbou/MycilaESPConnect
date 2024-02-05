@@ -1,6 +1,7 @@
 #include <MycilaESPConnect.h>
 
 AsyncWebServer server(80);
+uint32_t lastLog = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -32,17 +33,17 @@ void setup() {
 
   // network state listener
   ESPConnect.listen([](ESPConnectState previous, ESPConnectState state) {
-    Serial.printf("NetworkState: %s => %s\n", ESPConnect.getStateName(previous), ESPConnect.getStateName(state));
     JsonDocument doc;
     ESPConnect.toJson(doc.to<JsonObject>());
-    serializeJson(doc, Serial);
+    serializeJsonPretty(doc, Serial);
     Serial.println();
   });
 
+  ESPConnect.allowEthernet();
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(true);
   ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setWiFiConnectTimeout(10);
+  ESPConnect.setConnectTimeout(10);
 
   Serial.println("Trying to connect to saved WiFi or will start portal...");
 
@@ -55,4 +56,12 @@ void setup() {
 
 void loop() {
   ESPConnect.loop();
+
+  if (millis() - lastLog > 5000) {
+    JsonDocument doc;
+    ESPConnect.toJson(doc.to<JsonObject>());
+    serializeJson(doc, Serial);
+    Serial.println();
+    lastLog = millis();
+  }
 }

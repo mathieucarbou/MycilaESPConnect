@@ -29,25 +29,25 @@ enum class ESPConnectState {
   // NETWORK_DISABLED => NETWORK_ENABLED
   NETWORK_ENABLED,
 
-  // NETWORK_ENABLED => STA_CONNECTING
-  STA_CONNECTING,
-  // STA_CONNECTING => STA_TIMEOUT
-  STA_TIMEOUT,
-  // STA_CONNECTING => STA_CONNECTED
-  // STA_RECONNECTING => STA_CONNECTED
-  STA_CONNECTED, // final state
-  // STA_CONNECTED => STA_DISCONNECTED
-  STA_DISCONNECTED,
-  // STA_DISCONNECTED => STA_RECONNECTING
-  STA_RECONNECTING,
+  // NETWORK_ENABLED => NETWORK_CONNECTING
+  NETWORK_CONNECTING,
+  // NETWORK_CONNECTING => NETWORK_TIMEOUT
+  NETWORK_TIMEOUT,
+  // NETWORK_CONNECTING => NETWORK_CONNECTED
+  // NETWORK_RECONNECTING => NETWORK_CONNECTED
+  NETWORK_CONNECTED, // final state
+  // NETWORK_CONNECTED => NETWORK_DISCONNECTED
+  NETWORK_DISCONNECTED,
+  // NETWORK_DISCONNECTED => NETWORK_RECONNECTING
+  NETWORK_RECONNECTING,
 
-  // NETWORK_ENABLED => AP_CONNECTING
-  AP_CONNECTING,
-  // AP AP_CONNECTING => AP_CONNECTED
-  AP_CONNECTED, // final state
+  // NETWORK_ENABLED => AP_STARTING
+  AP_STARTING,
+  // AP AP_STARTING => AP_STARTED
+  AP_STARTED, // final state
 
   // NETWORK_ENABLED => PORTAL_STARTING
-  // STA_TIMEOUT => PORTAL_STARTING
+  // NETWORK_TIMEOUT => PORTAL_STARTING
   PORTAL_STARTING,
   // PORTAL_STARTING => PORTAL_STARTED
   PORTAL_STARTED,
@@ -55,6 +55,16 @@ enum class ESPConnectState {
   PORTAL_COMPLETE, // final state
   // PORTAL_STARTED => PORTAL_TIMEOUT
   PORTAL_TIMEOUT, // final state
+};
+
+enum class ESPConnectMode {
+  NONE = 0,
+  // wifi ap
+  AP,
+  // wifi sta
+  STA,
+  // ethernet
+  ETH
 };
 
 typedef std::function<void(ESPConnectState previous, ESPConnectState state)> ESPConnectStateCallback;
@@ -106,31 +116,40 @@ class ESPConnectClass {
     const char* getStateName() const;
     const char* getStateName(ESPConnectState state) const;
 
-    String getMacAddress() const { return WiFi.macAddress(); }
-    // Returns the IP address of the current WiFi, or IP address of the AP or captive portal, or empty if not available
-    IPAddress getIPAddress() const;
+    ESPConnectMode getMode() const;
+
+    bool isConnected() const;
+
+    const String getMACAddress() const;
+
+    // Returns the IP address of the current Ethernet, WiFi, or IP address of the AP or captive portal, or empty if not available
+    const IPAddress getIPAddress() const;
+
     // Returns the SSID of the current WiFi, or SSID of the AP or captive portal, or empty if not available
-    String getWiFiSSID() const;
+    const String getWiFiSSID() const;
     // Returns the BSSID of the current WiFi, or BSSID of the AP or captive portal, or empty if not available
-    String getWiFiBSSID() const;
+    const String getWiFiBSSID() const;
     // Returns the RSSI of the current WiFi, or -1 if not available
     int8_t getWiFiRSSI() const;
     // Returns the signal quality (percentage from 0 to 100) of the current WiFi, or -1 if not available
     int8_t getWiFiSignalQuality() const;
+
     // the hostname passed from begin()
     const String& getHostname() const { return _hostname; }
+
     // SSID name used for the captive portal or in AP mode
     const String& getAccessPointSSID() const { return _apSSID; }
     // Password used for the captive portal or in AP mode
     const String& getAccessPointPassword() const { return _apPassword; }
+
     // Returns the current configuration loaded or passed from begin() or from captive portal
     const ESPConnectConfig& getConfig() const { return _config; }
     // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
-    const String& getWiFiSSIDConfigured() const { return _config.wifiSSID; }
+    const String& getConfiguredWiFiSSID() const { return _config.wifiSSID; }
     // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
-    const String& getWiFiPassword() const { return _config.wifiPassword; }
+    const String& getConfiguredWiFiPassword() const { return _config.wifiPassword; }
     // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
-    bool isAPMode() const { return _config.apMode; }
+    bool hasConfiguredAPMode() const { return _config.apMode; }
 
     // Maximum duration that the captive portal will be active before closing
     uint32_t getCaptivePortalTimeout() const { return _portalTimeout; }
@@ -138,9 +157,9 @@ class ESPConnectClass {
     void setCaptivePortalTimeout(uint32_t timeout) { _portalTimeout = timeout; }
 
     // Maximum duration that the ESP will try to connect to the WiFi before giving up and start the captive portal
-    uint32_t getWiFiConnectTimeout() const { return _wifiConnectTimeout; }
+    uint32_t getConnectTimeout() const { return _connectTimeout; }
     // Maximum duration that the ESP will try to connect to the WiFi before giving up and start the captive portal
-    void setWiFiConnectTimeout(uint32_t timeout) { _wifiConnectTimeout = timeout; }
+    void setConnectTimeout(uint32_t timeout) { _connectTimeout = timeout; }
 
     // Whether ESPConnect will block in the begin() method until the network is ready or not (old behaviour)
     bool isBlocking() const { return _blocking; }
@@ -151,6 +170,9 @@ class ESPConnectClass {
     bool isAutoRestart() const { return _autoRestart; }
     // Whether ESPConnect will restart the ESP if the captive portal times out or once it has completed (old behaviour)
     void setAutoRestart(bool autoRestart) { _autoRestart = autoRestart; }
+
+    bool isEthernetAllowed() const { return _allowEthernet; }
+    void allowEthernet() { _allowEthernet = true; }
 
     // when using auto-load and save of configuration, this method can clear saved states.
     void clearConfiguration();
@@ -166,23 +188,27 @@ class ESPConnectClass {
     String _hostname = emptyString;
     String _apSSID = emptyString;
     String _apPassword = emptyString;
-    uint32_t _wifiConnectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
+    uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
     uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
     ESPConnectConfig _config;
     wifi_event_id_t _wifiEventListenerId = 0;
     bool _blocking = true;
     bool _autoRestart = true;
     bool _autoSave = false;
+    bool _allowEthernet = false;
 
   private:
     void _setState(ESPConnectState state);
     void _startMDNS();
+    void _startEthernet();
     void _startSTA();
-    void _startAccessPoint(bool captivePortal);
-    void _stopAccessPoint();
+    void _startAP(bool captivePortal);
+    void _stopAP();
     void _onWiFiEvent(WiFiEvent_t event);
-    int8_t _wifiSignalQuality(int32_t rssi) const;
-    bool _durationPassed(const uint32_t intervalSec);
+    bool _durationPassed(uint32_t intervalSec);
+
+  private:
+    static int8_t _wifiSignalQuality(int32_t rssi);
 };
 
 extern ESPConnectClass ESPConnect;

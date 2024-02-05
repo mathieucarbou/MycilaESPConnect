@@ -37,33 +37,31 @@ void setup() {
 
   // network state listener is required here in async mode
   ESPConnect.listen([](ESPConnectState previous, ESPConnectState state) {
-    Serial.printf("NetworkState: %s => %s\n", ESPConnect.getStateName(previous), ESPConnect.getStateName(state));
-
     JsonDocument doc;
     ESPConnect.toJson(doc.to<JsonObject>());
-    serializeJson(doc, Serial);
+    serializeJsonPretty(doc, Serial);
     Serial.println();
 
     switch (state) {
-      case ESPConnectState::STA_CONNECTED:
-      case ESPConnectState::AP_CONNECTED:
+      case ESPConnectState::NETWORK_CONNECTED:
+      case ESPConnectState::AP_STARTED:
         server.begin();
         MDNS.addService("http", "tcp", 80);
         break;
 
-      case ESPConnectState::STA_DISCONNECTED:
+      case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
         mdns_service_remove("_http", "_tcp");
         break;
 
       case ESPConnectState::PORTAL_COMPLETE:
-        config.apMode = ESPConnect.isAPMode();
+        config.apMode = ESPConnect.hasConfiguredAPMode();
         if (config.apMode) {
           Serial.println("====> Captive Portal: Access Point configured");
         } else {
           Serial.println("====> Captive Portal: WiFi configured");
-          config.wifiSSID = ESPConnect.getWiFiSSIDConfigured();
-          config.wifiPassword = ESPConnect.getWiFiPassword();
+          config.wifiSSID = ESPConnect.getConfiguredWiFiSSID();
+          config.wifiPassword = ESPConnect.getConfiguredWiFiPassword();
         }
         // SAVE config somewhere
         break;
@@ -73,10 +71,11 @@ void setup() {
     }
   });
 
+  ESPConnect.allowEthernet();
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
   ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setWiFiConnectTimeout(10);
+  ESPConnect.setConnectTimeout(10);
 
   Serial.println("====> Load config from elsewhere...");
   config.wifiSSID = "arduino";

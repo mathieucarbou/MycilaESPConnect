@@ -4,13 +4,13 @@
 [![Continuous Integration](https://github.com/mathieucarbou/MycilaESPConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/mathieucarbou/MycilaESPConnect/actions/workflows/ci.yml)
 [![PlatformIO Registry](https://badges.registry.platformio.org/packages/mathieucarbou/library/MycilaESPConnect.svg)](https://registry.platformio.org/libraries/mathieucarbou/MycilaESPConnect)
 
------
+---
 
 Simple & Easy WiFi Manager with Captive Portal for ESP32
 
 A simplistic approach to a WiFi Manager on ESP32 MCUs. Comes with captive portal to configure modules without any hassle.
 
------
+---
 
 > This fork is based on [https://github.com/ayushsharma82/ESPConnect](https://github.com/ayushsharma82/ESPConnect).
 > I highly recommend looking at all OSS projects (and products) from [@ayushsharma82](https://github.com/ayushsharma82).
@@ -34,4 +34,26 @@ A simplistic approach to a WiFi Manager on ESP32 MCUs. Comes with captive portal
 
 - **mDNS / DNS Support**
 
-See the examples and API for more !
+- **Ethernet support**
+
+## Ethernet Support
+
+Compile with `-D CONFIG_ETH_ENABLED` ([ref](https://community.platformio.org/t/please-help-me-fix-error-wifi-h-when-build-project-ethernet-testing-use-esp32-eth01/37573/3))
+
+For wt32-eth01, alo use the following flags:
+
+```cpp
+  -D ESPCONNECT_ETH_RESET_ON_START
+  -D ETH_PHY_TYPE=ETH_PHY_LAN8720
+  -D ETH_PHY_ADDR=1
+  -D ETH_PHY_MDC=23
+  -D ETH_PHY_MDIO=18
+  -D ETH_CLK_MODE=ETH_CLOCK_GPIO0_IN
+  -D ETH_PHY_POWER=16
+```
+
+In your application, if Ethernet is allowed, call `ESPConnect.allowEthernet()`.
+
+- Ethernet takes precedence over WiFi, but you can have both connected at the same time
+- Ethernet takes precedence over Captive Portal: if it is running and you connect an Ethernet cable, the Captive Portal will be closed
+- Ethernet _does not_ take precedence over AP Mode: if AP mode is configured, then Ethernet won't be started even if a cable is connected

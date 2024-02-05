@@ -75,7 +75,7 @@ jobs:
         run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/esphome-AsyncTCP#v2.1.1
 
       - name: Install ESP Async WebServer
-        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/ESPAsyncWebServer
+        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/ESPAsyncWebServer#v2.7.0
 
       - name: Build BlockingCaptivePortal
         run: arduino-cli compile --library . --warnings all -b ${{ matrix.board }} "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino"
@@ -96,6 +96,10 @@ jobs:
         include:
           - platform: espressif32
             board: esp32dev
+            eeprom: true
+            softwareserial: false
+          - platform: espressif32
+            board: wt32-eth01
             eeprom: true
             softwareserial: false
 
