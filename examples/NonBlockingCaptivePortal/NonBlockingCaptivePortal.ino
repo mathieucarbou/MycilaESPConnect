@@ -2,6 +2,7 @@
 #include <MycilaESPConnect.h>
 
 AsyncWebServer server(80);
+uint32_t lastLog = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -34,32 +35,31 @@ void setup() {
 
   // network state listener is required here in async mode
   ESPConnect.listen([](ESPConnectState previous, ESPConnectState state) {
-    Serial.printf("NetworkState: %s => %s\n", ESPConnect.getStateName(previous), ESPConnect.getStateName(state));
     JsonDocument doc;
     ESPConnect.toJson(doc.to<JsonObject>());
-    serializeJson(doc, Serial);
+    serializeJsonPretty(doc, Serial);
     Serial.println();
 
     switch (state) {
-      case ESPConnectState::STA_CONNECTED:
-      case ESPConnectState::AP_CONNECTED:
+      case ESPConnectState::NETWORK_CONNECTED:
+      case ESPConnectState::AP_STARTED:
         server.begin();
         MDNS.addService("http", "tcp", 80);
         break;
 
-      case ESPConnectState::STA_DISCONNECTED:
+      case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
         mdns_service_remove("_http", "_tcp");
-
       default:
         break;
     }
   });
 
+  ESPConnect.allowEthernet();
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
   ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setWiFiConnectTimeout(10);
+  ESPConnect.setConnectTimeout(10);
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
@@ -70,4 +70,12 @@ void setup() {
 
 void loop() {
   ESPConnect.loop();
+
+  if (millis() - lastLog > 5000) {
+    JsonDocument doc;
+    ESPConnect.toJson(doc.to<JsonObject>());
+    serializeJson(doc, Serial);
+    Serial.println();
+    lastLog = millis();
+  }
 }
