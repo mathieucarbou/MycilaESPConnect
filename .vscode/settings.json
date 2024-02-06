@@ -17,5 +17,6 @@
     "unordered_set": "cpp",
     "vector": "cpp",
     "stdexcept": "cpp"
-  }
+  },
+  "cmake.configureOnOpen": false
 }
