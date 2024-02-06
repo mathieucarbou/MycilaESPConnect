@@ -39,7 +39,6 @@ void setup() {
     Serial.println();
   });
 
-  ESPConnect.allowEthernet();
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(true);
   ESPConnect.setCaptivePortalTimeout(180);

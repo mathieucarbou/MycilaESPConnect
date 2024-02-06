@@ -39,6 +39,8 @@ jobs:
             --recursive \
             --filter=-whitespace/line_length,-whitespace/braces,-whitespace/comments,-runtime/indentation_namespace,-whitespace/indent,-readability/braces,-whitespace/newline,-readability/todo,-build/c++11 \
             --exclude=src/espconnect_webpage.h \
+            --exclude=src/ETHClass.h \
+            --exclude=src/ETHClass.cpp \
             src
 
   arduino:
@@ -96,12 +98,16 @@ jobs:
         include:
           - platform: espressif32
             board: esp32dev
-            eeprom: true
-            softwareserial: false
+            flags: 
           - platform: espressif32
             board: wt32-eth01
-            eeprom: true
-            softwareserial: false
+            flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_POWER=16"
+          - platform: espressif32
+            board: esp32s3box
+            flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
+          - platform: espressif32
+            board: esp32-poe
+            flags:
 
     steps:
       - name: Checkout
@@ -127,10 +133,10 @@ jobs:
         run: platformio platform install ${{ matrix.platform }}
 
       - name: Build BlockingCaptivePortal
-        run: platformio ci "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }}
+        run: platformio ci "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}"
 
       - name: Build NonBlockingCaptivePortal
-        run: platformio ci "examples/NonBlockingCaptivePortal/NonBlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }}
+        run: platformio ci "examples/NonBlockingCaptivePortal/NonBlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}"
 
       - name: Build AdvancedCaptivePortal
-        run: platformio ci "examples/AdvancedCaptivePortal/AdvancedCaptivePortal.ino" -l '.' -b ${{ matrix.board }}
+        run: platformio ci "examples/AdvancedCaptivePortal/AdvancedCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}"

@@ -4,13 +4,19 @@
  */
 #include "MycilaESPConnect.h"
 
-#include <espconnect_webpage.h>
-
 #include <AsyncJson.h>
 #include <ESPmDNS.h>
-#include <ETH.h>
 #include <Preferences.h>
 #include <functional>
+
+#if defined(ESPCONNECT_ETH_SUPPORT)
+#include <ETHClass.h>
+#if !defined(ESPCONNECT_ETH_ALT_IMPL) && (defined(ESPCONNECT_ETH_CS) || defined(ESPCONNECT_ETH_INT) || defined(ESPCONNECT_ETH_MISO) || defined(ESPCONNECT_ETH_MOSI) || defined(ESPCONNECT_ETH_RST) || defined(ESPCONNECT_ETH_SCLK))
+#define ESPCONNECT_ETH_ALT_IMPL 1
+#endif
+#endif // ESPCONNECT_ETH_SUPPORT
+
+#include <espconnect_webpage.h>
 
 #define TAG "ESPCONNECT"
 
@@ -47,7 +53,13 @@ ESPConnectMode ESPConnectClass::getMode() const {
     case ESPConnectState::NETWORK_CONNECTED:
     case ESPConnectState::NETWORK_DISCONNECTED:
     case ESPConnectState::NETWORK_RECONNECTING:
-      return ETH.localIP()[0] != 0 ? ESPConnectMode::ETH : (WiFi.localIP()[0] != 0 ? ESPConnectMode::STA : ESPConnectMode::NONE);
+#ifdef ESPCONNECT_ETH_SUPPORT
+      if (ETH.localIP()[0] != 0)
+        return ESPConnectMode::ETH;
+#endif
+      if (WiFi.localIP()[0] != 0)
+        return ESPConnectMode::STA;
+      return ESPConnectMode::NONE;
     default:
       return ESPConnectMode::NONE;
   }
@@ -62,8 +74,10 @@ const String ESPConnectClass::getMACAddress() const {
     case ESPConnectMode::AP:
     case ESPConnectMode::STA:
       return WiFi.macAddress();
+#ifdef ESPCONNECT_ETH_SUPPORT
     case ESPConnectMode::ETH:
       return ETH.macAddress();
+#endif
     default:
       return emptyString;
   }
@@ -75,8 +89,10 @@ const IPAddress ESPConnectClass::getIPAddress() const {
       return WiFi.softAPIP();
     case ESPConnectMode::STA:
       return WiFi.localIP();
+#ifdef ESPCONNECT_ETH_SUPPORT
     case ESPConnectMode::ETH:
       return ETH.localIP();
+#endif
     default:
       return IPAddress();
   }
@@ -241,12 +257,19 @@ void ESPConnectClass::loop() {
   if (_state == ESPConnectState::NETWORK_ENABLED && _config.apMode)
     _startAP(false);
 
+    // start captive portal when network enabled but not in ap mode and no wifi info and no ethernet
+#ifndef ESPCONNECT_ETH_SUPPORT
+  if (_state == ESPConnectState::NETWORK_ENABLED && _config.wifiSSID.isEmpty())
+    _startAP(true);
+#endif
+
   // otherwise, tries to connect to WiFi or ethernet
   if (_state == ESPConnectState::NETWORK_ENABLED) {
+#ifdef ESPCONNECT_ETH_SUPPORT
+    _startEthernet();
+#endif
     if (!_config.wifiSSID.isEmpty())
       _startSTA();
-    if (_allowEthernet)
-      _startEthernet();
   }
 
   // connection to WiFi or Ethernet times out ?
@@ -255,9 +278,8 @@ void ESPConnectClass::loop() {
     _setState(ESPConnectState::NETWORK_TIMEOUT);
   }
 
-  // check if we have to enter captive portal mode
-  if (_state == ESPConnectState::NETWORK_TIMEOUT ||
-      (_state == ESPConnectState::NETWORK_ENABLED && !_allowEthernet && _config.wifiSSID.isEmpty()))
+  // start captive portal on connect timeout
+  if (_state == ESPConnectState::NETWORK_TIMEOUT)
     _startAP(true);
 
   // portal duration ends ?
@@ -319,31 +341,45 @@ void ESPConnectClass::_setState(ESPConnectState state) {
   }
 }
 
-void ESPConnectClass::_startMDNS() {
-  MDNS.begin(_hostname.c_str());
-}
-
+#ifdef ESPCONNECT_ETH_SUPPORT
 void ESPConnectClass::_startEthernet() {
   _setState(ESPConnectState::NETWORK_CONNECTING);
 
+#if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
   pinMode(ETH_PHY_POWER, OUTPUT);
-
 #ifdef ESPCONNECT_ETH_RESET_ON_START
+  ESP_LOGD(TAG, "Resetting ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
   digitalWrite(ETH_PHY_POWER, LOW);
   delay(350);
 #endif
-
+  ESP_LOGD(TAG, "Activating ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
   digitalWrite(ETH_PHY_POWER, HIGH);
-  ETH.setHostname(_hostname.c_str());
-  ETH.begin();
+#endif
+
+  ESP_LOGD(TAG, "Starting ETH...");
+
+#ifdef ESPCONNECT_ETH_ALT_IMPL
+  if (!ETH.beginSPI(ESPCONNECT_ETH_MISO, ESPCONNECT_ETH_MOSI, ESPCONNECT_ETH_SCLK, ESPCONNECT_ETH_CS, ESPCONNECT_ETH_RST, ESPCONNECT_ETH_INT)) {
+    ESP_LOGE(TAG, "ETH failed to start!");
+  }
+#else
+  if (!ETH.begin()) {
+    ESP_LOGE(TAG, "ETH failed to start!");
+    _setState(ESPConnectState::NETWORK_ENABLED);
+  }
+#endif
 
   _lastTime = esp_timer_get_time();
+
+  ESP_LOGD(TAG, "ETH started.");
 }
+#endif
 
 void ESPConnectClass::_startSTA() {
   _setState(ESPConnectState::NETWORK_CONNECTING);
 
-  WiFi.setHostname(_hostname.c_str());
+  ESP_LOGD(TAG, "Starting WiFi...");
+
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
@@ -351,12 +387,15 @@ void ESPConnectClass::_startSTA() {
   WiFi.begin(_config.wifiSSID, _config.wifiPassword);
 
   _lastTime = esp_timer_get_time();
+
+  ESP_LOGD(TAG, "WiFi started.");
 }
 
 void ESPConnectClass::_startAP(bool captivePortal) {
   _setState(captivePortal ? ESPConnectState::PORTAL_STARTING : ESPConnectState::AP_STARTING);
 
-  WiFi.setHostname(_hostname.c_str());
+  ESP_LOGD(TAG, "Starting AP...");
+
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
@@ -369,8 +408,6 @@ void ESPConnectClass::_startAP(bool captivePortal) {
   } else
     WiFi.softAP(_apSSID, _apPassword);
 
-  _startMDNS();
-
   if (_dnsServer == nullptr) {
     _dnsServer = new DNSServer();
     _dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -378,6 +415,8 @@ void ESPConnectClass::_startAP(bool captivePortal) {
   }
 
   if (captivePortal) {
+    ESP_LOGD(TAG, "Activating Captive Portal...");
+
     WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
     WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
     WiFi.scanNetworks(true);
@@ -394,17 +433,20 @@ void ESPConnectClass::_startAP(bool captivePortal) {
 
     _lastTime = esp_timer_get_time();
   }
+
+  ESP_LOGD(TAG, "AP started.");
 }
 
 void ESPConnectClass::_stopAP() {
+  ESP_LOGD(TAG, "Stopping AP...");
   _lastTime = -1;
   WiFi.softAPdisconnect(true);
-  mdns_service_remove("_http", "_tcp");
   if (_dnsServer != nullptr) {
     _dnsServer->stop();
     delete _dnsServer;
     _dnsServer = nullptr;
   }
+  ESP_LOGD(TAG, "AP stopped.");
 }
 
 void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
@@ -412,6 +454,14 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
     return;
 
   switch (event) {
+#ifdef ESPCONNECT_ETH_SUPPORT
+    case ARDUINO_EVENT_ETH_START:
+      if (ETH.linkUp()) {
+        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_START", getStateName());
+        ETH.setHostname(_hostname.c_str());
+      }
+      break;
+
     case ARDUINO_EVENT_ETH_GOT_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING || _state == ESPConnectState::PORTAL_STARTING || _state == ESPConnectState::PORTAL_STARTED) {
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_GOT_IP", getStateName());
@@ -419,9 +469,14 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
           _stopAP();
         }
         _lastTime = -1;
-        _startMDNS();
+        MDNS.begin(_hostname.c_str());
         _setState(ESPConnectState::NETWORK_CONNECTED);
       }
+      break;
+#endif
+
+    case ARDUINO_EVENT_WIFI_STA_START:
+      WiFi.setHostname(_hostname.c_str());
       break;
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:
@@ -435,26 +490,36 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
         _lastTime = -1;
-        _startMDNS();
+        MDNS.begin(_hostname.c_str());
         _setState(ESPConnectState::NETWORK_CONNECTED);
       }
       break;
 
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
-      if (_state == ESPConnectState::NETWORK_CONNECTED && ETH.localIP()[0] == 0) {
+      if (_state == ESPConnectState::NETWORK_CONNECTED) {
+#ifdef ESPCONNECT_ETH_SUPPORT
+        if (ETH.localIP()[0] != 0)
+          return;
+#endif
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
 
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      if (_state == ESPConnectState::NETWORK_CONNECTED && ETH.localIP()[0] == 0) {
+      if (_state == ESPConnectState::NETWORK_CONNECTED) {
+#ifdef ESPCONNECT_ETH_SUPPORT
+        if (ETH.localIP()[0] != 0)
+          return;
+#endif
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
 
     case ARDUINO_EVENT_WIFI_AP_START:
+      WiFi.softAPsetHostname(_hostname.c_str());
+      MDNS.begin(_hostname.c_str());
       if (_state == ESPConnectState::AP_STARTING) {
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
         _setState(ESPConnectState::AP_STARTED);
