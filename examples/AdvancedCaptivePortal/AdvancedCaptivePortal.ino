@@ -1,4 +1,3 @@
-#include <ESPmDNS.h>
 #include <MycilaESPConnect.h>
 
 AsyncWebServer server(80);
@@ -46,12 +45,10 @@ void setup() {
       case ESPConnectState::NETWORK_CONNECTED:
       case ESPConnectState::AP_STARTED:
         server.begin();
-        MDNS.addService("http", "tcp", 80);
         break;
 
       case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
-        mdns_service_remove("_http", "_tcp");
         break;
 
       case ESPConnectState::PORTAL_COMPLETE:
@@ -71,7 +68,6 @@ void setup() {
     }
   });
 
-  ESPConnect.allowEthernet();
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
   ESPConnect.setCaptivePortalTimeout(180);

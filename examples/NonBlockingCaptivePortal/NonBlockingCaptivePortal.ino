@@ -1,8 +1,9 @@
-#include <ESPmDNS.h>
+#include <ArduinoOTA.h>
 #include <MycilaESPConnect.h>
 
 AsyncWebServer server(80);
 uint32_t lastLog = 0;
+String hostname = "arduino-1";
 
 void setup() {
   Serial.begin(115200);
@@ -44,18 +45,18 @@ void setup() {
       case ESPConnectState::NETWORK_CONNECTED:
       case ESPConnectState::AP_STARTED:
         server.begin();
-        MDNS.addService("http", "tcp", 80);
+        ArduinoOTA.setHostname(hostname.c_str());
+        ArduinoOTA.setMdnsEnabled(true);
+        ArduinoOTA.begin();
         break;
 
       case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
-        mdns_service_remove("_http", "_tcp");
       default:
         break;
     }
   });
 
-  ESPConnect.allowEthernet();
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
   ESPConnect.setCaptivePortalTimeout(180);
@@ -63,13 +64,14 @@ void setup() {
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
-  ESPConnect.begin(&server, "arduino", "Captive Portal SSID");
+  ESPConnect.begin(&server, hostname.c_str(), "Captive Portal SSID");
 
   Serial.println("====> setup() completed...");
 }
 
 void loop() {
   ESPConnect.loop();
+  ArduinoOTA.handle();
 
   if (millis() - lastLog > 5000) {
     JsonDocument doc;

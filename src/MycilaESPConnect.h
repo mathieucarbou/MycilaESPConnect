@@ -171,9 +171,6 @@ class ESPConnectClass {
     // Whether ESPConnect will restart the ESP if the captive portal times out or once it has completed (old behaviour)
     void setAutoRestart(bool autoRestart) { _autoRestart = autoRestart; }
 
-    bool isEthernetAllowed() const { return _allowEthernet; }
-    void allowEthernet() { _allowEthernet = true; }
-
     // when using auto-load and save of configuration, this method can clear saved states.
     void clearConfiguration();
 
@@ -195,17 +192,17 @@ class ESPConnectClass {
     bool _blocking = true;
     bool _autoRestart = true;
     bool _autoSave = false;
-    bool _allowEthernet = false;
 
   private:
     void _setState(ESPConnectState state);
-    void _startMDNS();
-    void _startEthernet();
     void _startSTA();
     void _startAP(bool captivePortal);
     void _stopAP();
     void _onWiFiEvent(WiFiEvent_t event);
     bool _durationPassed(uint32_t intervalSec);
+#ifdef ESPCONNECT_ETH_SUPPORT
+    void _startEthernet();
+#endif
 
   private:
     static int8_t _wifiSignalQuality(int32_t rssi);
