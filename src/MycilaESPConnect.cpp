@@ -10,10 +10,17 @@
 #include <functional>
 
 #if defined(ESPCONNECT_ETH_SUPPORT)
-#include <ETHClass.h>
+
 #if !defined(ESPCONNECT_ETH_ALT_IMPL) && (defined(ESPCONNECT_ETH_CS) || defined(ESPCONNECT_ETH_INT) || defined(ESPCONNECT_ETH_MISO) || defined(ESPCONNECT_ETH_MOSI) || defined(ESPCONNECT_ETH_RST) || defined(ESPCONNECT_ETH_SCLK))
 #define ESPCONNECT_ETH_ALT_IMPL 1
 #endif
+
+#ifdef ESPCONNECT_ETH_ALT_IMPL
+#include <ETHClass.h>
+#else
+#include <ETH.h>
+#endif
+
 #endif // ESPCONNECT_ETH_SUPPORT
 
 #include <espconnect_webpage.h>

@@ -17,6 +17,7 @@
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+#if defined(ESPCONNECT_ETH_ALT_IMPL) || defined(ESPCONNECT_ETH_CS) || defined(ESPCONNECT_ETH_INT) || defined(ESPCONNECT_ETH_MISO) || defined(ESPCONNECT_ETH_MOSI) || defined(ESPCONNECT_ETH_RST) || defined(ESPCONNECT_ETH_SCLK)
 
 #include "ETHClass.h"
 #include "esp_system.h"
@@ -742,3 +743,5 @@ String ETHClass::macAddress(void) {
 }
 
 ETHClass ETH;
+
+#endif
