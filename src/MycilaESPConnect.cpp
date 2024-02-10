@@ -87,14 +87,16 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
 }
 
 const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
+  const wifi_mode_t wifiMode = WiFi.getMode();
   switch (mode) {
     case ESPConnectMode::AP:
-      return WiFi.softAPIP();
+      return wifiMode == WIFI_MODE_AP || wifiMode == WIFI_MODE_APSTA ? WiFi.softAPIP() : IPAddress();
     case ESPConnectMode::STA:
-      return WiFi.localIP();
+      return wifiMode == WIFI_MODE_STA ? WiFi.localIP() : IPAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
-    case ESPConnectMode::ETH:
+    case ESPConnectMode::ETH: {
       return ETH.localIP();
+    }
 #endif
     default:
       return IPAddress();
@@ -102,21 +104,23 @@ const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
 }
 
 const String ESPConnectClass::getWiFiSSID() const {
-  switch (getMode()) {
-    case ESPConnectMode::AP:
-      return _apSSID;
-    case ESPConnectMode::STA:
-      return _config.wifiSSID;
+  switch (WiFi.getMode()) {
+    case WIFI_MODE_AP:
+    case WIFI_MODE_APSTA:
+      return WiFi.softAPSSID();
+    case WIFI_MODE_STA:
+      return WiFi.SSID();
     default:
       return emptyString;
   }
 }
 
 const String ESPConnectClass::getWiFiBSSID() const {
-  switch (getMode()) {
-    case ESPConnectMode::AP:
+  switch (WiFi.getMode()) {
+    case WIFI_MODE_AP:
+    case WIFI_MODE_APSTA:
       return WiFi.softAPmacAddress();
-    case ESPConnectMode::STA:
+    case WIFI_MODE_STA:
       return WiFi.BSSIDstr();
     default:
       return emptyString;
@@ -124,11 +128,11 @@ const String ESPConnectClass::getWiFiBSSID() const {
 }
 
 int8_t ESPConnectClass::getWiFiRSSI() const {
-  return _state == ESPConnectState::NETWORK_CONNECTED && WiFi.getMode() == WIFI_MODE_STA ? WiFi.RSSI() : 0;
+  return WiFi.getMode() == WIFI_MODE_STA ? WiFi.RSSI() : 0;
 }
 
 int8_t ESPConnectClass::getWiFiSignalQuality() const {
-  return _state == ESPConnectState::NETWORK_CONNECTED && WiFi.getMode() == WIFI_MODE_STA ? _wifiSignalQuality(WiFi.RSSI()) : 0;
+  return WiFi.getMode() == WIFI_MODE_STA ? _wifiSignalQuality(WiFi.RSSI()) : 0;
 }
 
 int8_t ESPConnectClass::_wifiSignalQuality(int32_t rssi) {
