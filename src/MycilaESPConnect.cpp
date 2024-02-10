@@ -94,9 +94,8 @@ const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
     case ESPConnectMode::STA:
       return wifiMode == WIFI_MODE_STA ? WiFi.localIP() : IPAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
-    case ESPConnectMode::ETH: {
+    case ESPConnectMode::ETH:
       return ETH.localIP();
-    }
 #endif
     default:
       return IPAddress();
