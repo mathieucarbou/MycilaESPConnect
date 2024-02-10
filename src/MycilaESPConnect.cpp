@@ -72,12 +72,8 @@ ESPConnectMode ESPConnectClass::getMode() const {
   }
 }
 
-bool ESPConnectClass::isConnected() const {
-  return getIPAddress()[0] != 0;
-}
-
-const String ESPConnectClass::getMACAddress() const {
-  switch (getMode()) {
+const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
+  switch (mode) {
     case ESPConnectMode::AP:
     case ESPConnectMode::STA:
       return WiFi.macAddress();
@@ -90,8 +86,8 @@ const String ESPConnectClass::getMACAddress() const {
   }
 }
 
-const IPAddress ESPConnectClass::getIPAddress() const {
-  switch (getMode()) {
+const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
+  switch (mode) {
     case ESPConnectMode::AP:
       return WiFi.softAPIP();
     case ESPConnectMode::STA:

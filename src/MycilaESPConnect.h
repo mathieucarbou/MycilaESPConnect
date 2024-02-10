@@ -116,14 +116,17 @@ class ESPConnectClass {
     const char* getStateName() const;
     const char* getStateName(ESPConnectState state) const;
 
+    // returns the current default mode of the ESP (STA, AP, ETH). ETH has priority over STA if both are connected
     ESPConnectMode getMode() const;
 
-    bool isConnected() const;
+    inline bool isConnected() const { return getIPAddress()[0] != 0; }
 
-    const String getMACAddress() const;
+    inline const String getMACAddress() const { return getMACAddress(getMode()); }
+    const String getMACAddress(ESPConnectMode mode) const;
 
     // Returns the IP address of the current Ethernet, WiFi, or IP address of the AP or captive portal, or empty if not available
-    const IPAddress getIPAddress() const;
+    inline const IPAddress getIPAddress() const { return getIPAddress(getMode()); }
+    const IPAddress getIPAddress(ESPConnectMode mode) const;
 
     // Returns the SSID of the current WiFi, or SSID of the AP or captive portal, or empty if not available
     const String getWiFiSSID() const;
