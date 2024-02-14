@@ -167,7 +167,236 @@ void ESPConnectClass::begin(AsyncWebServer* httpd, const String& hostname, const
 
   _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnectClass::_onWiFiEvent, this, std::placeholders::_1));
 
-  httpd->on("/espconnect/scan", HTTP_GET, [&](AsyncWebServerRequest* request) {
+  _state = ESPConnectState::NETWORK_ENABLED;
+
+  // blocks like the old behaviour
+  if (_blocking) {
+    ESP_LOGI(TAG, "Starting ESPConnect in blocking mode...");
+    while (_state != ESPConnectState::AP_STARTED && _state != ESPConnectState::NETWORK_CONNECTED) {
+      loop();
+      delay(100);
+    }
+  } else {
+    ESP_LOGI(TAG, "Starting ESPConnect in non-blocking mode...");
+  }
+}
+
+void ESPConnectClass::end() {
+  if (_state == ESPConnectState::NETWORK_DISABLED)
+    return;
+  ESP_LOGI(TAG, "Stopping ESPConnect...");
+  _lastTime = -1;
+  _autoSave = false;
+  _setState(ESPConnectState::NETWORK_DISABLED);
+  WiFi.removeEvent(_wifiEventListenerId);
+  WiFi.disconnect(true, true);
+  WiFi.mode(WIFI_MODE_NULL);
+  _stopAP();
+  _httpd = nullptr;
+}
+
+void ESPConnectClass::loop() {
+  if (_dnsServer != nullptr)
+    _dnsServer->processNextRequest();
+
+  // first check if we have to enter AP mode
+  if (_state == ESPConnectState::NETWORK_ENABLED && _config.apMode) {
+    _startAP();
+  }
+
+  // start captive portal when network enabled but not in ap mode and no wifi info and no ethernet
+  // portal wil be interrupted when network connected
+#ifndef ESPCONNECT_ETH_SUPPORT
+  if (_state == ESPConnectState::NETWORK_ENABLED && _config.wifiSSID.isEmpty()) {
+    _startAP();
+  }
+#endif
+
+  // otherwise, tries to connect to WiFi or ethernet
+  if (_state == ESPConnectState::NETWORK_ENABLED) {
+#ifdef ESPCONNECT_ETH_SUPPORT
+    _startEthernet();
+#endif
+    if (!_config.wifiSSID.isEmpty())
+      _startSTA();
+  }
+
+  // connection to WiFi or Ethernet times out ?
+  if (_state == ESPConnectState::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
+    WiFi.disconnect(true, true);
+    _setState(ESPConnectState::NETWORK_TIMEOUT);
+  }
+
+  // start captive portal on connect timeout
+  if (_state == ESPConnectState::NETWORK_TIMEOUT) {
+    _startAP();
+  }
+
+  // portal duration ends ?
+  if (_state == ESPConnectState::PORTAL_STARTED && _durationPassed(_portalTimeout)) {
+    _setState(ESPConnectState::PORTAL_TIMEOUT);
+  }
+
+  // disconnect from network ? reconnect!
+  if (_state == ESPConnectState::NETWORK_DISCONNECTED) {
+    _setState(ESPConnectState::NETWORK_RECONNECTING);
+  }
+
+  if (_state == ESPConnectState::AP_STARTED || _state == ESPConnectState::NETWORK_CONNECTED) {
+    _disableCaptivePortal();
+  }
+
+  if (_state == ESPConnectState::PORTAL_COMPLETE || _state == ESPConnectState::PORTAL_TIMEOUT) {
+    _stopAP();
+    if (_autoRestart)
+      ESP.restart();
+  }
+}
+
+void ESPConnectClass::clearConfiguration() {
+  Preferences preferences;
+  preferences.begin("espconnect", false);
+  preferences.clear();
+  preferences.end();
+}
+
+void ESPConnectClass::toJson(const JsonObject& root) const {
+  root["ip_address"] = getIPAddress().toString();
+  root["mac_address"] = getMACAddress();
+  root["mode"] = getMode() == ESPConnectMode::AP ? "AP" : (getMode() == ESPConnectMode::STA ? "STA" : (getMode() == ESPConnectMode::ETH ? "ETH" : "NONE"));
+  root["state"] = getStateName();
+  root["wifi_bssid"] = getWiFiBSSID();
+  root["wifi_rssi"] = getWiFiRSSI();
+  root["wifi_signal"] = getWiFiSignalQuality();
+  root["wifi_ssid"] = getWiFiSSID();
+}
+
+void ESPConnectClass::_setState(ESPConnectState state) {
+  if (_state == state)
+    return;
+
+  const ESPConnectState previous = _state;
+  _state = state;
+  ESP_LOGD(TAG, "State: %s => %s", getStateName(previous), getStateName(state));
+
+  // be sure to save anything before auto restart and callback
+  if (_autoSave && _state == ESPConnectState::PORTAL_COMPLETE) {
+    Preferences preferences;
+    preferences.begin("espconnect", false);
+    preferences.putBool("ap", _config.apMode);
+    if (!_config.apMode) {
+      preferences.putString("ssid", _config.wifiSSID);
+      preferences.putString("password", _config.wifiPassword);
+    }
+    preferences.end();
+  }
+
+  // make sure callback is called before auto restart
+  if (_callback != nullptr)
+    _callback(previous, state);
+}
+
+#ifdef ESPCONNECT_ETH_SUPPORT
+void ESPConnectClass::_startEthernet() {
+  _setState(ESPConnectState::NETWORK_CONNECTING);
+
+#if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
+  pinMode(ETH_PHY_POWER, OUTPUT);
+#ifdef ESPCONNECT_ETH_RESET_ON_START
+  ESP_LOGD(TAG, "Resetting ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
+  digitalWrite(ETH_PHY_POWER, LOW);
+  delay(350);
+#endif
+  ESP_LOGD(TAG, "Activating ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
+  digitalWrite(ETH_PHY_POWER, HIGH);
+#endif
+
+  ESP_LOGI(TAG, "Starting Ethernet...");
+
+#ifdef ESPCONNECT_ETH_ALT_IMPL
+  if (!ETH.beginSPI(ESPCONNECT_ETH_MISO, ESPCONNECT_ETH_MOSI, ESPCONNECT_ETH_SCLK, ESPCONNECT_ETH_CS, ESPCONNECT_ETH_RST, ESPCONNECT_ETH_INT)) {
+    ESP_LOGE(TAG, "ETH failed to start!");
+  }
+#else
+  if (!ETH.begin()) {
+    ESP_LOGE(TAG, "ETH failed to start!");
+    _setState(ESPConnectState::NETWORK_ENABLED);
+  }
+#endif
+
+  _lastTime = esp_timer_get_time();
+
+  ESP_LOGD(TAG, "ETH started.");
+}
+#endif
+
+void ESPConnectClass::_startSTA() {
+  _setState(ESPConnectState::NETWORK_CONNECTING);
+
+  ESP_LOGI(TAG, "Starting WiFi...");
+
+  WiFi.setSleep(false);
+  WiFi.persistent(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(_config.wifiSSID, _config.wifiPassword);
+
+  _lastTime = esp_timer_get_time();
+
+  ESP_LOGD(TAG, "WiFi started.");
+}
+
+void ESPConnectClass::_startAP() {
+  _setState(_config.apMode ? ESPConnectState::AP_STARTING : ESPConnectState::PORTAL_STARTING);
+
+  ESP_LOGI(TAG, "Starting Access Point...");
+
+  WiFi.setSleep(false);
+  WiFi.persistent(false);
+  WiFi.setAutoReconnect(false);
+  WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
+  WiFi.mode(_config.apMode ? WIFI_AP : WIFI_AP_STA);
+
+  if (_apPassword.isEmpty() || _apPassword.length() < 8) {
+    // Disabling invalid Access Point password which must be at least 8 characters long when set
+    WiFi.softAP(_apSSID, emptyString);
+  } else
+    WiFi.softAP(_apSSID, _apPassword);
+
+  if (_dnsServer == nullptr) {
+    _dnsServer = new DNSServer();
+    _dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
+    _dnsServer->start(53, "*", WiFi.softAPIP());
+  }
+
+  ESP_LOGD(TAG, "Access Point started.");
+
+  if (!_config.apMode)
+    _enableCaptivePortal();
+}
+
+void ESPConnectClass::_stopAP() {
+  _disableCaptivePortal();
+  ESP_LOGI(TAG, "Stopping Access Point...");
+  _lastTime = -1;
+  WiFi.softAPdisconnect(true);
+  if (_dnsServer != nullptr) {
+    _dnsServer->stop();
+    delete _dnsServer;
+    _dnsServer = nullptr;
+  }
+  ESP_LOGD(TAG, "Access Point stopped.");
+}
+
+void ESPConnectClass::_enableCaptivePortal() {
+  ESP_LOGI(TAG, "Enable Captive Portal...");
+
+  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+  WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
+  WiFi.scanNetworks(true);
+
+  if (_scanHandler == nullptr) {
+    _scanHandler = &_httpd->on("/espconnect/scan", HTTP_GET, [&](AsyncWebServerRequest* request) {
     AsyncJsonResponse* response = new AsyncJsonResponse(true);
     JsonArray json = response->getRoot();
     int n = WiFi.scanComplete();
@@ -198,261 +427,76 @@ void ESPConnectClass::begin(AsyncWebServer* httpd, const String& hostname, const
     }
     response->setLength();
     request->send(response); });
+  }
 
-  httpd->on("/espconnect/connect", HTTP_POST, [&](AsyncWebServerRequest* request) {
-    _config.apMode = (request->hasParam("ap_mode", true) ? request->getParam("ap_mode", true)->value() : emptyString) == "true";
-    if (_config.apMode) {
-      request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
-      _setState(ESPConnectState::PORTAL_COMPLETE);
-    } else {
-      String ssid = request->hasParam("ssid", true) ? request->getParam("ssid", true)->value() : emptyString;
-      String password = request->hasParam("password", true) ? request->getParam("password", true)->value() : emptyString;
-      if (ssid.isEmpty())
-        return request->send(403, "application/json", "{\"message\":\"Invalid SSID\"}");
-      if (ssid.length() > 32 || password.length() > 64 || (!password.isEmpty() && password.length() < 8))
-        return request->send(403, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
-      _config.wifiSSID = ssid;
-      _config.wifiPassword = password;
-      request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
-      _setState(ESPConnectState::PORTAL_COMPLETE);
-    } });
+  if (_connectHandler == nullptr) {
+    _connectHandler = &_httpd->on("/espconnect/connect", HTTP_POST, [&](AsyncWebServerRequest* request) {
+      _config.apMode = (request->hasParam("ap_mode", true) ? request->getParam("ap_mode", true)->value() : emptyString) == "true";
+      if (_config.apMode) {
+        request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
+        _setState(ESPConnectState::PORTAL_COMPLETE);
+      } else {
+        String ssid = request->hasParam("ssid", true) ? request->getParam("ssid", true)->value() : emptyString;
+        String password = request->hasParam("password", true) ? request->getParam("password", true)->value() : emptyString;
+        if (ssid.isEmpty())
+          return request->send(403, "application/json", "{\"message\":\"Invalid SSID\"}");
+        if (ssid.length() > 32 || password.length() > 64 || (!password.isEmpty() && password.length() < 8))
+          return request->send(403, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
+        _config.wifiSSID = ssid;
+        _config.wifiPassword = password;
+        request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
+        _setState(ESPConnectState::PORTAL_COMPLETE);
+      } });
+  }
 
-  httpd->on("/espconnect", HTTP_GET, [](AsyncWebServerRequest* request) {
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
+  if (_homeHandler == nullptr) {
+    _homeHandler = &_httpd->on("/espconnect", HTTP_GET, [](AsyncWebServerRequest* request) {
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response); });
+  }
+
+  if (_rewriteHandler == nullptr) {
+    // this filter makes sure that the root path is only rewritten when captive portal is started
+    _rewriteHandler = &_httpd->rewrite("/", "/espconnect").setFilter([&](AsyncWebServerRequest* request) {
+      return _state == ESPConnectState::PORTAL_STARTED;
+    });
+  }
+
+  _httpd->onNotFound([](AsyncWebServerRequest* request) {
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
     response->addHeader("Content-Encoding", "gzip");
-    request->send(response); });
-
-  // this filter makes sure that the root path is only rewritten when captive portal is started
-  httpd->rewrite("/", "/espconnect").setFilter([&](AsyncWebServerRequest* request) {
-    return _state == ESPConnectState::PORTAL_STARTED;
+    request->send(response);
   });
 
-  _state = ESPConnectState::NETWORK_ENABLED;
-
-  // blocks like the old behaviour
-  if (_blocking) {
-    ESP_LOGD(TAG, "begin(blocking=true)");
-    while (_state != ESPConnectState::AP_STARTED && _state != ESPConnectState::NETWORK_CONNECTED) {
-      loop();
-      delay(100);
-    }
-  } else {
-    ESP_LOGD(TAG, "begin(blocking=false)");
-  }
-}
-
-void ESPConnectClass::end() {
-  if (_state == ESPConnectState::NETWORK_DISABLED)
-    return;
-  ESP_LOGD(TAG, "end()");
-  _lastTime = -1;
-  _autoSave = false;
-  _setState(ESPConnectState::NETWORK_DISABLED);
-  WiFi.removeEvent(_wifiEventListenerId);
-  WiFi.disconnect(true, true);
-  WiFi.mode(WIFI_MODE_NULL);
-  _stopAP();
-  _httpd = nullptr;
-}
-
-void ESPConnectClass::loop() {
-  if (_dnsServer != nullptr)
-    _dnsServer->processNextRequest();
-
-  // first check if we have to enter AP mode
-  if (_state == ESPConnectState::NETWORK_ENABLED && _config.apMode)
-    _startAP(false);
-
-    // start captive portal when network enabled but not in ap mode and no wifi info and no ethernet
-#ifndef ESPCONNECT_ETH_SUPPORT
-  if (_state == ESPConnectState::NETWORK_ENABLED && _config.wifiSSID.isEmpty())
-    _startAP(true);
-#endif
-
-  // otherwise, tries to connect to WiFi or ethernet
-  if (_state == ESPConnectState::NETWORK_ENABLED) {
-#ifdef ESPCONNECT_ETH_SUPPORT
-    _startEthernet();
-#endif
-    if (!_config.wifiSSID.isEmpty())
-      _startSTA();
-  }
-
-  // connection to WiFi or Ethernet times out ?
-  if (_state == ESPConnectState::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
-    WiFi.disconnect(true, true);
-    _setState(ESPConnectState::NETWORK_TIMEOUT);
-  }
-
-  // start captive portal on connect timeout
-  if (_state == ESPConnectState::NETWORK_TIMEOUT)
-    _startAP(true);
-
-  // portal duration ends ?
-  if (_state == ESPConnectState::PORTAL_STARTED && _durationPassed(_portalTimeout)) {
-    _setState(ESPConnectState::PORTAL_TIMEOUT);
-  }
-
-  // disconnect from network ? reconnect!
-  if (_state == ESPConnectState::NETWORK_DISCONNECTED) {
-    _setState(ESPConnectState::NETWORK_RECONNECTING);
-  }
-}
-
-void ESPConnectClass::clearConfiguration() {
-  Preferences preferences;
-  preferences.begin("espconnect", false);
-  preferences.clear();
-  preferences.end();
-}
-
-void ESPConnectClass::toJson(const JsonObject& root) const {
-  root["ip_address"] = getIPAddress().toString();
-  root["mac_address"] = getMACAddress();
-  root["mode"] = getMode() == ESPConnectMode::AP ? "AP" : (getMode() == ESPConnectMode::STA ? "STA" : (getMode() == ESPConnectMode::ETH ? "ETH" : "NONE"));
-  root["state"] = getStateName();
-  root["wifi_bssid"] = getWiFiBSSID();
-  root["wifi_rssi"] = getWiFiRSSI();
-  root["wifi_signal"] = getWiFiSignalQuality();
-  root["wifi_ssid"] = getWiFiSSID();
-}
-
-void ESPConnectClass::_setState(ESPConnectState state) {
-  if (_state == state)
-    return;
-
-  ESP_LOGD(TAG, "State: %s => %s", getStateName(_state), getStateName(state));
-
-  // be sure to save anything before auto restart and callback
-  if (_autoSave && state == ESPConnectState::PORTAL_COMPLETE) {
-    Preferences preferences;
-    preferences.begin("espconnect", false);
-    preferences.putBool("ap", _config.apMode);
-    if (!_config.apMode) {
-      preferences.putString("ssid", _config.wifiSSID);
-      preferences.putString("password", _config.wifiPassword);
-    }
-    preferences.end();
-  }
-
-  const ESPConnectState previous = _state;
-  _state = state;
-
-  // make sure callback is called before auto restart
-  if (_callback != nullptr)
-    _callback(previous, _state);
-
-  if (_autoRestart && (_state == ESPConnectState::PORTAL_COMPLETE || _state == ESPConnectState::PORTAL_TIMEOUT)) {
-    ESP.restart();
-  }
-}
-
-#ifdef ESPCONNECT_ETH_SUPPORT
-void ESPConnectClass::_startEthernet() {
-  _setState(ESPConnectState::NETWORK_CONNECTING);
-
-#if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
-  pinMode(ETH_PHY_POWER, OUTPUT);
-#ifdef ESPCONNECT_ETH_RESET_ON_START
-  ESP_LOGD(TAG, "Resetting ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
-  digitalWrite(ETH_PHY_POWER, LOW);
-  delay(350);
-#endif
-  ESP_LOGD(TAG, "Activating ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
-  digitalWrite(ETH_PHY_POWER, HIGH);
-#endif
-
-  ESP_LOGD(TAG, "Starting ETH...");
-
-#ifdef ESPCONNECT_ETH_ALT_IMPL
-  if (!ETH.beginSPI(ESPCONNECT_ETH_MISO, ESPCONNECT_ETH_MOSI, ESPCONNECT_ETH_SCLK, ESPCONNECT_ETH_CS, ESPCONNECT_ETH_RST, ESPCONNECT_ETH_INT)) {
-    ESP_LOGE(TAG, "ETH failed to start!");
-  }
-#else
-  if (!ETH.begin()) {
-    ESP_LOGE(TAG, "ETH failed to start!");
-    _setState(ESPConnectState::NETWORK_ENABLED);
-  }
-#endif
-
+  _httpd->begin();
+  MDNS.addService("http", "tcp", 80);
   _lastTime = esp_timer_get_time();
-
-  ESP_LOGD(TAG, "ETH started.");
-}
-#endif
-
-void ESPConnectClass::_startSTA() {
-  _setState(ESPConnectState::NETWORK_CONNECTING);
-
-  ESP_LOGD(TAG, "Starting WiFi...");
-
-  WiFi.setSleep(false);
-  WiFi.persistent(false);
-  WiFi.setAutoReconnect(true);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(_config.wifiSSID, _config.wifiPassword);
-
-  _lastTime = esp_timer_get_time();
-
-  ESP_LOGD(TAG, "WiFi started.");
 }
 
-void ESPConnectClass::_startAP(bool captivePortal) {
-  _setState(captivePortal ? ESPConnectState::PORTAL_STARTING : ESPConnectState::AP_STARTING);
-
-  ESP_LOGD(TAG, "Starting AP...");
-
-  WiFi.setSleep(false);
-  WiFi.persistent(false);
-  WiFi.setAutoReconnect(false);
-  WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
-  WiFi.mode(captivePortal ? WIFI_AP_STA : WIFI_AP);
-
-  if (_apPassword.isEmpty() || _apPassword.length() < 8) {
-    // Disabling invalid Access Point password which must be at least 8 characters long when set
-    WiFi.softAP(_apSSID, emptyString);
-  } else
-    WiFi.softAP(_apSSID, _apPassword);
-
-  if (_dnsServer == nullptr) {
-    _dnsServer = new DNSServer();
-    _dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
-    _dnsServer->start(53, "*", WiFi.softAPIP());
+void ESPConnectClass::_disableCaptivePortal() {
+  if (_rewriteHandler == nullptr)
+    return;
+  ESP_LOGI(TAG, "Disable Captive Portal...");
+  mdns_service_remove("_http", "_tcp");
+  _httpd->end();
+  _httpd->onNotFound(nullptr);
+  if (_connectHandler != nullptr) {
+    _httpd->removeHandler(_connectHandler);
+    _connectHandler = nullptr;
   }
-
-  if (captivePortal) {
-    ESP_LOGD(TAG, "Activating Captive Portal...");
-
-    WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
-    WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
-    WiFi.scanNetworks(true);
-
-    _httpd->begin();
-
-    _httpd->onNotFound([](AsyncWebServerRequest* request) {
-      AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    });
-
-    MDNS.addService("http", "tcp", 80);
-
-    _lastTime = esp_timer_get_time();
+  if (_scanHandler != nullptr) {
+    _httpd->removeHandler(_scanHandler);
+    _scanHandler = nullptr;
   }
-
-  ESP_LOGD(TAG, "AP started.");
-}
-
-void ESPConnectClass::_stopAP() {
-  ESP_LOGD(TAG, "Stopping AP...");
-  _lastTime = -1;
-  WiFi.softAPdisconnect(true);
-  if (_dnsServer != nullptr) {
-    _dnsServer->stop();
-    delete _dnsServer;
-    _dnsServer = nullptr;
+  if (_homeHandler != nullptr) {
+    _httpd->removeHandler(_homeHandler);
+    _homeHandler = nullptr;
   }
-  ESP_LOGD(TAG, "AP stopped.");
+  if (_rewriteHandler != nullptr) {
+    _httpd->removeRewrite(_rewriteHandler);
+    _rewriteHandler = nullptr;
+  }
 }
 
 void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {

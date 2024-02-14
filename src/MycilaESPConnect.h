@@ -195,12 +195,18 @@ class ESPConnectClass {
     bool _blocking = true;
     bool _autoRestart = true;
     bool _autoSave = false;
+    AsyncCallbackWebHandler* _scanHandler = nullptr;
+    AsyncCallbackWebHandler* _connectHandler = nullptr;
+    AsyncCallbackWebHandler* _homeHandler = nullptr;
+    AsyncWebRewrite* _rewriteHandler = nullptr;
 
   private:
     void _setState(ESPConnectState state);
     void _startSTA();
-    void _startAP(bool captivePortal);
+    void _startAP();
     void _stopAP();
+    void _enableCaptivePortal();
+    void _disableCaptivePortal();
     void _onWiFiEvent(WiFiEvent_t event);
     bool _durationPassed(uint32_t intervalSec);
 #ifdef ESPCONNECT_ETH_SUPPORT
