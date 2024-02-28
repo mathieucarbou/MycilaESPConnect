@@ -250,6 +250,8 @@ void ESPConnectClass::loop() {
     _stopAP();
     if (_autoRestart)
       ESP.restart();
+    else
+      _setState(ESPConnectState::NETWORK_ENABLED);
   }
 }
 
