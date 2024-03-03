@@ -61,7 +61,7 @@ ESPConnectMode ESPConnectClass::getMode() const {
     case ESPConnectState::NETWORK_DISCONNECTED:
     case ESPConnectState::NETWORK_RECONNECTING:
 #ifdef ESPCONNECT_ETH_SUPPORT
-      if (ETH.localIP()[0] != 0)
+      if (ETH.linkUp() && ETH.localIP()[0] != 0)
         return ESPConnectMode::ETH;
 #endif
       if (WiFi.localIP()[0] != 0)
@@ -79,7 +79,7 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
       return WiFi.macAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
     case ESPConnectMode::ETH:
-      return ETH.macAddress();
+      return ETH.linkUp() ? ETH.macAddress() : emptyString;
 #endif
     default:
       return emptyString;
@@ -95,7 +95,7 @@ const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
       return wifiMode == WIFI_MODE_STA ? WiFi.localIP() : IPAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
     case ESPConnectMode::ETH:
-      return ETH.localIP();
+      return ETH.linkUp() ? ETH.localIP() : IPAddress();
 #endif
     default:
       return IPAddress();
@@ -550,7 +550,7 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTED) {
 #ifdef ESPCONNECT_ETH_SUPPORT
-        if (ETH.localIP()[0] != 0)
+        if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
@@ -561,7 +561,7 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
       if (_state == ESPConnectState::NETWORK_CONNECTED) {
 #ifdef ESPCONNECT_ETH_SUPPORT
-        if (ETH.localIP()[0] != 0)
+        if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
         ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
