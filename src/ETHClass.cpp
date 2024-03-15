@@ -17,10 +17,10 @@
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#if defined(ESPCONNECT_ETH_ALT_IMPL) || defined(ESPCONNECT_ETH_CS) || defined(ESPCONNECT_ETH_INT) || defined(ESPCONNECT_ETH_MISO) || defined(ESPCONNECT_ETH_MOSI) || defined(ESPCONNECT_ETH_RST) || defined(ESPCONNECT_ETH_SCLK)
+#include "esp_system.h"
+#if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST) && ESP_IDF_VERSION_MAJOR < 5
 
 #include "ETHClass.h"
-#include "esp_system.h"
 #if ESP_IDF_VERSION_MAJOR > 3
 #include "esp_eth.h"
 #include "esp_eth_com.h"

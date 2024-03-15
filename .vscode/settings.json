@@ -16,7 +16,8 @@
     "unordered_map": "cpp",
     "unordered_set": "cpp",
     "vector": "cpp",
-    "stdexcept": "cpp"
+    "stdexcept": "cpp",
+    "usb_serial_jtag_ll.h": "c"
   },
   "cmake.configureOnOpen": false
 }

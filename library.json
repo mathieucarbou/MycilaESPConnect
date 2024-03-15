@@ -1,7 +1,7 @@
 {
   "name": "MycilaESPConnect",
   "version": "3.2.4",
-  "description": "Simple & Easy WiFi Manager with Captive Portal for ESP32",
+  "description": "Simple & Easy Network Manager for ESP32 with WiFi, Ethernet and Captive Portal support",
   "keywords": "http,async,websocket,webserver",
   "homepage": "https://github.com/mathieucarbou/MycilaESPConnect",
   "repository": {

@@ -10,18 +10,18 @@
 #include <functional>
 
 #if defined(ESPCONNECT_ETH_SUPPORT)
-
-#if !defined(ESPCONNECT_ETH_ALT_IMPL) && (defined(ESPCONNECT_ETH_CS) || defined(ESPCONNECT_ETH_INT) || defined(ESPCONNECT_ETH_MISO) || defined(ESPCONNECT_ETH_MOSI) || defined(ESPCONNECT_ETH_RST) || defined(ESPCONNECT_ETH_SCLK))
-#define ESPCONNECT_ETH_ALT_IMPL 1
-#endif
-
-#ifdef ESPCONNECT_ETH_ALT_IMPL
+#if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
+#define ESPCONNECT_ETH_SPI_SUPPORT 1
+#if ESP_IDF_VERSION_MAJOR >= 5
+#include <ETH.h>
+#include <SPI.h>
+#else
 #include <ETHClass.h>
+#endif
 #else
 #include <ETH.h>
 #endif
-
-#endif // ESPCONNECT_ETH_SUPPORT
+#endif
 
 #include <espconnect_webpage.h>
 
@@ -315,15 +315,21 @@ void ESPConnectClass::_startEthernet() {
 #endif
 
   ESP_LOGI(TAG, "Starting Ethernet...");
-
-#ifdef ESPCONNECT_ETH_ALT_IMPL
-  if (!ETH.beginSPI(ESPCONNECT_ETH_MISO, ESPCONNECT_ETH_MOSI, ESPCONNECT_ETH_SCLK, ESPCONNECT_ETH_CS, ESPCONNECT_ETH_RST, ESPCONNECT_ETH_INT)) {
+#if defined(ESPCONNECT_ETH_SPI_SUPPORT)
+#if ESP_IDF_VERSION_MAJOR >= 5
+  // https://github.com/espressif/arduino-esp32/tree/master/libraries/Ethernet/examples
+  SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
+  if (!ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI)) {
     ESP_LOGE(TAG, "ETH failed to start!");
   }
 #else
+  if (!ETH.beginSPI(ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_SPI_SCK, ETH_PHY_CS, ETH_PHY_RST, ETH_PHY_IRQ)) {
+    ESP_LOGE(TAG, "ETH failed to start!");
+  }
+#endif
+#else
   if (!ETH.begin()) {
     ESP_LOGE(TAG, "ETH failed to start!");
-    _setState(ESPConnectState::NETWORK_ENABLED);
   }
 #endif
 

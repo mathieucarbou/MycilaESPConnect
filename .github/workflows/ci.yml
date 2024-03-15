@@ -106,7 +106,7 @@ jobs:
             opts:
           - platform: espressif32
             board: esp32s3box
-            flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
+            flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_CS=9 -DETH_PHY_IRQ=13 -DETH_PHY_MISO=11 -DETH_PHY_MOSI=12 -DETH_PHY_RST=14 -DETH_PHY_SCK=10"
             opts:
           - platform: espressif32
             board: esp32-poe
@@ -120,10 +120,10 @@ jobs:
             board: wt32-eth01
             flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_POWER=16"
             opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
-          # - platform: espressif32
-          #   board: esp32s3box
-          #   flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
-          #   opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+          - platform: espressif32
+            board: esp32s3box
+            flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_ADDR=1 -DETH_PHY_CS=9 -DETH_PHY_IRQ=13 -DETH_PHY_RST=14 -DETH_PHY_SPI_MISO=11 -DETH_PHY_SPI_MOSI=12 -DETH_PHY_SPI_SCK=10 -DETH_PHY_TYPE=ETH_PHY_W5500"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
           - platform: espressif32
             board: esp32-poe
             flags:
