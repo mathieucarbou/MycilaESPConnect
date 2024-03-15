@@ -98,16 +98,36 @@ jobs:
         include:
           - platform: espressif32
             board: esp32dev
-            flags: 
+            flags:
+            opts:
           - platform: espressif32
             board: wt32-eth01
             flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_POWER=16"
+            opts:
           - platform: espressif32
             board: esp32s3box
             flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
+            opts:
           - platform: espressif32
             board: esp32-poe
             flags:
+            opts:
+          - platform: espressif32
+            board: esp32dev
+            flags:
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+          - platform: espressif32
+            board: wt32-eth01
+            flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_POWER=16"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+          - platform: espressif32
+            board: esp32s3box
+            flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+          - platform: espressif32
+            board: esp32-poe
+            flags:
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
 
     steps:
       - name: Checkout
@@ -124,7 +144,7 @@ jobs:
       - name: Set up Python 3.x
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install PlatformIO
         run: pip install platformio
@@ -133,10 +153,10 @@ jobs:
         run: platformio platform install ${{ matrix.platform }}
 
       - name: Build BlockingCaptivePortal
-        run: platformio ci "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}"
+        run: platformio ci "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}" ${{ matrix.opts }}
 
       - name: Build NonBlockingCaptivePortal
-        run: platformio ci "examples/NonBlockingCaptivePortal/NonBlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}"
+        run: platformio ci "examples/NonBlockingCaptivePortal/NonBlockingCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}" ${{ matrix.opts }}
 
       - name: Build AdvancedCaptivePortal
-        run: platformio ci "examples/AdvancedCaptivePortal/AdvancedCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}"
+        run: platformio ci "examples/AdvancedCaptivePortal/AdvancedCaptivePortal.ino" -l '.' -b ${{ matrix.board }} -O "build_flags=${{ matrix.flags }}" ${{ matrix.opts }}
