@@ -77,7 +77,7 @@ jobs:
         run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/esphome-AsyncTCP#v2.1.1
 
       - name: Install ESP Async WebServer
-        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/ESPAsyncWebServer#v2.8.0
+        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/ESPAsyncWebServer#v2.8.1
 
       - name: Build BlockingCaptivePortal
         run: arduino-cli compile --library . --warnings all -b ${{ matrix.board }} "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino"
@@ -120,10 +120,10 @@ jobs:
             board: wt32-eth01
             flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_POWER=16"
             opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
-          - platform: espressif32
-            board: esp32s3box
-            flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
-            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+          # - platform: espressif32
+          #   board: esp32s3box
+          #   flags: "-DESPCONNECT_ETH_SUPPORT -DESPCONNECT_ETH_CS=9 -DESPCONNECT_ETH_INT=13 -DESPCONNECT_ETH_MISO=11 -DESPCONNECT_ETH_MOSI=12 -DESPCONNECT_ETH_RST=14 -DESPCONNECT_ETH_SCLK=10"
+          #   opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
           - platform: espressif32
             board: esp32-poe
             flags:
