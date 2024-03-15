@@ -115,19 +115,19 @@ jobs:
           - platform: espressif32
             board: esp32dev
             flags:
-            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/mathieucarbou/arduino-esp32.git#3.0.0-alpha3-fixes, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
           - platform: espressif32
             board: wt32-eth01
             flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_POWER=16"
-            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/mathieucarbou/arduino-esp32.git#3.0.0-alpha3-fixes, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
           - platform: espressif32
             board: esp32s3box
             flags: "-DESPCONNECT_ETH_SUPPORT -DETH_PHY_ADDR=1 -DETH_PHY_CS=9 -DETH_PHY_IRQ=13 -DETH_PHY_RST=14 -DETH_PHY_SPI_MISO=11 -DETH_PHY_SPI_MOSI=12 -DETH_PHY_SPI_SCK=10 -DETH_PHY_TYPE=ETH_PHY_W5500"
-            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/mathieucarbou/arduino-esp32.git#3.0.0-alpha3-fixes, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
           - platform: espressif32
             board: esp32-poe
             flags:
-            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/espressif/arduino-esp32.git#3.0.0-alpha3, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
+            opts: "--project-option 'platform_packages=platformio/framework-arduinoespressif32 @ https://github.com/mathieucarbou/arduino-esp32.git#3.0.0-alpha3-fixes, platform_packages=platformio/framework-arduinoespressif32-libs @ https://github.com/espressif/esp32-arduino-libs.git#idf-release/v5.1'"
 
     steps:
       - name: Checkout
