@@ -248,9 +248,10 @@ void ESPConnectClass::loop() {
 
   if (_state == ESPConnectState::PORTAL_COMPLETE || _state == ESPConnectState::PORTAL_TIMEOUT) {
     _stopAP();
-    if (_autoRestart)
+    if (_autoRestart) {
+      ESP_LOGW(TAG, "Auto Restart of ESP...");
       ESP.restart();
-    else
+    } else
       _setState(ESPConnectState::NETWORK_ENABLED);
   }
 }
