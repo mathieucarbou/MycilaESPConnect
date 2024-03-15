@@ -13,22 +13,15 @@ He is making great Arduino libraries.
 ## Changes
 
 - **Logo**: user is responsible to provide a logo at this path: `/logo`
-
 - **AP Mode**: a new choice is added to the captive portal so that the user can remain in AP mode
-
 - **Network State Machine**: a better state machine is implemented to handle switching between Captive Portal, AP Mode and STA mode
-
 - **New API**: API has been completely rewritten
-
 - **Callback**: Listen to Network State changes
-
 - **Blocking and Non-blocking modes**: ESPConnect can be configured to loop and wait for the user to complete the Captive Portal steps, or the app can continue working in the background and the Captive Portal will be launched as needed.
-
 - **Flexible Configuration:** ESPConnect can either control the configuration persistence for you or let you do it
-
 - **mDNS / DNS Support**
-
 - **Ethernet support**
+- **Ready for Arduino 3 (ESP-IDF 5.1)**
 
 ## Ethernet Support
 
