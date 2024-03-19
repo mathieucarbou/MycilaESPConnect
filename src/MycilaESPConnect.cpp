@@ -409,15 +409,15 @@ void ESPConnectClass::_enableCaptivePortal() {
     AsyncJsonResponse* response = new AsyncJsonResponse(true);
     JsonArray json = response->getRoot();
     int n = WiFi.scanComplete();
-    if (n == WIFI_SCAN_FAILED)
-    {
+    if (n == 0 || n == WIFI_SCAN_FAILED) { // -2 or 0
+      // no result or scan failed
+      WiFi.scanDelete();
       WiFi.scanNetworks(true);
       return request->send(202);
-    }
-    else if (n == WIFI_SCAN_RUNNING)
+    } else if (n == WIFI_SCAN_RUNNING) // -1
       return request->send(202);
-    else
-    {
+    else { // n > 0
+      // we have some results
       for (int i = 0; i < n; ++i)
       {
 #if ARDUINOJSON_VERSION_MAJOR == 6
@@ -430,9 +430,9 @@ void ESPConnectClass::_enableCaptivePortal() {
         entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
         entry["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
       }
+      // clean up and start scanning again in background
       WiFi.scanDelete();
-      if (WiFi.scanComplete() == WIFI_SCAN_FAILED)
-        WiFi.scanNetworks(true);
+      WiFi.scanNetworks(true);
     }
     response->setLength();
     request->send(response); });
