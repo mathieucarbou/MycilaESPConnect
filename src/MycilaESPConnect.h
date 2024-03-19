@@ -23,6 +23,10 @@
 #define ESPCONNECT_PORTAL_TIMEOUT 180
 #endif
 
+#ifndef ESPCONNECT_PORTAL_SCAN_TIMEOUT
+#define ESPCONNECT_PORTAL_SCAN_TIMEOUT 20
+#endif
+
 enum class ESPConnectState {
   // end() => NETWORK_DISABLED
   NETWORK_DISABLED = 0,
@@ -190,6 +194,8 @@ class ESPConnectClass {
     String _apPassword = emptyString;
     uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
     uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
+    uint32_t _scanStart = 0;
+    uint32_t _scanTimeout = ESPCONNECT_PORTAL_SCAN_TIMEOUT;
     ESPConnectConfig _config;
     wifi_event_id_t _wifiEventListenerId = 0;
     bool _blocking = true;

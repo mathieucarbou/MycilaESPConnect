@@ -403,39 +403,59 @@ void ESPConnectClass::_enableCaptivePortal() {
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
   WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
   WiFi.scanNetworks(true);
+  _scanStart = millis();
 
   if (_scanHandler == nullptr) {
     _scanHandler = &_httpd->on("/espconnect/scan", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    AsyncJsonResponse* response = new AsyncJsonResponse(true);
-    JsonArray json = response->getRoot();
-    int n = WiFi.scanComplete();
-    if (n == 0 || n == WIFI_SCAN_FAILED) { // -2 or 0
-      // no result or scan failed
-      WiFi.scanDelete();
-      WiFi.scanNetworks(true);
-      return request->send(202);
-    } else if (n == WIFI_SCAN_RUNNING) // -1
-      return request->send(202);
-    else { // n > 0
-      // we have some results
-      for (int i = 0; i < n; ++i)
-      {
+      int n = WiFi.scanComplete();
+
+      // scan still running ? wait...
+      if (n == WIFI_SCAN_RUNNING) {
+        return request->send(202);
+
+        // scan error or finished with no result ?
+      } else if (n == 0 || n == WIFI_SCAN_FAILED) {
+        // timeout ?
+        const bool timedOut = millis() - _scanStart > _scanTimeout;
+
+        // re-scan
+        WiFi.scanDelete();
+        WiFi.scanNetworks(true);
+        _scanStart = millis();
+
+        // send empty json response, to let the user choose AP mode if timeout, or still ask client to wait
+        if (timedOut) {
+          AsyncJsonResponse* response = new AsyncJsonResponse(true);
+          response->setLength();
+          request->send(response);
+        } else {
+          return request->send(202);
+        }
+
+        // scan results ?
+      } else {
+        AsyncJsonResponse* response = new AsyncJsonResponse(true);
+        JsonArray json = response->getRoot();
+        // we have some results
+        for (int i = 0; i < n; ++i) {
 #if ARDUINOJSON_VERSION_MAJOR == 6
-        JsonObject entry = json.createNestedObject();
+          JsonObject entry = json.createNestedObject();
 #else
-        JsonObject entry = json.add<JsonObject>();
+          JsonObject entry = json.add<JsonObject>();
 #endif
-        entry["name"] = WiFi.SSID(i);
-        entry["rssi"] = WiFi.RSSI(i);
-        entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
-        entry["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
+          entry["name"] = WiFi.SSID(i);
+          entry["rssi"] = WiFi.RSSI(i);
+          entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
+          entry["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
+        }
+        // clean up and start scanning again in background
+        WiFi.scanDelete();
+        WiFi.scanNetworks(true);
+        _scanStart = millis();
+        response->setLength();
+        request->send(response);
       }
-      // clean up and start scanning again in background
-      WiFi.scanDelete();
-      WiFi.scanNetworks(true);
-    }
-    response->setLength();
-    request->send(response); });
+    });
   }
 
   if (_connectHandler == nullptr) {
