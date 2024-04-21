@@ -346,11 +346,12 @@ bool ETHClass::beginSPI(int miso, int mosi, int sck, int cs, int rst, int irq,
     return false;
   }
 
-  /* The SPI Ethernet module might not have a burned factory MAC address, we cat to set it manually.
-     02:00:00 is a Locally Administered OUI range so should not be used except when testing on a LAN under your control.
-     */
-  uint8_t address[] = {
-    0x02, 0x00, 0x00, 0x12, 0x34, 0x56};
+  uint8_t address[6] = {0, 0, 0, 0, 0, 0};
+  if (esp_read_mac(address, ESP_MAC_ETH) != ESP_OK) {
+    log_e("esp_read_mac failed");
+    return false;
+  }
+
   esp_eth_ioctl(eth_handle, ETH_CMD_S_MAC_ADDR, address);
 
   /* attach Ethernet driver to TCP/IP stack */
