@@ -213,7 +213,7 @@ class ESPConnectClass {
     void _stopAP();
     void _enableCaptivePortal();
     void _disableCaptivePortal();
-    void _onWiFiEvent(WiFiEvent_t event);
+    void _onWiFiEvent(arduino_event_id_t event);
     bool _durationPassed(uint32_t intervalSec);
 #ifdef ESPCONNECT_ETH_SUPPORT
     void _startEthernet();

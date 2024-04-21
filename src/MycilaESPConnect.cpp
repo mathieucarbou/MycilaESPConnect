@@ -528,7 +528,7 @@ void ESPConnectClass::_disableCaptivePortal() {
   }
 }
 
-void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
+void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
   if (_state == ESPConnectState::NETWORK_DISABLED)
     return;
 
