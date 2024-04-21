@@ -7,6 +7,7 @@
 #include <AsyncJson.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
+#include <esp_mac.h>
 #include <functional>
 
 #if defined(ESPCONNECT_ETH_SUPPORT)
@@ -73,18 +74,57 @@ ESPConnectMode ESPConnectClass::getMode() const {
 }
 
 const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
+  String mac = emptyString;
+
   switch (mode) {
     case ESPConnectMode::AP:
-      return WiFi.softAPmacAddress();
+      mac = WiFi.softAPmacAddress();
+      break;
     case ESPConnectMode::STA:
-      return WiFi.macAddress();
+      mac = WiFi.macAddress();
+      break;
 #ifdef ESPCONNECT_ETH_SUPPORT
     case ESPConnectMode::ETH:
-      return ETH.linkUp() ? ETH.macAddress() : emptyString;
+      mac = ETH.linkUp() ? ETH.macAddress() : emptyString;
+      break;
 #endif
     default:
-      return emptyString;
+      mac = emptyString;
+      break;
   }
+
+  if (mac != emptyString && mac != "00:00:00:00:00:00")
+    return mac;
+
+  // ESP_MAC_IEEE802154 is used to mean "no MAC address" in this context
+  esp_mac_type_t type = esp_mac_type_t::ESP_MAC_IEEE802154;
+
+  switch (mode) {
+    case ESPConnectMode::AP:
+      type = ESP_MAC_WIFI_SOFTAP;
+      break;
+    case ESPConnectMode::STA:
+      type = ESP_MAC_WIFI_STA;
+      break;
+#ifdef ESPCONNECT_ETH_SUPPORT
+    case ESPConnectMode::ETH:
+      type = ESP_MAC_ETH;
+      break;
+#endif
+    default:
+      break;
+  }
+
+  if (type == esp_mac_type_t::ESP_MAC_IEEE802154)
+    return emptyString;
+
+  uint8_t bytes[6] = {0, 0, 0, 0, 0, 0};
+  if (esp_read_mac(bytes, type) != ESP_OK)
+    return emptyString;
+
+  char buffer[18] = {0};
+  sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]);
+  return String(buffer);
 }
 
 const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
@@ -266,7 +306,13 @@ void ESPConnectClass::clearConfiguration() {
 
 void ESPConnectClass::toJson(const JsonObject& root) const {
   root["ip_address"] = getIPAddress().toString();
+  root["ip_address_ap"] = getIPAddress(ESPConnectMode::AP).toString();
+  root["ip_address_eth"] = getIPAddress(ESPConnectMode::ETH).toString();
+  root["ip_address_sta"] = getIPAddress(ESPConnectMode::STA).toString();
   root["mac_address"] = getMACAddress();
+  root["mac_address_ap"] = getMACAddress(ESPConnectMode::AP);
+  root["mac_address_eth"] = getMACAddress(ESPConnectMode::ETH);
+  root["mac_address_sta"] = getMACAddress(ESPConnectMode::STA);
   root["mode"] = getMode() == ESPConnectMode::AP ? "AP" : (getMode() == ESPConnectMode::STA ? "STA" : (getMode() == ESPConnectMode::ETH ? "ETH" : "NONE"));
   root["state"] = getStateName();
   root["wifi_bssid"] = getWiFiBSSID();
