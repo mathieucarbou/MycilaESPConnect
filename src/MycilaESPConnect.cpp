@@ -75,6 +75,7 @@ ESPConnectMode ESPConnectClass::getMode() const {
 const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
   switch (mode) {
     case ESPConnectMode::AP:
+      return WiFi.softAPmacAddress();
     case ESPConnectMode::STA:
       return WiFi.macAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
@@ -441,7 +442,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 #if ARDUINOJSON_VERSION_MAJOR == 6
           JsonObject entry = json.createNestedObject();
 #else
-          JsonObject entry = json.add<JsonObject>();
+            JsonObject entry = json.add<JsonObject>();
 #endif
           entry["name"] = WiFi.SSID(i);
           entry["rssi"] = WiFi.RSSI(i);
