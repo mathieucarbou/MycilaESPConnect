@@ -274,12 +274,20 @@ bool ETHClass::beginSPI(int miso, int mosi, int sck, int cs, int rst, int irq,
 
   // Init SPI bus
   spi_device_handle_t spi_handle = {0};
-  spi_bus_config_t buscfg = {0};
-  buscfg.miso_io_num = miso;
-  buscfg.mosi_io_num = mosi;
-  buscfg.sclk_io_num = sck;
-  buscfg.quadwp_io_num = -1;
-  buscfg.quadhd_io_num = -1;
+  spi_bus_config_t buscfg = {
+      .mosi_io_num = mosi,
+      .miso_io_num = miso,
+      .sclk_io_num = sck,
+      .quadwp_io_num = -1,
+      .quadhd_io_num = -1,
+      .data4_io_num = 0,
+      .data5_io_num = 0,
+      .data6_io_num = 0,
+      .data7_io_num = 0,
+      .max_transfer_sz = 0,
+      .flags = 0,
+      .intr_flags = 0
+  };
   err = spi_bus_initialize(host_id, &buscfg, SPI_DMA_CH_AUTO);
   if (err != ESP_OK) {
     log_e("spi_bus_initialize failed");
@@ -289,9 +297,19 @@ bool ETHClass::beginSPI(int miso, int mosi, int sck, int cs, int rst, int irq,
   spi_device_interface_config_t devcfg = {
     .command_bits = 16, // Actually it's the address phase in W5500 SPI frame
     .address_bits = 8,  // Actually it's the control phase in W5500 SPI frame
+    .dummy_bits = 0,
     .mode = 0,
+    .duty_cycle_pos = 0,
+    .cs_ena_pretrans = 0,
+    .cs_ena_posttrans = 0,
     .clock_speed_hz = clk_mhz * 1000 * 1000,
-    .queue_size = 20};
+    .input_delay_ns = 0,
+    .spics_io_num = 0,
+    .flags = 0,
+    .queue_size = 20,
+    .pre_cb = nullptr,
+    .post_cb = nullptr
+  };
 
   // Set SPI module Chip Select GPIO
   devcfg.spics_io_num = cs;
