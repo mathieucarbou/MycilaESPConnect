@@ -76,7 +76,7 @@ void loop() {
   if (millis() - lastLog > 5000) {
     JsonDocument doc;
     ESPConnect.toJson(doc.to<JsonObject>());
-    serializeJson(doc, Serial);
+    serializeJsonPretty(doc, Serial);
     Serial.println();
     lastLog = millis();
   }
