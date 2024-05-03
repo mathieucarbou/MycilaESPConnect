@@ -31,6 +31,12 @@ void setup() {
     request->send(200);
   });
 
+  server.on("/restart", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    Serial.println("Restarting...");
+    request->send(200);
+    ESP.restart();
+  });
+
   // add a rewrite which is only applicable in AP mode and STA mode, but not in Captive Portal mode
   server.rewrite("/", "/home").setFilter([](AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
 
@@ -38,7 +44,7 @@ void setup() {
   ESPConnect.listen([](ESPConnectState previous, ESPConnectState state) {
     JsonDocument doc;
     ESPConnect.toJson(doc.to<JsonObject>());
-    serializeJsonPretty(doc, Serial);
+    serializeJson(doc, Serial);
     Serial.println();
 
     switch (state) {
@@ -52,6 +58,7 @@ void setup() {
 
       case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
+        ArduinoOTA.end();
       default:
         break;
     }
@@ -60,7 +67,7 @@ void setup() {
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
   ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setConnectTimeout(10);
+  ESPConnect.setConnectTimeout(15);
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
@@ -72,12 +79,4 @@ void setup() {
 void loop() {
   ESPConnect.loop();
   ArduinoOTA.handle();
-
-  if (millis() - lastLog > 5000) {
-    JsonDocument doc;
-    ESPConnect.toJson(doc.to<JsonObject>());
-    serializeJsonPretty(doc, Serial);
-    Serial.println();
-    lastLog = millis();
-  }
 }
