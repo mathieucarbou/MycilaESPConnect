@@ -180,7 +180,7 @@ int8_t ESPConnectClass::_wifiSignalQuality(int32_t rssi) {
   return s > 100 ? 100 : (s < 0 ? 0 : s);
 }
 
-void ESPConnectClass::begin(AsyncWebServer* httpd, const String& hostname, const String& apSSID, const String& apPassword) {
+void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword) {
   if (_state != ESPConnectState::NETWORK_DISABLED)
     return;
 
@@ -196,11 +196,11 @@ void ESPConnectClass::begin(AsyncWebServer* httpd, const String& hostname, const
   begin(httpd, hostname, apSSID, apPassword, {ssid, password, ap});
 }
 
-void ESPConnectClass::begin(AsyncWebServer* httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config) {
+void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config) {
   if (_state != ESPConnectState::NETWORK_DISABLED)
     return;
 
-  _httpd = httpd;
+  _httpd = &httpd;
   _hostname = hostname;
   _apSSID = apSSID;
   _apPassword = apPassword;

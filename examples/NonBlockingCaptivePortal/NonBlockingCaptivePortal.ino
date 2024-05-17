@@ -71,7 +71,7 @@ void setup() {
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
-  ESPConnect.begin(&server, hostname.c_str(), "Captive Portal SSID");
+  ESPConnect.begin(server, hostname.c_str(), "Captive Portal SSID");
 
   Serial.println("====> setup() completed...");
 }

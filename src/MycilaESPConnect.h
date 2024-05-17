@@ -9,9 +9,9 @@
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 
-#define ESPCONNECT_VERSION "3.2.9"
-#define ESPCONNECT_VERSION_MAJOR 3
-#define ESPCONNECT_VERSION_MINOR 2
+#define ESPCONNECT_VERSION          "3.2.9"
+#define ESPCONNECT_VERSION_MAJOR    3
+#define ESPCONNECT_VERSION_MINOR    2
 #define ESPCONNECT_VERSION_REVISION 9
 #define ESPCONNECT_FORK_mathieucarbou
 
@@ -94,7 +94,7 @@ class ESPConnectClass {
     // 4. If STA mode times out, or nothing configured, starts the captive portal
     //
     // Using this method will activate auto-load and auto-save of the configuration
-    void begin(AsyncWebServer* httpd, const String& hostname, const String& apSSID, const String& apPassword = emptyString);
+    void begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword = emptyString); // NOLINT
 
     // Start ESPConnect:
     //
@@ -103,7 +103,7 @@ class ESPConnectClass {
     // 3. If STA mode fails, or empty WiFi credentials were passed, starts the captive portal
     //
     // Using this method will NOT auto-load or auto-save any configuration
-    void begin(AsyncWebServer* httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config);
+    void begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config); // NOLINT
 
     // loop() method to be called from main loop()
     void loop();
