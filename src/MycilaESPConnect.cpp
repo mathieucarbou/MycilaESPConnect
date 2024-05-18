@@ -26,6 +26,20 @@
 
 #include <espconnect_webpage.h>
 
+#ifdef MYCILA_LOGGER_SUPPORT
+#include <MycilaLogger.h>
+extern Mycila::Logger logger;
+#define LOGD(tag, format, ...) logger.debug(tag, format, ##__VA_ARGS__)
+#define LOGI(tag, format, ...) logger.info(tag, format, ##__VA_ARGS__)
+#define LOGW(tag, format, ...) logger.warn(tag, format, ##__VA_ARGS__)
+#define LOGE(tag, format, ...) logger.error(tag, format, ##__VA_ARGS__)
+#else
+#define LOGD(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
+#define LOGI(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
+#define LOGW(tag, format, ...) ESP_LOGW(tag, format, ##__VA_ARGS__)
+#define LOGE(tag, format, ...) ESP_LOGE(tag, format, ##__VA_ARGS__)
+#endif
+
 #define TAG "ESPCONNECT"
 
 static const char* NetworkStateNames[] = {
@@ -212,20 +226,20 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
 
   // blocks like the old behaviour
   if (_blocking) {
-    ESP_LOGI(TAG, "Starting ESPConnect in blocking mode...");
+    LOGI(TAG, "Starting ESPConnect in blocking mode...");
     while (_state != ESPConnectState::AP_STARTED && _state != ESPConnectState::NETWORK_CONNECTED) {
       loop();
       delay(100);
     }
   } else {
-    ESP_LOGI(TAG, "Starting ESPConnect in non-blocking mode...");
+    LOGI(TAG, "Starting ESPConnect in non-blocking mode...");
   }
 }
 
 void ESPConnectClass::end() {
   if (_state == ESPConnectState::NETWORK_DISABLED)
     return;
-  ESP_LOGI(TAG, "Stopping ESPConnect...");
+  LOGI(TAG, "Stopping ESPConnect...");
   _lastTime = -1;
   _autoSave = false;
   _setState(ESPConnectState::NETWORK_DISABLED);
@@ -290,7 +304,7 @@ void ESPConnectClass::loop() {
   if (_state == ESPConnectState::PORTAL_COMPLETE || _state == ESPConnectState::PORTAL_TIMEOUT) {
     _stopAP();
     if (_autoRestart) {
-      ESP_LOGW(TAG, "Auto Restart of ESP...");
+      LOGW(TAG, "Auto Restart of ESP...");
       ESP.restart();
     } else
       _setState(ESPConnectState::NETWORK_ENABLED);
@@ -327,7 +341,7 @@ void ESPConnectClass::_setState(ESPConnectState state) {
 
   const ESPConnectState previous = _state;
   _state = state;
-  ESP_LOGD(TAG, "State: %s => %s", getStateName(previous), getStateName(state));
+  LOGD(TAG, "State: %s => %s", getStateName(previous), getStateName(state));
 
   // be sure to save anything before auto restart and callback
   if (_autoSave && _state == ESPConnectState::PORTAL_COMPLETE) {
@@ -353,43 +367,43 @@ void ESPConnectClass::_startEthernet() {
 #if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
   pinMode(ETH_PHY_POWER, OUTPUT);
 #ifdef ESPCONNECT_ETH_RESET_ON_START
-  ESP_LOGD(TAG, "Resetting ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
+  LOGD(TAG, "Resetting ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
   digitalWrite(ETH_PHY_POWER, LOW);
   delay(350);
 #endif
-  ESP_LOGD(TAG, "Activating ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
+  LOGD(TAG, "Activating ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
   digitalWrite(ETH_PHY_POWER, HIGH);
 #endif
 
-  ESP_LOGI(TAG, "Starting Ethernet...");
+  LOGI(TAG, "Starting Ethernet...");
 #if defined(ESPCONNECT_ETH_SPI_SUPPORT)
 #if ESP_IDF_VERSION_MAJOR >= 5
   // https://github.com/espressif/arduino-esp32/tree/master/libraries/Ethernet/examples
   SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
   if (!ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI)) {
-    ESP_LOGE(TAG, "ETH failed to start!");
+    LOGE(TAG, "ETH failed to start!");
   }
 #else
   if (!ETH.beginSPI(ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_SPI_SCK, ETH_PHY_CS, ETH_PHY_RST, ETH_PHY_IRQ)) {
-    ESP_LOGE(TAG, "ETH failed to start!");
+    LOGE(TAG, "ETH failed to start!");
   }
 #endif
 #else
   if (!ETH.begin()) {
-    ESP_LOGE(TAG, "ETH failed to start!");
+    LOGE(TAG, "ETH failed to start!");
   }
 #endif
 
   _lastTime = esp_timer_get_time();
 
-  ESP_LOGD(TAG, "ETH started.");
+  LOGD(TAG, "ETH started.");
 }
 #endif
 
 void ESPConnectClass::_startSTA() {
   _setState(ESPConnectState::NETWORK_CONNECTING);
 
-  ESP_LOGI(TAG, "Starting WiFi...");
+  LOGI(TAG, "Starting WiFi...");
 
   WiFi.setSleep(false);
   WiFi.persistent(false);
@@ -399,13 +413,13 @@ void ESPConnectClass::_startSTA() {
 
   _lastTime = esp_timer_get_time();
 
-  ESP_LOGD(TAG, "WiFi started.");
+  LOGD(TAG, "WiFi started.");
 }
 
 void ESPConnectClass::_startAP() {
   _setState(_config.apMode ? ESPConnectState::AP_STARTING : ESPConnectState::PORTAL_STARTING);
 
-  ESP_LOGI(TAG, "Starting Access Point...");
+  LOGI(TAG, "Starting Access Point...");
 
   WiFi.setSleep(false);
   WiFi.persistent(false);
@@ -425,7 +439,7 @@ void ESPConnectClass::_startAP() {
     _dnsServer->start(53, "*", WiFi.softAPIP());
   }
 
-  ESP_LOGD(TAG, "Access Point started.");
+  LOGD(TAG, "Access Point started.");
 
   if (!_config.apMode)
     _enableCaptivePortal();
@@ -433,7 +447,7 @@ void ESPConnectClass::_startAP() {
 
 void ESPConnectClass::_stopAP() {
   _disableCaptivePortal();
-  ESP_LOGI(TAG, "Stopping Access Point...");
+  LOGI(TAG, "Stopping Access Point...");
   _lastTime = -1;
   WiFi.softAPdisconnect(true);
   if (_dnsServer != nullptr) {
@@ -441,11 +455,11 @@ void ESPConnectClass::_stopAP() {
     delete _dnsServer;
     _dnsServer = nullptr;
   }
-  ESP_LOGD(TAG, "Access Point stopped.");
+  LOGD(TAG, "Access Point stopped.");
 }
 
 void ESPConnectClass::_enableCaptivePortal() {
-  ESP_LOGI(TAG, "Enable Captive Portal...");
+  LOGI(TAG, "Enable Captive Portal...");
 
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
   WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
@@ -553,7 +567,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 void ESPConnectClass::_disableCaptivePortal() {
   if (_rewriteHandler == nullptr)
     return;
-  ESP_LOGI(TAG, "Disable Captive Portal...");
+  LOGI(TAG, "Disable Captive Portal...");
   mdns_service_remove("_http", "_tcp");
   _httpd->end();
   _httpd->onNotFound(nullptr);
@@ -583,14 +597,14 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
 #ifdef ESPCONNECT_ETH_SUPPORT
     case ARDUINO_EVENT_ETH_START:
       if (ETH.linkUp()) {
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_START", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_START", getStateName());
         ETH.setHostname(_hostname.c_str());
       }
       break;
 
     case ARDUINO_EVENT_ETH_GOT_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING || _state == ESPConnectState::PORTAL_STARTING || _state == ESPConnectState::PORTAL_STARTED) {
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_GOT_IP", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_GOT_IP", getStateName());
         if (_state == ESPConnectState::PORTAL_STARTING || _state == ESPConnectState::PORTAL_STARTED) {
           _stopAP();
         }
@@ -607,14 +621,14 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
 
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       if (_state == ESPConnectState::NETWORK_CONNECTED && WiFi.localIP()[0] == 0) {
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_DISCONNECTED", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_DISCONNECTED", getStateName());
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
         _lastTime = -1;
         MDNS.begin(_hostname.c_str());
         _setState(ESPConnectState::NETWORK_CONNECTED);
@@ -627,7 +641,7 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
         if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
@@ -638,7 +652,7 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
         if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
@@ -647,10 +661,10 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
       WiFi.softAPsetHostname(_hostname.c_str());
       MDNS.begin(_hostname.c_str());
       if (_state == ESPConnectState::AP_STARTING) {
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
         _setState(ESPConnectState::AP_STARTED);
       } else if (_state == ESPConnectState::PORTAL_STARTING) {
-        ESP_LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
         _setState(ESPConnectState::PORTAL_STARTED);
       }
       break;
