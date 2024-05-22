@@ -287,8 +287,9 @@ void ESPConnectClass::loop() {
     _startAP();
   }
 
-  // portal duration ends ?
-  if (_state == ESPConnectState::PORTAL_STARTED && _durationPassed(_portalTimeout)) {
+  // timeout portal if we failed to connect to WiFi (we got a SSID) and portal duration is passed
+  // in order to restart and try again to connect to the configured WiFi
+  if (_state == ESPConnectState::PORTAL_STARTED && !_config.wifiSSID.isEmpty() && _durationPassed(_portalTimeout)) {
     _setState(ESPConnectState::PORTAL_TIMEOUT);
   }
 
