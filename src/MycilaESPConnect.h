@@ -9,10 +9,10 @@
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 
-#define ESPCONNECT_VERSION          "4.1.0"
+#define ESPCONNECT_VERSION          "4.1.1"
 #define ESPCONNECT_VERSION_MAJOR    4
 #define ESPCONNECT_VERSION_MINOR    1
-#define ESPCONNECT_VERSION_REVISION 0
+#define ESPCONNECT_VERSION_REVISION 1
 #define ESPCONNECT_FORK_mathieucarbou
 
 #ifndef ESPCONNECT_CONNECTION_TIMEOUT
