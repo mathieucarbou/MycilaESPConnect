@@ -31,15 +31,13 @@
       "owner": "mathieucarbou",
       "name": "ESP Async WebServer",
       "version": "^2.10.4",
-      "platforms": "espressif32"
+      "platforms": ["espressif8266", "espressif32"]
     },
     {
       "owner": "bblanchon",
       "name": "ArduinoJson",
       "version": "^7.0.4",
-      "platforms": [
-        "espressif32"
-      ]
+      "platforms": ["espressif8266", "espressif32"]
     }
   ],
   "export": {
