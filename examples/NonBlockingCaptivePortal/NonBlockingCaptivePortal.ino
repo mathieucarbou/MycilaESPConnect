@@ -1,4 +1,3 @@
-#include <ArduinoOTA.h>
 #include <MycilaESPConnect.h>
 
 AsyncWebServer server(80);
@@ -53,16 +52,10 @@ void setup() {
       case ESPConnectState::NETWORK_CONNECTED:
       case ESPConnectState::AP_STARTED:
         server.begin();
-        ArduinoOTA.setHostname(hostname.c_str());
-#ifndef ESP8266
-        ArduinoOTA.setMdnsEnabled(true);
-#endif
-        ArduinoOTA.begin();
         break;
 
       case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
-        ArduinoOTA.end();
       default:
         break;
     }
@@ -87,5 +80,4 @@ void setup() {
 
 void loop() {
   ESPConnect.loop();
-  ArduinoOTA.handle();
 }
