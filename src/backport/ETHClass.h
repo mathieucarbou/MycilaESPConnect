@@ -21,6 +21,8 @@
 #ifndef _ETH_H_
 #define _ETH_H_
 
+#if defined(ESPCONNECT_ETH_SUPPORT) && ESP_IDF_VERSION_MAJOR < 5 && defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
+
 #include "WiFi.h"
 #include "driver/spi_master.h"
 #include "esp_eth.h"
@@ -123,5 +125,7 @@ class ETHClass {
 };
 
 extern ETHClass ETH;
+
+#endif
 
 #endif /* _ETH_H_ */

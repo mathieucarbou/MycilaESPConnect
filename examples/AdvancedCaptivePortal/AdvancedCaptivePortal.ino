@@ -23,19 +23,21 @@ void setup() {
     request->send(200, "text/plain", "Hello World!");
   });
 
+#ifndef ESP8266
   // clear persisted config
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     Serial.println("Clearing configuration...");
     ESPConnect.clearConfiguration();
     request->send(200);
   });
+#endif
 
   // add a rewrite which is only applicable in AP mode and STA mode, but not in Captive Portal mode
   server.rewrite("/", "/home")
-    .setFilter([](AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
+    .setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
 
   // network state listener is required here in async mode
-  ESPConnect.listen([](ESPConnectState previous, ESPConnectState state) {
+  ESPConnect.listen([](__unused ESPConnectState previous, ESPConnectState state) {
     JsonDocument doc;
     ESPConnect.toJson(doc.to<JsonObject>());
     serializeJsonPretty(doc, Serial);
@@ -74,7 +76,6 @@ void setup() {
   ESPConnect.setConnectTimeout(10);
 
   Serial.println("====> Load config from elsewhere...");
-  config.wifiSSID = "arduino";
   config = {
     .wifiSSID = "IoT",
     .wifiPassword = "",

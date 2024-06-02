@@ -4,27 +4,42 @@
  */
 #include "MycilaESPConnect.h"
 
-#include <AsyncJson.h>
+#ifdef ESP8266
+#include <ESP8266mDNS.h>
+#define wifi_mode_t                         WiFiMode_t
+#define WIFI_MODE_STA                       WIFI_STA
+#define WIFI_MODE_AP                        WIFI_AP
+#define WIFI_MODE_APSTA                     WIFI_AP_STA
+#define WIFI_MODE_NULL                      WIFI_OFF
+#define WIFI_AUTH_OPEN                      ENC_TYPE_NONE
+#define ARDUINO_EVENT_WIFI_STA_START        WIFI_EVENT_STAMODE_CONNECTED
+#define ARDUINO_EVENT_WIFI_STA_GOT_IP       WIFI_EVENT_STAMODE_GOT_IP
+#define ARDUINO_EVENT_WIFI_STA_LOST_IP      WIFI_EVENT_STAMODE_DHCP_TIMEOUT
+#define ARDUINO_EVENT_WIFI_STA_DISCONNECTED WIFI_EVENT_STAMODE_DISCONNECTED
+#define ARDUINO_EVENT_WIFI_AP_START         WIFI_EVENT_SOFTAPMODE_STACONNECTED
+#else
 #include <ESPmDNS.h>
 #include <Preferences.h>
 #include <esp_mac.h>
-#include <functional>
+#endif
 
-#if defined(ESPCONNECT_ETH_SUPPORT)
+#include <AsyncJson.h>
+#include <functional>
+#include "./espconnect_webpage.h"
+
+#ifdef ESPCONNECT_ETH_SUPPORT
 #if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
 #define ESPCONNECT_ETH_SPI_SUPPORT 1
 #if ESP_IDF_VERSION_MAJOR >= 5
 #include <ETH.h>
 #include <SPI.h>
 #else
-#include <ETHClass.h>
+#include "backport/ETHClass.h"
 #endif
 #else
 #include <ETH.h>
 #endif
 #endif
-
-#include <espconnect_webpage.h>
 
 #ifdef MYCILA_LOGGER_SUPPORT
 #include <MycilaLogger.h>
@@ -33,6 +48,11 @@ extern Mycila::Logger logger;
 #define LOGI(tag, format, ...) logger.info(tag, format, ##__VA_ARGS__)
 #define LOGW(tag, format, ...) logger.warn(tag, format, ##__VA_ARGS__)
 #define LOGE(tag, format, ...) logger.error(tag, format, ##__VA_ARGS__)
+#elif defined(ESP8266)
+#define LOGD(tag, format, ...)
+#define LOGI(tag, format, ...)
+#define LOGW(tag, format, ...)
+#define LOGE(tag, format, ...)
 #else
 #define LOGD(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
 #define LOGI(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
@@ -110,6 +130,17 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
   if (mac != emptyString && mac != "00:00:00:00:00:00")
     return mac;
 
+#ifdef ESP8266
+  switch (mode) {
+    case ESPConnectMode::AP:
+      return WiFi.softAPmacAddress();
+    case ESPConnectMode::STA:
+      return WiFi.macAddress();
+    default:
+      // ETH not supported with ESP8266
+      return emptyString;
+  }
+#else
   // ESP_MAC_IEEE802154 is used to mean "no MAC address" in this context
   esp_mac_type_t type = esp_mac_type_t::ESP_MAC_IEEE802154;
 
@@ -139,6 +170,7 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
   char buffer[18] = {0};
   snprintf(buffer, sizeof(buffer), "%02X:%02X:%02X:%02X:%02X:%02X", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]);
   return String(buffer);
+#endif
 }
 
 const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
@@ -194,6 +226,7 @@ int8_t ESPConnectClass::_wifiSignalQuality(int32_t rssi) {
   return s > 100 ? 100 : (s < 0 ? 0 : s);
 }
 
+#ifndef ESP8266
 void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword) {
   if (_state != ESPConnectState::NETWORK_DISABLED)
     return;
@@ -209,6 +242,7 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
 
   begin(httpd, hostname, apSSID, apPassword, {ssid, password, ap});
 }
+#endif
 
 void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config) {
   if (_state != ESPConnectState::NETWORK_DISABLED)
@@ -220,7 +254,25 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
   _apPassword = apPassword;
   _config = config; // copy values
 
+#ifdef ESP8266
+  WiFi.onStationModeConnected([&](__unused const WiFiEventStationModeConnected& event) {
+    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_START);
+  });
+  WiFi.onStationModeGotIP([&](__unused const WiFiEventStationModeGotIP& event) {
+    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  });
+  WiFi.onStationModeDHCPTimeout([&]() {
+    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_LOST_IP);
+  });
+  WiFi.onStationModeDisconnected([&](__unused const WiFiEventStationModeDisconnected& event) {
+    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  });
+  WiFi.onSoftAPModeStationConnected([&](__unused const WiFiEventSoftAPModeStationConnected& event) {
+    _onWiFiEvent(ARDUINO_EVENT_WIFI_AP_START);
+  });
+#else
   _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnectClass::_onWiFiEvent, this, std::placeholders::_1));
+#endif
 
   _state = ESPConnectState::NETWORK_ENABLED;
 
@@ -243,7 +295,9 @@ void ESPConnectClass::end() {
   _lastTime = -1;
   _autoSave = false;
   _setState(ESPConnectState::NETWORK_DISABLED);
+#ifndef ESP8266
   WiFi.removeEvent(_wifiEventListenerId);
+#endif
   WiFi.disconnect(true, true);
   WiFi.mode(WIFI_MODE_NULL);
   _stopAP();
@@ -312,12 +366,14 @@ void ESPConnectClass::loop() {
   }
 }
 
+#ifndef ESP8266
 void ESPConnectClass::clearConfiguration() {
   Preferences preferences;
   preferences.begin("espconnect", false);
   preferences.clear();
   preferences.end();
 }
+#endif
 
 void ESPConnectClass::toJson(const JsonObject& root) const {
   root["ip_address"] = getIPAddress().toString();
@@ -344,6 +400,7 @@ void ESPConnectClass::_setState(ESPConnectState state) {
   _state = state;
   LOGD(TAG, "State: %s => %s", getStateName(previous), getStateName(state));
 
+#ifndef ESP8266
   // be sure to save anything before auto restart and callback
   if (_autoSave && _state == ESPConnectState::PORTAL_COMPLETE) {
     Preferences preferences;
@@ -355,6 +412,7 @@ void ESPConnectClass::_setState(ESPConnectState state) {
     }
     preferences.end();
   }
+#endif
 
   // make sure callback is called before auto restart
   if (_callback != nullptr)
@@ -412,7 +470,7 @@ void ESPConnectClass::_startSTA() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(_config.wifiSSID, _config.wifiPassword);
 
-  _lastTime = esp_timer_get_time();
+  _lastTime = micros();
 
   LOGD(TAG, "WiFi started.");
 }
@@ -462,8 +520,10 @@ void ESPConnectClass::_stopAP() {
 void ESPConnectClass::_enableCaptivePortal() {
   LOGI(TAG, "Enable Captive Portal...");
 
+#ifndef ESP8266
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
   WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
+#endif
   WiFi.scanNetworks(true);
   _scanStart = millis();
 
@@ -549,7 +609,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 
   if (_rewriteHandler == nullptr) {
     // this filter makes sure that the root path is only rewritten when captive portal is started
-    _rewriteHandler = &_httpd->rewrite("/", "/espconnect").setFilter([&](AsyncWebServerRequest* request) {
+    _rewriteHandler = &_httpd->rewrite("/", "/espconnect").setFilter([&](__unused AsyncWebServerRequest* request) {
       return _state == ESPConnectState::PORTAL_STARTED;
     });
   }
@@ -562,14 +622,16 @@ void ESPConnectClass::_enableCaptivePortal() {
 
   _httpd->begin();
   MDNS.addService("http", "tcp", 80);
-  _lastTime = esp_timer_get_time();
+  _lastTime = micros();
 }
 
 void ESPConnectClass::_disableCaptivePortal() {
   if (_rewriteHandler == nullptr)
     return;
   LOGI(TAG, "Disable Captive Portal...");
+#ifndef ESP8266
   mdns_service_remove("_http", "_tcp");
+#endif
   _httpd->end();
   _httpd->onNotFound(nullptr);
   if (_connectHandler != nullptr) {
@@ -590,7 +652,7 @@ void ESPConnectClass::_disableCaptivePortal() {
   }
 }
 
-void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
+void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
   if (_state == ESPConnectState::NETWORK_DISABLED)
     return;
 
@@ -620,12 +682,14 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
       WiFi.setHostname(_hostname.c_str());
       break;
 
+#ifndef ESP8266
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       if (_state == ESPConnectState::NETWORK_CONNECTED && WiFi.localIP()[0] == 0) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_DISCONNECTED", getStateName());
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
+#endif
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
@@ -637,29 +701,27 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
       break;
 
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
-      if (_state == ESPConnectState::NETWORK_CONNECTED) {
-#ifdef ESPCONNECT_ETH_SUPPORT
-        if (ETH.linkUp() && ETH.localIP()[0] != 0)
-          return;
-#endif
-        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
-        _setState(ESPConnectState::NETWORK_DISCONNECTED);
-      }
-      break;
-
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
       if (_state == ESPConnectState::NETWORK_CONNECTED) {
 #ifdef ESPCONNECT_ETH_SUPPORT
         if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
-        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
+        if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+          LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
+        } else {
+          LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
+        }
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
 
     case ARDUINO_EVENT_WIFI_AP_START:
+#ifdef ESP8266
+      WiFi.setHostname(_hostname.c_str());
+#else
       WiFi.softAPsetHostname(_hostname.c_str());
+#endif
       MDNS.begin(_hostname.c_str());
       if (_state == ESPConnectState::AP_STARTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
@@ -677,7 +739,7 @@ void ESPConnectClass::_onWiFiEvent(arduino_event_id_t event) {
 
 bool ESPConnectClass::_durationPassed(uint32_t intervalSec) {
   if (_lastTime >= 0) {
-    const int64_t now = esp_timer_get_time();
+    const int64_t now = micros();
     if (now - _lastTime >= (int64_t)intervalSec * (int64_t)1000000) {
       _lastTime = now;
       return true;

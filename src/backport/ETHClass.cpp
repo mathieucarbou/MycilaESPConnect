@@ -17,8 +17,8 @@
  License along with this library; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#include "esp_system.h"
-#if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST) && ESP_IDF_VERSION_MAJOR < 5
+#include <Arduino.h>
+#if defined(ESPCONNECT_ETH_SUPPORT) && ESP_IDF_VERSION_MAJOR < 5 && defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
 
 #include "ETHClass.h"
 #if ESP_IDF_VERSION_MAJOR > 3

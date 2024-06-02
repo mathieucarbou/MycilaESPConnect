@@ -39,8 +39,8 @@ jobs:
             --recursive \
             --filter=-whitespace/line_length,-whitespace/braces,-whitespace/comments,-runtime/indentation_namespace,-whitespace/indent,-readability/braces,-whitespace/newline,-readability/todo,-build/c++11 \
             --exclude=src/espconnect_webpage.h \
-            --exclude=src/ETHClass.h \
-            --exclude=src/ETHClass.cpp \
+            --exclude=src/backport/ETHClass.h \
+            --exclude=src/backport/ETHClass.cpp \
             src
 
   arduino:
@@ -57,6 +57,10 @@ jobs:
           - core: esp32:esp32
             board: esp32:esp32:esp32
             index_url: https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json
+          - name: package_esp8266com_index.json
+            core: esp8266:esp8266
+            board: esp8266:esp8266:huzzah
+            index_url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
     steps:
       - name: Checkout
@@ -74,11 +78,14 @@ jobs:
       - name: Install ArduinoJson
         run: arduino-cli lib install ArduinoJson@7.0.2
 
-      - name: Install AsyncTCP-esphome
+      - name: Install AsyncTCP
         run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/AsyncTCP#v3.1.4
 
+      - name: Install ESPAsyncTCP
+        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/esphome-ESPAsyncTCP#v2.0.0
+
       - name: Install ESP Async WebServer
-        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/ESPAsyncWebServer#v2.10.3
+        run: ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/mathieucarbou/ESPAsyncWebServer#v2.10.4
 
       - name: Build BlockingCaptivePortal
         run: arduino-cli compile --library . --warnings all -b ${{ matrix.board }} "examples/BlockingCaptivePortal/BlockingCaptivePortal.ino"
@@ -96,7 +103,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-pio_envs
+          key: pip
           path: ~/.cache/pip
       - uses: actions/setup-python@v5
         with:
@@ -129,7 +136,7 @@ jobs:
           path: |
             ~/.platformio
             ~/.cache/pip
-          key: "pio:${{ matrix.environment }}"
+          key: pio
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"

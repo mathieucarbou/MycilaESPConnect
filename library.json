@@ -23,13 +23,14 @@
   "license": "GPL-3.0-only",
   "frameworks": "arduino",
   "platforms": [
+    "espressif8266",
     "espressif32"
   ],
   "dependencies": [
     {
       "owner": "mathieucarbou",
       "name": "ESP Async WebServer",
-      "version": "^2.10.3",
+      "version": "^2.10.4",
       "platforms": "espressif32"
     },
     {

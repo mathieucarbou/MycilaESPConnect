@@ -7,7 +7,12 @@
 #include <ArduinoJson.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#else
 #include <WiFi.h>
+#endif
 
 #define ESPCONNECT_VERSION          "4.1.2"
 #define ESPCONNECT_VERSION_MAJOR    4
@@ -86,6 +91,7 @@ class ESPConnectClass {
   public:
     ~ESPConnectClass() { end(); }
 
+#ifndef ESP8266
     // Start ESPConnect:
     //
     // 1. Load the configuration
@@ -95,6 +101,7 @@ class ESPConnectClass {
     //
     // Using this method will activate auto-load and auto-save of the configuration
     void begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword = emptyString); // NOLINT
+#endif
 
     // Start ESPConnect:
     //
@@ -178,8 +185,10 @@ class ESPConnectClass {
     // Whether ESPConnect will restart the ESP if the captive portal times out or once it has completed (old behaviour)
     void setAutoRestart(bool autoRestart) { _autoRestart = autoRestart; }
 
+#ifndef ESP8266
     // when using auto-load and save of configuration, this method can clear saved states.
     void clearConfiguration();
+#endif
 
     void toJson(const JsonObject& root) const;
 
@@ -197,7 +206,9 @@ class ESPConnectClass {
     uint32_t _scanStart = 0;
     uint32_t _scanTimeout = ESPCONNECT_PORTAL_SCAN_TIMEOUT;
     ESPConnectConfig _config;
-    wifi_event_id_t _wifiEventListenerId = 0;
+#ifndef ESP8266
+    WiFiEventId_t _wifiEventListenerId = 0;
+#endif
     bool _blocking = true;
     bool _autoRestart = true;
     bool _autoSave = false;
@@ -213,7 +224,7 @@ class ESPConnectClass {
     void _stopAP();
     void _enableCaptivePortal();
     void _disableCaptivePortal();
-    void _onWiFiEvent(arduino_event_id_t event);
+    void _onWiFiEvent(WiFiEvent_t event);
     bool _durationPassed(uint32_t intervalSec);
 #ifdef ESPCONNECT_ETH_SUPPORT
     void _startEthernet();
