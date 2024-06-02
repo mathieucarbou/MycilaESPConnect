@@ -38,6 +38,12 @@
       "name": "ArduinoJson",
       "version": "^7.0.4",
       "platforms": ["espressif8266", "espressif32"]
+    },
+    {
+      "owner": "vshymanskyy",
+      "name": "Preferences",
+      "version": "^2.1.0",
+      "platforms": ["espressif8266"]
     }
   ],
   "export": {

@@ -24,6 +24,96 @@ He is making great Arduino libraries.
 - **Ready for Arduino 3 (ESP-IDF 5.1)**
 - **Experimental ESP8266 support:** it compiles but I am not able to correctly test it. Feedbacks and testers are welcomed.
 
+## Usage
+
+### API
+
+- `ESPConnect.setAutoRestart(bool)`: will automatically restart the ESP after the captive portal times out, or after the captive portal has been answered by te user
+- `ESPConnect.setBlocking(bool)`: will block the execution of the program in the begin code to handle the connect. If false, the setup code will continue in the background and the network setup will be done in the background from the main loop.
+- `ESPConnect.listen()`: register a callback for all ESPConnect events
+
+2 flavors of `begin()` methods:
+
+1. `ESPConnect.begin(server, "hostname", "ssid", "password")` / `ESPConnect.begin(server, "hostname", "ssid")`
+2. `ESPConnect.begin(server, "hostname", "ssid", "password", ESPConnectConfig)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
+
+The first flavors will automatically handle the persistance of user choices and reload them at startup.
+
+The second choice let the user handle the load/save of the configuration.
+
+Please have a look at the self-documented API for the other methods and teh examples.
+
+### Blocking mode
+
+```cpp
+  ESPConnect.listen([](__unused ESPConnectState previous, __unused ESPConnectState state) {
+    // ...
+  });
+
+  ESPConnect.setAutoRestart(true);
+  ESPConnect.setBlocking(true);
+  ESPConnect.begin(server, "arduino", "Captive Portal SSID");
+  Serial.println("ESPConnect completed!");
+```
+
+### Non-blocking mode
+
+```cpp
+void setup() {
+  ESPConnect.listen([](__unused ESPConnectState previous, __unused ESPConnectState state) {
+    // ...
+  });
+
+  ESPConnect.setAutoRestart(true);
+  ESPConnect.setBlocking(false);
+  ESPConnect.begin(server, "arduino", "Captive Portal SSID");
+  Serial.println("ESPConnect started!");
+}
+
+void loop() {
+  ESPConnect.loop();
+}
+```
+
+### Use an external configuration system
+
+```cpp
+  ESPConnect.listen([](__unused ESPConnectState previous, __unused ESPConnectState state) {
+    switch (state) {
+      case ESPConnectState::PORTAL_COMPLETE:
+        bool apMode = ESPConnect.hasConfiguredAPMode();
+        String wifiSSID = ESPConnect.getConfiguredWiFiSSID();
+        String wifiPassword = ESPConnect.getConfiguredWiFiPassword();
+        if (apMode) {
+          Serial.println("====> Captive Portal: Access Point configured");
+        } else {
+          Serial.println("====> Captive Portal: WiFi configured");
+        }
+        saveConfig(wifiSSID, wifiPassword, apMode);
+        break;
+
+      default:
+        break;
+    }
+  });
+
+  ESPConnect.setAutoRestart(true);
+  ESPConnect.setBlocking(true);
+
+  // load config from external system
+  ESPConnectConfig config = {
+    .wifiSSID = ...,
+    .wifiPassword = ...,
+    .apMode = ...
+  };
+
+  ESPConnect.begin(server, "arduino", "Captive Portal SSID", "", config);
+```
+
+### ESP8266 Specifics
+
+The dependency `vshymanskyy/Preferences` is required when using the auto-load avd auto-save feature.
+
 ## Ethernet Support
 
 Set `-D ESPCONNECT_ETH_SUPPORT` to add Ethernet support.

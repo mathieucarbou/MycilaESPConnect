@@ -1,8 +1,7 @@
 #include <MycilaESPConnect.h>
+#include <Preferences.h>
 
 AsyncWebServer server(80);
-
-ESPConnectConfig config;
 
 void setup() {
   Serial.begin(115200);
@@ -23,14 +22,15 @@ void setup() {
     request->send(200, "text/plain", "Hello World!");
   });
 
-#ifndef ESP8266
   // clear persisted config
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     Serial.println("Clearing configuration...");
-    ESPConnect.clearConfiguration();
+    Preferences preferences;
+    preferences.begin("app", false);
+    preferences.clear();
+    preferences.end();
     request->send(200);
   });
-#endif
 
   // add a rewrite which is only applicable in AP mode and STA mode, but not in Captive Portal mode
   server.rewrite("/", "/home")
@@ -53,17 +53,19 @@ void setup() {
         server.end();
         break;
 
-      case ESPConnectState::PORTAL_COMPLETE:
-        config.apMode = ESPConnect.hasConfiguredAPMode();
-        if (config.apMode) {
-          Serial.println("====> Captive Portal: Access Point configured");
-        } else {
-          Serial.println("====> Captive Portal: WiFi configured");
-          config.wifiSSID = ESPConnect.getConfiguredWiFiSSID();
-          config.wifiPassword = ESPConnect.getConfiguredWiFiPassword();
+      case ESPConnectState::PORTAL_COMPLETE: {
+        Serial.println("====> Captive Portal has ended, save the configuration...");
+        bool apMode = ESPConnect.hasConfiguredAPMode();
+        Preferences preferences;
+        preferences.begin("app", false);
+        preferences.putBool("apMode", apMode);
+        if (!apMode) {
+          preferences.putString("ssid", ESPConnect.getConfiguredWiFiSSID());
+          preferences.putString("password", ESPConnect.getConfiguredWiFiPassword());
         }
-        // SAVE config somewhere
+        preferences.end();
         break;
+      }
 
       default:
         break;
@@ -76,10 +78,13 @@ void setup() {
   ESPConnect.setConnectTimeout(10);
 
   Serial.println("====> Load config from elsewhere...");
-  config = {
-    .wifiSSID = "IoT",
-    .wifiPassword = "",
-    .apMode = false};
+  Preferences preferences;
+  preferences.begin("app", true);
+  ESPConnectConfig config = {
+    .wifiSSID = preferences.isKey("ssid") ? preferences.getString("ssid", emptyString) : emptyString,
+    .wifiPassword = preferences.isKey("password") ? preferences.getString("password", emptyString) : emptyString,
+    .apMode = preferences.isKey("apMode") ? preferences.getBool("ap", false) : false};
+  preferences.end();
 
   Serial.println("====> Trying to connect to saved WiFi or will start captive portal in the background...");
   ESPConnect.begin(server, "arduino", "Captive Portal SSID", "", config);

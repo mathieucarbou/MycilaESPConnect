@@ -91,7 +91,6 @@ class ESPConnectClass {
   public:
     ~ESPConnectClass() { end(); }
 
-#ifndef ESP8266
     // Start ESPConnect:
     //
     // 1. Load the configuration
@@ -101,7 +100,6 @@ class ESPConnectClass {
     //
     // Using this method will activate auto-load and auto-save of the configuration
     void begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword = emptyString); // NOLINT
-#endif
 
     // Start ESPConnect:
     //
@@ -185,10 +183,8 @@ class ESPConnectClass {
     // Whether ESPConnect will restart the ESP if the captive portal times out or once it has completed (old behaviour)
     void setAutoRestart(bool autoRestart) { _autoRestart = autoRestart; }
 
-#ifndef ESP8266
     // when using auto-load and save of configuration, this method can clear saved states.
     void clearConfiguration();
-#endif
 
     void toJson(const JsonObject& root) const;
 

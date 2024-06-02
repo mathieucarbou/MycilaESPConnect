@@ -19,15 +19,14 @@
 #define ARDUINO_EVENT_WIFI_AP_START         WIFI_EVENT_SOFTAPMODE_STACONNECTED
 #else
 #include <ESPmDNS.h>
-#include <Preferences.h>
 #include <esp_mac.h>
 #endif
 
 #include <AsyncJson.h>
+#include <Preferences.h>
 #include <functional>
-#include "./espconnect_webpage.h"
 
-#ifdef ESPCONNECT_ETH_SUPPORT
+#if defined(ESPCONNECT_ETH_SUPPORT)
 #if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
 #define ESPCONNECT_ETH_SPI_SUPPORT 1
 #if ESP_IDF_VERSION_MAJOR >= 5
@@ -40,6 +39,8 @@
 #include <ETH.h>
 #endif
 #endif
+
+#include "./espconnect_webpage.h"
 
 #ifdef MYCILA_LOGGER_SUPPORT
 #include <MycilaLogger.h>
@@ -226,7 +227,6 @@ int8_t ESPConnectClass::_wifiSignalQuality(int32_t rssi) {
   return s > 100 ? 100 : (s < 0 ? 0 : s);
 }
 
-#ifndef ESP8266
 void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword) {
   if (_state != ESPConnectState::NETWORK_DISABLED)
     return;
@@ -242,7 +242,6 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
 
   begin(httpd, hostname, apSSID, apPassword, {ssid, password, ap});
 }
-#endif
 
 void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config) {
   if (_state != ESPConnectState::NETWORK_DISABLED)
@@ -366,14 +365,12 @@ void ESPConnectClass::loop() {
   }
 }
 
-#ifndef ESP8266
 void ESPConnectClass::clearConfiguration() {
   Preferences preferences;
   preferences.begin("espconnect", false);
   preferences.clear();
   preferences.end();
 }
-#endif
 
 void ESPConnectClass::toJson(const JsonObject& root) const {
   root["ip_address"] = getIPAddress().toString();
@@ -400,7 +397,6 @@ void ESPConnectClass::_setState(ESPConnectState state) {
   _state = state;
   LOGD(TAG, "State: %s => %s", getStateName(previous), getStateName(state));
 
-#ifndef ESP8266
   // be sure to save anything before auto restart and callback
   if (_autoSave && _state == ESPConnectState::PORTAL_COMPLETE) {
     Preferences preferences;
@@ -412,7 +408,6 @@ void ESPConnectClass::_setState(ESPConnectState state) {
     }
     preferences.end();
   }
-#endif
 
   // make sure callback is called before auto restart
   if (_callback != nullptr)
@@ -676,13 +671,6 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
         _setState(ESPConnectState::NETWORK_CONNECTED);
       }
       break;
-#endif
-
-    case ARDUINO_EVENT_WIFI_STA_START:
-      WiFi.setHostname(_hostname.c_str());
-      break;
-
-#ifndef ESP8266
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       if (_state == ESPConnectState::NETWORK_CONNECTED && WiFi.localIP()[0] == 0) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_DISCONNECTED", getStateName());
@@ -690,6 +678,10 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       }
       break;
 #endif
+
+    case ARDUINO_EVENT_WIFI_STA_START:
+      WiFi.setHostname(_hostname.c_str());
+      break;
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
