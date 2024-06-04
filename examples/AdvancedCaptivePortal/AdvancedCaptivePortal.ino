@@ -7,8 +7,6 @@ void setup() {
   Serial.begin(115200);
   while (!Serial)
     continue;
-  
-  delay(2000);
 
   // serve your logo here
   server.on("/logo", HTTP_GET, [&](AsyncWebServerRequest* request) {
@@ -32,6 +30,7 @@ void setup() {
     preferences.clear();
     preferences.end();
     request->send(200);
+    ESP.restart();
   });
 
   // add a rewrite which is only applicable in AP mode and STA mode, but not in Captive Portal mode
@@ -76,6 +75,8 @@ void setup() {
 
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
+  ESPConnect.setCaptivePortalTimeout(180);
+  ESPConnect.setConnectTimeout(20);
   
   Serial.println("====> Load config from elsewhere...");
   Preferences preferences;
@@ -98,4 +99,5 @@ void setup() {
 
 void loop() {
   ESPConnect.loop();
+  delay(100);
 }

@@ -256,12 +256,15 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
 
   _autoSave = true;
 
+  LOGD(TAG, "Loading config...");
   Preferences preferences;
   preferences.begin("espconnect", true);
   String ssid = preferences.isKey("ssid") ? preferences.getString("ssid", emptyString) : emptyString;
   String password = preferences.isKey("password") ? preferences.getString("password", emptyString) : emptyString;
   bool ap = preferences.isKey("ap") ? preferences.getBool("ap", false) : false;
   preferences.end();
+  LOGD(TAG, " - AP: %d", ap);
+  LOGD(TAG, " - SSID: %s", ssid.c_str());
 
   begin(httpd, hostname, apSSID, apPassword, {ssid, password, ap});
 }
@@ -277,20 +280,17 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
   _config = config; // copy values
 
 #ifdef ESP8266
-  WiFi.onStationModeConnected([this](__unused const WiFiEventStationModeConnected& event) {
+  onStationModeConnected = WiFi.onStationModeConnected([this](__unused const WiFiEventStationModeConnected& event) {
     this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_START);
   });
-  WiFi.onStationModeGotIP([this](__unused const WiFiEventStationModeGotIP& event) {
+  onStationModeGotIP = WiFi.onStationModeGotIP([this](__unused const WiFiEventStationModeGotIP& event) {
     this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_GOT_IP);
   });
-  WiFi.onStationModeDHCPTimeout([this]() {
+  onStationModeDHCPTimeout = WiFi.onStationModeDHCPTimeout([this]() {
     this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_LOST_IP);
   });
-  WiFi.onStationModeDisconnected([this](__unused const WiFiEventStationModeDisconnected& event) {
+  onStationModeDisconnected = WiFi.onStationModeDisconnected([this](__unused const WiFiEventStationModeDisconnected& event) {
     this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-  });
-  WiFi.onSoftAPModeStationConnected([this](__unused const WiFiEventSoftAPModeStationConnected& event) {
-    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_AP_START);
   });
 #else
   _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnectClass::_onWiFiEvent, this, std::placeholders::_1));
@@ -422,6 +422,9 @@ void ESPConnectClass::_setState(ESPConnectState state) {
 
   // be sure to save anything before auto restart and callback
   if (_autoSave && _state == ESPConnectState::PORTAL_COMPLETE) {
+    LOGD(TAG, "Saving config...");
+    LOGD(TAG, " - AP: %d", _config.apMode);
+    LOGD(TAG, " - SSID: %s", _config.wifiSSID.c_str());
     Preferences preferences;
     preferences.begin("espconnect", false);
     preferences.putBool("ap", _config.apMode);
@@ -519,6 +522,10 @@ void ESPConnectClass::_startAP() {
   }
 
   LOGD(TAG, "Access Point started.");
+
+#ifdef ESP8266
+  _onWiFiEvent(ARDUINO_EVENT_WIFI_AP_START);
+#endif
 
   if (!_config.apMode)
     _enableCaptivePortal();

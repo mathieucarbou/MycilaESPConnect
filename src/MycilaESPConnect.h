@@ -9,9 +9,9 @@
 #include <ESPAsyncWebServer.h>
 
 #ifdef ESP8266
-#include <ESP8266WiFi.h>
+  #include <ESP8266WiFi.h>
 #else
-#include <WiFi.h>
+  #include <WiFi.h>
 #endif
 
 #define ESPCONNECT_VERSION          "4.2.2"
@@ -21,15 +21,15 @@
 #define ESPCONNECT_FORK_mathieucarbou
 
 #ifndef ESPCONNECT_CONNECTION_TIMEOUT
-#define ESPCONNECT_CONNECTION_TIMEOUT 15
+  #define ESPCONNECT_CONNECTION_TIMEOUT 20
 #endif
 
 #ifndef ESPCONNECT_PORTAL_TIMEOUT
-#define ESPCONNECT_PORTAL_TIMEOUT 180
+  #define ESPCONNECT_PORTAL_TIMEOUT 180
 #endif
 
 #ifndef ESPCONNECT_PORTAL_SCAN_TIMEOUT
-#define ESPCONNECT_PORTAL_SCAN_TIMEOUT 20
+  #define ESPCONNECT_PORTAL_SCAN_TIMEOUT 20
 #endif
 
 enum class ESPConnectState {
@@ -212,6 +212,12 @@ class ESPConnectClass {
     AsyncCallbackWebHandler* _connectHandler = nullptr;
     AsyncCallbackWebHandler* _homeHandler = nullptr;
     AsyncWebRewrite* _rewriteHandler = nullptr;
+#ifdef ESP8266
+    WiFiEventHandler onStationModeConnected;
+    WiFiEventHandler onStationModeGotIP;
+    WiFiEventHandler onStationModeDHCPTimeout;
+    WiFiEventHandler onStationModeDisconnected;
+#endif
 
   private:
     void _setState(ESPConnectState state);

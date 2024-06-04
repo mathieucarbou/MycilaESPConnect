@@ -26,6 +26,7 @@ void setup() {
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     ESPConnect.clearConfiguration();
     request->send(200);
+    ESP.restart();
   });
 
   // add a rewrite which is only applicable in AP mode and STA mode, but not in Captive Portal mode
@@ -41,8 +42,6 @@ void setup() {
 
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(true);
-  ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setConnectTimeout(10);
 
   Serial.println("Trying to connect to saved WiFi or will start portal...");
 

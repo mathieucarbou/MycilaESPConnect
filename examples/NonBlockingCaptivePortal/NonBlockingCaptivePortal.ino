@@ -28,6 +28,7 @@ void setup() {
     Serial.println("Clearing configuration...");
     ESPConnect.clearConfiguration();
     request->send(200);
+    ESP.restart();
   });
 
   server.on("/restart", HTTP_GET, [&](AsyncWebServerRequest* request) {
@@ -61,8 +62,6 @@ void setup() {
 
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
-  ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setConnectTimeout(15);
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
