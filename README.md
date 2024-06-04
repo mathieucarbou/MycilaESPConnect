@@ -22,7 +22,7 @@ He is making great Arduino libraries.
 - **mDNS / DNS Support**
 - **Ethernet support**
 - **Ready for Arduino 3 (ESP-IDF 5.1)**
-- **Experimental ESP8266 support:** it compiles but I am not able to correctly test it. Feedbacks and testers are welcomed.
+- **ESP8266 support** (except for Ethernet)
 
 ## Usage
 
