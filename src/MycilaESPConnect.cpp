@@ -50,10 +50,12 @@ extern Mycila::Logger logger;
 #define LOGW(tag, format, ...) logger.warn(tag, format, ##__VA_ARGS__)
 #define LOGE(tag, format, ...) logger.error(tag, format, ##__VA_ARGS__)
 #elif defined(ESP8266)
-#define LOGD(tag, format, ...)
-#define LOGI(tag, format, ...)
-#define LOGW(tag, format, ...)
-#define LOGE(tag, format, ...)
+#ifdef ESPCONNECT_DEBUG
+#define LOGD(tag, format, ...)   { Serial.printf("%6lu [%s] DEBUG: ", millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
+#define LOGI(tag, format, ...)   { Serial.printf("%6lu [%s] INFO: ",  millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
+#define LOGW(tag, format, ...)   { Serial.printf("%6lu [%s] WARN: ",  millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
+#define LOGE(tag, format, ...)   { Serial.printf("%6lu [%s] ERROR: ", millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
+#endif
 #else
 #define LOGD(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
 #define LOGI(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
@@ -254,20 +256,20 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
   _config = config; // copy values
 
 #ifdef ESP8266
-  WiFi.onStationModeConnected([&](__unused const WiFiEventStationModeConnected& event) {
-    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_START);
+  WiFi.onStationModeConnected([this](__unused const WiFiEventStationModeConnected& event) {
+    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_START);
   });
-  WiFi.onStationModeGotIP([&](__unused const WiFiEventStationModeGotIP& event) {
-    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  WiFi.onStationModeGotIP([this](__unused const WiFiEventStationModeGotIP& event) {
+    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_GOT_IP);
   });
-  WiFi.onStationModeDHCPTimeout([&]() {
-    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_LOST_IP);
+  WiFi.onStationModeDHCPTimeout([this]() {
+    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_LOST_IP);
   });
-  WiFi.onStationModeDisconnected([&](__unused const WiFiEventStationModeDisconnected& event) {
-    _onWiFiEvent(ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+  WiFi.onStationModeDisconnected([this](__unused const WiFiEventStationModeDisconnected& event) {
+    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   });
-  WiFi.onSoftAPModeStationConnected([&](__unused const WiFiEventSoftAPModeStationConnected& event) {
-    _onWiFiEvent(ARDUINO_EVENT_WIFI_AP_START);
+  WiFi.onSoftAPModeStationConnected([this](__unused const WiFiEventSoftAPModeStationConnected& event) {
+    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_AP_START);
   });
 #else
   _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnectClass::_onWiFiEvent, this, std::placeholders::_1));
@@ -448,7 +450,7 @@ void ESPConnectClass::_startEthernet() {
   }
 #endif
 
-  _lastTime = esp_timer_get_time();
+  _lastTime = millis();
 
   LOGD(TAG, "ETH started.");
 }
@@ -463,9 +465,11 @@ void ESPConnectClass::_startSTA() {
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
   WiFi.mode(WIFI_STA);
+
+  LOGD(TAG, "Connecting to SSID: %s...", _config.wifiSSID.c_str());
   WiFi.begin(_config.wifiSSID, _config.wifiPassword);
 
-  _lastTime = micros();
+  _lastTime = millis();
 
   LOGD(TAG, "WiFi started.");
 }
@@ -617,7 +621,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 
   _httpd->begin();
   MDNS.addService("http", "tcp", 80);
-  _lastTime = micros();
+  _lastTime = millis();
 }
 
 void ESPConnectClass::_disableCaptivePortal() {
@@ -680,6 +684,7 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
 #endif
 
     case ARDUINO_EVENT_WIFI_STA_START:
+      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_START", getStateName());
       WiFi.setHostname(_hostname.c_str());
       break;
 
@@ -730,12 +735,9 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
 }
 
 bool ESPConnectClass::_durationPassed(uint32_t intervalSec) {
-  if (_lastTime >= 0) {
-    const int64_t now = micros();
-    if (now - _lastTime >= (int64_t)intervalSec * (int64_t)1000000) {
-      _lastTime = now;
-      return true;
-    }
+  if (_lastTime >= 0 && millis() - (uint32_t)_lastTime >= intervalSec * 1000) {
+    _lastTime = -1;
+    return true;
   }
   return false;
 }

@@ -7,6 +7,8 @@ void setup() {
   Serial.begin(115200);
   while (!Serial)
     continue;
+  
+  delay(2000);
 
   // serve your logo here
   server.on("/logo", HTTP_GET, [&](AsyncWebServerRequest* request) {
@@ -58,10 +60,10 @@ void setup() {
         bool apMode = ESPConnect.hasConfiguredAPMode();
         Preferences preferences;
         preferences.begin("app", false);
-        preferences.putBool("apMode", apMode);
+        preferences.putBool("ap", apMode);
         if (!apMode) {
-          preferences.putString("ssid", ESPConnect.getConfiguredWiFiSSID());
-          preferences.putString("password", ESPConnect.getConfiguredWiFiPassword());
+          preferences.putString("ssid", ESPConnect.getConfiguredWiFiSSID().c_str());
+          preferences.putString("password", ESPConnect.getConfiguredWiFiPassword().c_str());
         }
         preferences.end();
         break;
@@ -74,19 +76,21 @@ void setup() {
 
   ESPConnect.setAutoRestart(true);
   ESPConnect.setBlocking(false);
-  ESPConnect.setCaptivePortalTimeout(180);
-  ESPConnect.setConnectTimeout(10);
-
+  
   Serial.println("====> Load config from elsewhere...");
   Preferences preferences;
   preferences.begin("app", true);
   ESPConnectConfig config = {
     .wifiSSID = preferences.isKey("ssid") ? preferences.getString("ssid", emptyString) : emptyString,
     .wifiPassword = preferences.isKey("password") ? preferences.getString("password", emptyString) : emptyString,
-    .apMode = preferences.isKey("apMode") ? preferences.getBool("ap", false) : false};
+    .apMode = preferences.isKey("ap") ? preferences.getBool("ap", false) : false};
   preferences.end();
 
   Serial.println("====> Trying to connect to saved WiFi or will start captive portal in the background...");
+  Serial.printf("ap: %d\n", config.apMode);
+  Serial.printf("wifiSSID: %s\n", config.wifiSSID.c_str());
+  Serial.printf("wifiPassword: %s\n", config.wifiPassword.c_str());
+
   ESPConnect.begin(server, "arduino", "Captive Portal SSID", "", config);
 
   Serial.println("====> setup() completed...");
