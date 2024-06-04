@@ -114,7 +114,7 @@ void loop() {
 
 The dependency `vshymanskyy/Preferences` is required when using the auto-load avd auto-save feature.
 
-## Ethernet Support
+### Ethernet Support
 
 Set `-D ESPCONNECT_ETH_SUPPORT` to add Ethernet support.
 
@@ -160,3 +160,18 @@ Flags for **T-ETH-Lite ESP32 S3**:
 ```
 
 Note: this project is making use of the `ETHClass` library from [Lewis He](https://github.com/Xinyuan-LilyGO/LilyGO-T-ETH-Series/tree/master/lib/ETHClass)
+
+### Logo
+
+You can customize the logo by providing a web handler for `/logo`:
+
+```c++
+  webServer.on("/logo", HTTP_GET, [](AsyncWebServerRequest* request) {
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "image/png", logo_png_gz_start, logo_png_gz_end - logo_png_gz_start);
+    response->addHeader("Content-Encoding", "gzip");
+    response->addHeader("Cache-Control", "public, max-age=900");
+    request->send(response);
+  });
+```
+
+If not provided, the logo won't appear in the Captive Portal.

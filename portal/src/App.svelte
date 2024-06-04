@@ -75,7 +75,8 @@
 <div class="container main-container">
 	<div class="row">
 		<div class="column text-center">
-			<img id="logo" src="/logo" alt="Logo">
+			<h2 id="title" style="display: none;">Captive Portal</h2>
+			<img id="logo" src="/logo" alt="Logo" onerror="document.getElementById('logo').remove();document.getElementById('title').style.display = 'block';">
 			<p class="mb-2 text-muted">
 				Please select a WiFi network to connect to, or choose "AP Mode".
 			</p>
