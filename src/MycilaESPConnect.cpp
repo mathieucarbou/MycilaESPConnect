@@ -5,21 +5,21 @@
 #include "MycilaESPConnect.h"
 
 #ifdef ESP8266
-#include <ESP8266mDNS.h>
-#define wifi_mode_t                         WiFiMode_t
-#define WIFI_MODE_STA                       WIFI_STA
-#define WIFI_MODE_AP                        WIFI_AP
-#define WIFI_MODE_APSTA                     WIFI_AP_STA
-#define WIFI_MODE_NULL                      WIFI_OFF
-#define WIFI_AUTH_OPEN                      ENC_TYPE_NONE
-#define ARDUINO_EVENT_WIFI_STA_START        WIFI_EVENT_STAMODE_CONNECTED
-#define ARDUINO_EVENT_WIFI_STA_GOT_IP       WIFI_EVENT_STAMODE_GOT_IP
-#define ARDUINO_EVENT_WIFI_STA_LOST_IP      WIFI_EVENT_STAMODE_DHCP_TIMEOUT
-#define ARDUINO_EVENT_WIFI_STA_DISCONNECTED WIFI_EVENT_STAMODE_DISCONNECTED
-#define ARDUINO_EVENT_WIFI_AP_START         WIFI_EVENT_SOFTAPMODE_STACONNECTED
+  #include <ESP8266mDNS.h>
+  #define wifi_mode_t                         WiFiMode_t
+  #define WIFI_MODE_STA                       WIFI_STA
+  #define WIFI_MODE_AP                        WIFI_AP
+  #define WIFI_MODE_APSTA                     WIFI_AP_STA
+  #define WIFI_MODE_NULL                      WIFI_OFF
+  #define WIFI_AUTH_OPEN                      ENC_TYPE_NONE
+  #define ARDUINO_EVENT_WIFI_STA_START        WIFI_EVENT_STAMODE_CONNECTED
+  #define ARDUINO_EVENT_WIFI_STA_GOT_IP       WIFI_EVENT_STAMODE_GOT_IP
+  #define ARDUINO_EVENT_WIFI_STA_LOST_IP      WIFI_EVENT_STAMODE_DHCP_TIMEOUT
+  #define ARDUINO_EVENT_WIFI_STA_DISCONNECTED WIFI_EVENT_STAMODE_DISCONNECTED
+  #define ARDUINO_EVENT_WIFI_AP_START         WIFI_EVENT_SOFTAPMODE_STACONNECTED
 #else
-#include <ESPmDNS.h>
-#include <esp_mac.h>
+  #include <ESPmDNS.h>
+  #include <esp_mac.h>
 #endif
 
 #include <AsyncJson.h>
@@ -27,40 +27,61 @@
 #include <functional>
 
 #if defined(ESPCONNECT_ETH_SUPPORT)
-#if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
-#define ESPCONNECT_ETH_SPI_SUPPORT 1
-#if ESP_IDF_VERSION_MAJOR >= 5
-#include <ETH.h>
-#include <SPI.h>
-#else
-#include "backport/ETHClass.h"
-#endif
-#else
-#include <ETH.h>
-#endif
+  #if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
+    #define ESPCONNECT_ETH_SPI_SUPPORT 1
+    #if ESP_IDF_VERSION_MAJOR >= 5
+      #include <ETH.h>
+      #include <SPI.h>
+    #else
+      #include "backport/ETHClass.h"
+    #endif
+  #else
+    #include <ETH.h>
+  #endif
 #endif
 
 #include "./espconnect_webpage.h"
 
 #ifdef MYCILA_LOGGER_SUPPORT
-#include <MycilaLogger.h>
+  #include <MycilaLogger.h>
 extern Mycila::Logger logger;
-#define LOGD(tag, format, ...) logger.debug(tag, format, ##__VA_ARGS__)
-#define LOGI(tag, format, ...) logger.info(tag, format, ##__VA_ARGS__)
-#define LOGW(tag, format, ...) logger.warn(tag, format, ##__VA_ARGS__)
-#define LOGE(tag, format, ...) logger.error(tag, format, ##__VA_ARGS__)
+  #define LOGD(tag, format, ...) logger.debug(tag, format, ##__VA_ARGS__)
+  #define LOGI(tag, format, ...) logger.info(tag, format, ##__VA_ARGS__)
+  #define LOGW(tag, format, ...) logger.warn(tag, format, ##__VA_ARGS__)
+  #define LOGE(tag, format, ...) logger.error(tag, format, ##__VA_ARGS__)
 #elif defined(ESP8266)
-#ifdef ESPCONNECT_DEBUG
-#define LOGD(tag, format, ...)   { Serial.printf("%6lu [%s] DEBUG: ", millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
-#define LOGI(tag, format, ...)   { Serial.printf("%6lu [%s] INFO: ",  millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
-#define LOGW(tag, format, ...)   { Serial.printf("%6lu [%s] WARN: ",  millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
-#define LOGE(tag, format, ...)   { Serial.printf("%6lu [%s] ERROR: ", millis(),  tag); Serial.printf(format "\n", ##__VA_ARGS__); }
-#endif
+  #ifdef ESPCONNECT_DEBUG
+    #define LOGD(tag, format, ...)                         \
+      {                                                    \
+        Serial.printf("%6lu [%s] DEBUG: ", millis(), tag); \
+        Serial.printf(format "\n", ##__VA_ARGS__);         \
+      }
+    #define LOGI(tag, format, ...)                        \
+      {                                                   \
+        Serial.printf("%6lu [%s] INFO: ", millis(), tag); \
+        Serial.printf(format "\n", ##__VA_ARGS__);        \
+      }
+    #define LOGW(tag, format, ...)                        \
+      {                                                   \
+        Serial.printf("%6lu [%s] WARN: ", millis(), tag); \
+        Serial.printf(format "\n", ##__VA_ARGS__);        \
+      }
+    #define LOGE(tag, format, ...)                         \
+      {                                                    \
+        Serial.printf("%6lu [%s] ERROR: ", millis(), tag); \
+        Serial.printf(format "\n", ##__VA_ARGS__);         \
+      }
+  #else
+    #define LOGD(tag, format, ...)
+    #define LOGI(tag, format, ...)
+    #define LOGW(tag, format, ...)
+    #define LOGE(tag, format, ...)
+  #endif
 #else
-#define LOGD(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
-#define LOGI(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
-#define LOGW(tag, format, ...) ESP_LOGW(tag, format, ##__VA_ARGS__)
-#define LOGE(tag, format, ...) ESP_LOGE(tag, format, ##__VA_ARGS__)
+  #define LOGD(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
+  #define LOGI(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
+  #define LOGW(tag, format, ...) ESP_LOGW(tag, format, ##__VA_ARGS__)
+  #define LOGE(tag, format, ...) ESP_LOGE(tag, format, ##__VA_ARGS__)
 #endif
 
 #define TAG "ESPCONNECT"
@@ -154,11 +175,11 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
     case ESPConnectMode::STA:
       type = ESP_MAC_WIFI_STA;
       break;
-#ifdef ESPCONNECT_ETH_SUPPORT
+  #ifdef ESPCONNECT_ETH_SUPPORT
     case ESPConnectMode::ETH:
       type = ESP_MAC_ETH;
       break;
-#endif
+  #endif
     default:
       break;
   }
@@ -420,35 +441,35 @@ void ESPConnectClass::_setState(ESPConnectState state) {
 void ESPConnectClass::_startEthernet() {
   _setState(ESPConnectState::NETWORK_CONNECTING);
 
-#if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
+  #if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
   pinMode(ETH_PHY_POWER, OUTPUT);
-#ifdef ESPCONNECT_ETH_RESET_ON_START
+    #ifdef ESPCONNECT_ETH_RESET_ON_START
   LOGD(TAG, "Resetting ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
   digitalWrite(ETH_PHY_POWER, LOW);
   delay(350);
-#endif
+    #endif
   LOGD(TAG, "Activating ETH_PHY_POWER Pin %d", ETH_PHY_POWER);
   digitalWrite(ETH_PHY_POWER, HIGH);
-#endif
+  #endif
 
   LOGI(TAG, "Starting Ethernet...");
-#if defined(ESPCONNECT_ETH_SPI_SUPPORT)
-#if ESP_IDF_VERSION_MAJOR >= 5
+  #if defined(ESPCONNECT_ETH_SPI_SUPPORT)
+    #if ESP_IDF_VERSION_MAJOR >= 5
   // https://github.com/espressif/arduino-esp32/tree/master/libraries/Ethernet/examples
   SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
   if (!ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI)) {
     LOGE(TAG, "ETH failed to start!");
   }
-#else
+    #else
   if (!ETH.beginSPI(ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_SPI_SCK, ETH_PHY_CS, ETH_PHY_RST, ETH_PHY_IRQ)) {
     LOGE(TAG, "ETH failed to start!");
   }
-#endif
-#else
+    #endif
+  #else
   if (!ETH.begin()) {
     LOGE(TAG, "ETH failed to start!");
   }
-#endif
+  #endif
 
   _lastTime = millis();
 
