@@ -175,3 +175,8 @@ You can customize the logo by providing a web handler for `/logo`:
 ```
 
 If not provided, the logo won't appear in the Captive Portal.
+
+### mDNS
+
+mDNS takes quite a lot of space in flash (about 25KB).
+You can disable it by setting `-D ESPCONNECT_NO_MDNS`.

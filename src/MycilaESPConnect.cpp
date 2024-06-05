@@ -5,7 +5,9 @@
 #include "MycilaESPConnect.h"
 
 #ifdef ESP8266
-  #include <ESP8266mDNS.h>
+  #ifndef ESPCONNECT_NO_MDNS
+    #include <ESP8266mDNS.h>
+  #endif
   #define wifi_mode_t                         WiFiMode_t
   #define WIFI_MODE_STA                       WIFI_STA
   #define WIFI_MODE_AP                        WIFI_AP
@@ -18,7 +20,9 @@
   #define ARDUINO_EVENT_WIFI_STA_DISCONNECTED WIFI_EVENT_STAMODE_DISCONNECTED
   #define ARDUINO_EVENT_WIFI_AP_START         WIFI_EVENT_SOFTAPMODE_STACONNECTED
 #else
-  #include <ESPmDNS.h>
+  #ifndef ESPCONNECT_NO_MDNS
+    #include <ESPmDNS.h>
+  #endif
   #include <esp_mac.h>
 #endif
 
@@ -648,7 +652,9 @@ void ESPConnectClass::_enableCaptivePortal() {
   });
 
   _httpd->begin();
+#ifndef ESPCONNECT_NO_MDNS
   MDNS.addService("http", "tcp", 80);
+#endif
   _lastTime = millis();
 }
 
@@ -656,8 +662,10 @@ void ESPConnectClass::_disableCaptivePortal() {
   if (_rewriteHandler == nullptr)
     return;
   LOGI(TAG, "Disable Captive Portal...");
-#ifndef ESP8266
+#ifndef ESPCONNECT_NO_MDNS
+  #ifndef ESP8266
   mdns_service_remove("_http", "_tcp");
+  #endif
 #endif
   _httpd->end();
   _httpd->onNotFound(nullptr);
@@ -699,7 +707,9 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
           _stopAP();
         }
         _lastTime = -1;
+  #ifndef ESPCONNECT_NO_MDNS
         MDNS.begin(_hostname.c_str());
+  #endif
         _setState(ESPConnectState::NETWORK_CONNECTED);
       }
       break;
@@ -720,7 +730,9 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
         _lastTime = -1;
+#ifndef ESPCONNECT_NO_MDNS
         MDNS.begin(_hostname.c_str());
+#endif
         _setState(ESPConnectState::NETWORK_CONNECTED);
       }
       break;
@@ -747,7 +759,9 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
 #else
       WiFi.softAPsetHostname(_hostname.c_str());
 #endif
+#ifndef ESPCONNECT_NO_MDNS
       MDNS.begin(_hostname.c_str());
+#endif
       if (_state == ESPConnectState::AP_STARTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
         _setState(ESPConnectState::AP_STARTED);
