@@ -10,6 +10,17 @@ This fork is based on [https://github.com/ayushsharma82/ESPConnect](https://gith
 I highly recommend looking at all OSS projects (and products) from [@ayushsharma82](https://github.com/ayushsharma82).
 He is making great Arduino libraries.
 
+- [Changes](#changes)
+- [Usage](#usage)
+  - [API](#api)
+  - [Blocking mode](#blocking-mode)
+  - [Non-blocking mode](#non-blocking-mode)
+  - [Use an external configuration system](#use-an-external-configuration-system)
+  - [ESP8266 Specifics](#esp8266-specifics)
+  - [Ethernet Support](#ethernet-support)
+  - [Logo](#logo)
+  - [mDNS](#mdns)
+
 ## Changes
 
 - **Logo**: user is responsible to provide a logo at this path: `/logo`
@@ -135,8 +146,9 @@ Known **compatibilities**:
 | [OLIMEX ESP32-PoE](https://docs.platformio.org/en/stable/boards/espressif32/esp32-poe.html) (esp32-poe)                          |     ✅      |     ❌     |
 | [Wireless-Tag WT32-ETH01 Ethernet Module](https://docs.platformio.org/en/stable/boards/espressif32/wt32-eth01.html) (wt32-eth01) |     ✅      |     ✅     |
 | [T-ETH-Lite ESP32 S3](https://github.com/Xinyuan-LilyGO/LilyGO-T-ETH-Series/) (esp32s3box)                                       |     ✅      |     ✅     |
+| [USR-ES1 W5500](https://fr.aliexpress.com/item/1005001636214844.html)                                                            |     ✅      |     ✅     |
 
-Flags for **wt32-eth01**:
+Example of flags for **wt32-eth01**:
 
 ```cpp
   -D ESPCONNECT_ETH_SUPPORT
@@ -144,7 +156,7 @@ Flags for **wt32-eth01**:
   -D ETH_PHY_POWER=16
 ```
 
-Flags for **T-ETH-Lite ESP32 S3**:
+Example of flags for **T-ETH-Lite ESP32 S3**:
 
 ```cpp
   -D ESPCONNECT_ETH_SUPPORT
@@ -155,6 +167,21 @@ Flags for **T-ETH-Lite ESP32 S3**:
   -D ETH_PHY_SPI_MISO=11
   -D ETH_PHY_SPI_MOSI=12
   -D ETH_PHY_SPI_SCK=10
+  ; can only be activated with ESP-IDF >= 5
+  ; -D ETH_PHY_TYPE=ETH_PHY_W5500
+```
+
+Example of flags for **USR-ES1 W5500 with esp32dev** (tested by [@MicSG-dev](https://github.com/mathieucarbou/ESPAsyncWebServer/discussions/36#discussioncomment-9826045)):
+
+```cpp
+  -D ESPCONNECT_ETH_SUPPORT
+  -D ETH_PHY_ADDR=1
+  -D ETH_PHY_CS=5
+  -D ETH_PHY_IRQ=4
+  -D ETH_PHY_RST=14
+  -D ETH_PHY_SPI_MISO=19
+  -D ETH_PHY_SPI_MOSI=23
+  -D ETH_PHY_SPI_SCK=18
   ; can only be activated with ESP-IDF >= 5
   ; -D ETH_PHY_TYPE=ETH_PHY_W5500
 ```
