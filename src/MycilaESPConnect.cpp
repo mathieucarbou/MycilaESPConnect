@@ -739,16 +739,18 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
 
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+      if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
+        WiFi.reconnect();
+      } else {
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
+      }
       if (_state == ESPConnectState::NETWORK_CONNECTED) {
+        // we have to move to state disconnected only if we are not connected to ethernet
 #ifdef ESPCONNECT_ETH_SUPPORT
         if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
-        if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
-          LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
-        } else {
-          LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
-        }
         _setState(ESPConnectState::NETWORK_DISCONNECTED);
       }
       break;
