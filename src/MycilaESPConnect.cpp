@@ -14,7 +14,6 @@
   #define WIFI_MODE_APSTA                     WIFI_AP_STA
   #define WIFI_MODE_NULL                      WIFI_OFF
   #define WIFI_AUTH_OPEN                      ENC_TYPE_NONE
-  #define ARDUINO_EVENT_WIFI_STA_START        WIFI_EVENT_STAMODE_CONNECTED
   #define ARDUINO_EVENT_WIFI_STA_GOT_IP       WIFI_EVENT_STAMODE_GOT_IP
   #define ARDUINO_EVENT_WIFI_STA_LOST_IP      WIFI_EVENT_STAMODE_DHCP_TIMEOUT
   #define ARDUINO_EVENT_WIFI_STA_DISCONNECTED WIFI_EVENT_STAMODE_DISCONNECTED
@@ -284,9 +283,6 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
   _config = config; // copy values
 
 #ifdef ESP8266
-  onStationModeConnected = WiFi.onStationModeConnected([this](__unused const WiFiEventStationModeConnected& event) {
-    this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_START);
-  });
   onStationModeGotIP = WiFi.onStationModeGotIP([this](__unused const WiFiEventStationModeGotIP& event) {
     this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_GOT_IP);
   });
@@ -489,6 +485,7 @@ void ESPConnectClass::_startSTA() {
 
   LOGI(TAG, "Starting WiFi...");
 
+  WiFi.setHostname(_hostname.c_str());
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
@@ -507,6 +504,10 @@ void ESPConnectClass::_startAP() {
 
   LOGI(TAG, "Starting Access Point...");
 
+  WiFi.setHostname(_hostname.c_str());
+#ifndef ESP8266
+  WiFi.softAPsetHostname(_hostname.c_str());
+#endif
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
@@ -721,11 +722,6 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       break;
 #endif
 
-    case ARDUINO_EVENT_WIFI_STA_START:
-      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_START", getStateName());
-      WiFi.setHostname(_hostname.c_str());
-      break;
-
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
       if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
@@ -756,11 +752,6 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       break;
 
     case ARDUINO_EVENT_WIFI_AP_START:
-#ifdef ESP8266
-      WiFi.setHostname(_hostname.c_str());
-#else
-      WiFi.softAPsetHostname(_hostname.c_str());
-#endif
 #ifndef ESPCONNECT_NO_MDNS
       MDNS.begin(_hostname.c_str());
 #endif
