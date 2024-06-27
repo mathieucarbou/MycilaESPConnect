@@ -634,7 +634,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 
   if (_homeHandler == nullptr) {
     _homeHandler = &_httpd->on("/espconnect", HTTP_GET, [](AsyncWebServerRequest* request) {
-      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
       response->addHeader("Content-Encoding", "gzip");
       request->send(response); });
   }
@@ -647,7 +647,7 @@ void ESPConnectClass::_enableCaptivePortal() {
   }
 
   _httpd->onNotFound([](AsyncWebServerRequest* request) {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
+    AsyncWebServerResponse* response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });

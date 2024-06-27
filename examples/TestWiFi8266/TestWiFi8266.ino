@@ -16,14 +16,13 @@ void setup() {
   // this is just an ugly piece of code to wait for serial to connect
   delay(2000);
 
-  // serve your logo here
-  server.on("/logo", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    // AsyncWebServerResponse* response = request->beginResponse_P(200, "image/png", _binary_data_logo_icon_png_gz_start, _binary_data_logo_icon_png_gz_end - _binary_data_logo_icon_png_gz_start);
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "image/png", "", 0);
-    response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", "public, max-age=900");
-    request->send(response);
-  });
+  // this is possible to serve a logo
+  // server.on("/logo", HTTP_GET, [&](AsyncWebServerRequest* request) {
+  //   AsyncWebServerResponse* response = request->beginResponse(200, "image/png");
+  //   response->addHeader("Content-Encoding", "gzip");
+  //   response->addHeader("Cache-Control", "public, max-age=900");
+  //   request->send(response);
+  // });
 
   // serve your home page here
   server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
