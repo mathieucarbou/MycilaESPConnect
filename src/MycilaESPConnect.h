@@ -14,9 +14,9 @@
   #include <WiFi.h>
 #endif
 
-#define ESPCONNECT_VERSION          "4.4.0"
+#define ESPCONNECT_VERSION          "4.5.0"
 #define ESPCONNECT_VERSION_MAJOR    4
-#define ESPCONNECT_VERSION_MINOR    4
+#define ESPCONNECT_VERSION_MINOR    5
 #define ESPCONNECT_VERSION_REVISION 0
 #define ESPCONNECT_FORK_mathieucarbou
 
