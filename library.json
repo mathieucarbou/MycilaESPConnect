@@ -10,11 +10,6 @@
   },
   "authors": [
     {
-      "name": "Ayush Sharma",
-      "email": "asrocks5@gmail.com",
-      "maintainer": false
-    },
-    {
       "name": "Mathieu Carbou",
       "email": "mathieu.carbou@gmail.com",
       "maintainer": true
