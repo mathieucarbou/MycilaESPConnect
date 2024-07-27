@@ -56,6 +56,7 @@ function addLineBreaks(buffer){
 
     const FILE = 
 `
+// SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef _espconnect_webpage_h
 #define _espconnect_webpage_h
 
