@@ -6,7 +6,7 @@
 
 Simple & Easy Network Manager for ESP32 with WiFi, Ethernet and Captive Portal support
 
-This fork is based on the UI from [https://github.com/ayushsharma82/ESPConnect](https://github.com/ayushsharma82/ESPConnect) (and this part falls under GPL v3).
+This library is based on the UI from [https://github.com/ayushsharma82/ESPConnect](https://github.com/ayushsharma82/ESPConnect) (and this part falls under GPL v3).
 I highly recommend looking at all OSS projects (and products) from [@ayushsharma82](https://github.com/ayushsharma82).
 He is making great Arduino libraries.
 
