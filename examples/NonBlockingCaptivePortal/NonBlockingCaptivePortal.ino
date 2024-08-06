@@ -23,12 +23,14 @@ void setup() {
     ESPConnect.clearConfiguration();
     request->send(200);
     ESP.restart();
+    return PSYCHIC_OK;
   });
 
   server.on("/restart", HTTP_GET, [&](AsyncWebServerRequest* request) {
     Serial.println("Restarting...");
     request->send(200);
     ESP.restart();
+    return PSYCHIC_OK;
   });
 
   // network state listener is required here in async mode
