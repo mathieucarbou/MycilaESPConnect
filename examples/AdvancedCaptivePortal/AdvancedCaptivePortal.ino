@@ -26,6 +26,7 @@ void setup() {
     preferences.end();
     request->send(200);
     ESP.restart();
+    return PSYCHIC_OK;
   });
 
   // network state listener is required here in async mode

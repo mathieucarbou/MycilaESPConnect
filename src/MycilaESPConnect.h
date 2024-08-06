@@ -5,9 +5,17 @@
 #pragma once
 
 #include <ArduinoJson.h>
-#include <AsyncJson.h>
 #include <DNSServer.h>
-#include <ESPAsyncWebServer.h>
+#ifdef ESPCONNECT_USE_PSYCHIC
+  #include <FS.h>
+  #include <NetworkInterface.h>
+  #include <PsychicHttp.h>
+#else
+  #include <ESPAsyncWebServer.h>
+  #include <AsyncJson.h>
+  #define PSYCHIC_OK
+  #define PSYCHIC_REQ
+#endif
 
 #ifdef ESP8266
   #include <ESP8266WiFi.h>
