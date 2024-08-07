@@ -621,9 +621,9 @@ void ESPConnectClass::_enableCaptivePortal() {
         String ssid = request->hasParam("ssid", true) ? request->getParam("ssid", true)->value() : emptyString;
         String password = request->hasParam("password", true) ? request->getParam("password", true)->value() : emptyString;
         if (ssid.isEmpty())
-          return request->send(403, "application/json", "{\"message\":\"Invalid SSID\"}");
+          return request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
         if (ssid.length() > 32 || password.length() > 64 || (!password.isEmpty() && password.length() < 8))
-          return request->send(403, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
+          return request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
         _config.wifiSSID = ssid;
         _config.wifiPassword = password;
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
