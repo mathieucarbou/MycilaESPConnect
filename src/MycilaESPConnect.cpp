@@ -25,7 +25,6 @@
   #include <esp_mac.h>
 #endif
 
-#include <AsyncJson.h>
 #include <Preferences.h>
 #include <functional>
 
@@ -633,15 +632,12 @@ void ESPConnectClass::_enableCaptivePortal() {
   }
 
   if (_homeHandler == nullptr) {
-    _homeHandler = &_httpd->on("/espconnect", HTTP_GET, [](AsyncWebServerRequest* request) {
+    _homeHandler = &_httpd->on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
       AsyncWebServerResponse *response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
       response->addHeader("Content-Encoding", "gzip");
-      request->send(response); });
-  }
-
-  if (_rewriteHandler == nullptr) {
-    // this filter makes sure that the root path is only rewritten when captive portal is started
-    _rewriteHandler = &_httpd->rewrite("/", "/espconnect").setFilter([&](__unused AsyncWebServerRequest* request) {
+      request->send(response);
+    });
+    _homeHandler->setFilter([&](AsyncWebServerRequest* request) {
       return _state == ESPConnectState::PORTAL_STARTED;
     });
   }
@@ -660,7 +656,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 }
 
 void ESPConnectClass::_disableCaptivePortal() {
-  if (_rewriteHandler == nullptr)
+  if (_homeHandler == nullptr)
     return;
   LOGI(TAG, "Disable Captive Portal...");
 #ifndef ESPCONNECT_NO_MDNS
@@ -681,10 +677,6 @@ void ESPConnectClass::_disableCaptivePortal() {
   if (_homeHandler != nullptr) {
     _httpd->removeHandler(_homeHandler);
     _homeHandler = nullptr;
-  }
-  if (_rewriteHandler != nullptr) {
-    _httpd->removeRewrite(_rewriteHandler);
-    _rewriteHandler = nullptr;
   }
 }
 

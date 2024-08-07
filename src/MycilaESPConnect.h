@@ -7,6 +7,7 @@
 #include <ArduinoJson.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
+#include <AsyncJson.h>
 
 #ifdef ESP8266
   #include <ESP8266WiFi.h>
