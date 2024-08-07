@@ -580,7 +580,7 @@ void ESPConnectClass::_enableCaptivePortal() {
         if (timedOut) {
           AsyncJsonResponse* response = new AsyncJsonResponse(true);
           response->setLength();
-          request->send(response);
+          return request->send(response);
         } else {
           return request->send(202);
         }
@@ -606,7 +606,7 @@ void ESPConnectClass::_enableCaptivePortal() {
         WiFi.scanNetworks(true);
         _scanStart = millis();
         response->setLength();
-        request->send(response);
+        return request->send(response);
       }
     });
   }
@@ -628,14 +628,15 @@ void ESPConnectClass::_enableCaptivePortal() {
         _config.wifiPassword = password;
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
         _setState(ESPConnectState::PORTAL_COMPLETE);
-      } });
+      }
+    });
   }
 
   if (_homeHandler == nullptr) {
     _homeHandler = &_httpd->on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
       AsyncWebServerResponse *response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
       response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
+      return request->send(response);
     });
     _homeHandler->setFilter([&](AsyncWebServerRequest* request) {
       return _state == ESPConnectState::PORTAL_STARTED;
@@ -645,7 +646,7 @@ void ESPConnectClass::_enableCaptivePortal() {
   _httpd->onNotFound([](AsyncWebServerRequest* request) {
     AsyncWebServerResponse* response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
     response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
+    return request->send(response);
   });
 
   _httpd->begin();

@@ -211,7 +211,6 @@ class ESPConnectClass {
     AsyncCallbackWebHandler* _scanHandler = nullptr;
     AsyncCallbackWebHandler* _connectHandler = nullptr;
     AsyncCallbackWebHandler* _homeHandler = nullptr;
-    AsyncWebRewrite* _rewriteHandler = nullptr;
 #ifdef ESP8266
     WiFiEventHandler onStationModeGotIP;
     WiFiEventHandler onStationModeDHCPTimeout;

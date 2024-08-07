@@ -19,7 +19,7 @@ void setup() {
 
   // serve your home page here
   server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    request->send(200, "text/plain", "Hello World!");
+    return request->send(200, "text/plain", "Hello World!");
   }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
 
   // clear persisted config
