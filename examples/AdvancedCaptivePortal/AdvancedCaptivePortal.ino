@@ -16,11 +16,6 @@ void setup() {
   //   request->send(response);
   // });
 
-  // serve your home page here
-  server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    return request->send(200, "text/plain", "Hello World!");
-  }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
-
   // clear persisted config
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     Serial.println("Clearing configuration...");
@@ -60,6 +55,11 @@ void setup() {
           preferences.putString("password", ESPConnect.getConfiguredWiFiPassword().c_str());
         }
         preferences.end();
+
+        // serve your home page here
+        server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+          return request->send(200, "text/plain", "Hello World!");
+        }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
         break;
       }
 

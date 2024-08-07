@@ -16,11 +16,6 @@ void setup() {
   //   request->send(response);
   // });
 
-  // serve your home page here
-  server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    return request->send(200, "text/plain", "Hello World!");
-  }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
-
   // clear persisted config
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     ESPConnect.clearConfiguration();
@@ -44,6 +39,11 @@ void setup() {
   ESPConnect.begin(server, "arduino", "Captive Portal SSID");
 
   Serial.println("ESPConnect completed, continuing setup()...");
+
+  // serve your home page here
+  server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+    return request->send(200, "text/plain", "Hello World!");
+  }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
 
   server.begin();
 }
