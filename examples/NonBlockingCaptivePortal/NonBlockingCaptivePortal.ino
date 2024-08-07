@@ -18,9 +18,9 @@ void setup() {
   // });
 
   // serve your home page here
-  server.on("/home", HTTP_GET, [&](AsyncWebServerRequest* request) {
+  server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
     request->send(200, "text/plain", "Hello World!");
-  });
+  }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
 
   // clear persisted config
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
@@ -35,9 +35,6 @@ void setup() {
     request->send(200);
     ESP.restart();
   });
-
-  // add a rewrite which is only applicable in AP mode and STA mode, but not in Captive Portal mode
-  server.rewrite("/", "/home").setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
 
   // network state listener is required here in async mode
   ESPConnect.listen([](__unused ESPConnectState previous, ESPConnectState state) {
