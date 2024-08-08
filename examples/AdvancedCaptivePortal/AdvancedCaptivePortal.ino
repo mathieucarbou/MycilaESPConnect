@@ -37,6 +37,10 @@ void setup() {
     switch (state) {
       case ESPConnectState::NETWORK_CONNECTED:
       case ESPConnectState::AP_STARTED:
+        // serve your home page here
+        server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+          return request->send(200, "text/plain", "Hello World!");
+        }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
         server.begin();
         break;
 
@@ -55,11 +59,6 @@ void setup() {
           preferences.putString("password", ESPConnect.getConfiguredWiFiPassword().c_str());
         }
         preferences.end();
-
-        // serve your home page here
-        server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-          return request->send(200, "text/plain", "Hello World!");
-        }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
         break;
       }
 

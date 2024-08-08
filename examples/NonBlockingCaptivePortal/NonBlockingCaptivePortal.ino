@@ -41,18 +41,15 @@ void setup() {
     switch (state) {
       case ESPConnectState::NETWORK_CONNECTED:
       case ESPConnectState::AP_STARTED:
+        // serve your home page here
+        server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
+          return request->send(200, "text/plain", "Hello World!");
+        }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
         server.begin();
         break;
 
       case ESPConnectState::NETWORK_DISCONNECTED:
         server.end();
-        break;
-
-      case ESPConnectState::PORTAL_COMPLETE:
-        // serve your home page here
-        server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-          return request->send(200, "text/plain", "Hello World!");
-        }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
         break;
 
       default:
