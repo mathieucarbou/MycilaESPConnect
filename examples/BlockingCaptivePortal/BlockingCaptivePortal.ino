@@ -21,6 +21,7 @@ void setup() {
     ESPConnect.clearConfiguration();
     request->send(200);
     ESP.restart();
+    return PSYCHIC_OK;
   });
 
   // network state listener

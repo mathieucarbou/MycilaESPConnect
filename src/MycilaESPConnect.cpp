@@ -578,7 +578,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 
         // send empty json response, to let the user choose AP mode if timeout, or still ask client to wait
         if (timedOut) {
-          AsyncJsonResponse* response = new AsyncJsonResponse(true);
+          AsyncJsonResponse* response = new AsyncJsonResponse(PSYCHIC_REQ true);
           response->setLength();
           return request->send(response);
         } else {
@@ -587,7 +587,7 @@ void ESPConnectClass::_enableCaptivePortal() {
 
         // scan results ?
       } else {
-        AsyncJsonResponse* response = new AsyncJsonResponse(true);
+        AsyncJsonResponse* response = new AsyncJsonResponse(PSYCHIC_REQ true);
         JsonArray json = response->getRoot();
         // we have some results
         for (int i = 0; i < n; ++i) {
@@ -629,6 +629,7 @@ void ESPConnectClass::_enableCaptivePortal() {
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
         _setState(ESPConnectState::PORTAL_COMPLETE);
       }
+      return PSYCHIC_OK;
     });
   }
 

@@ -6,8 +6,15 @@
 
 #include <ArduinoJson.h>
 #include <DNSServer.h>
-#include <ESPAsyncWebServer.h>
-#include <AsyncJson.h>
+#ifdef ESPCONNECT_USE_PSYCHIC
+  #include <FS.h>
+  #include <PsychicHttp.h>
+#else
+  #include <AsyncJson.h>
+  #include <ESPAsyncWebServer.h>
+  #define PSYCHIC_OK
+  #define PSYCHIC_REQ
+#endif
 
 #ifdef ESP8266
   #include <ESP8266WiFi.h>
