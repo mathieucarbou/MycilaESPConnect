@@ -638,7 +638,7 @@ void ESPConnectClass::_enableCaptivePortal() {
       response->addHeader("Content-Encoding", "gzip");
       return request->send(response);
     });
-    _homeHandler->setFilter([&](AsyncWebServerRequest* request) {
+    _homeHandler->setFilter([&](__unused AsyncWebServerRequest* request) {
       return _state == ESPConnectState::PORTAL_STARTED;
     });
   }
