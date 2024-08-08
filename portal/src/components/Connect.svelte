@@ -14,7 +14,7 @@
     formData.append('ssid', ssid);
     formData.append('password', password);
     formData.append('ap_mode', ap_mode);
-    const res = await fetch(`/espconnect/connect`, { method: 'POST', body: formData });
+    const res = await fetch(`/espconnect/connect`, { method: 'POST', body: new URLSearchParams(formData) });
 		if (res.status === 200) {
       dispatch('success');
 		} else {
