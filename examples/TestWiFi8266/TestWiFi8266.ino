@@ -4,6 +4,7 @@
 #include <LittleFS.h>
 
 AsyncWebServer server(80);
+Mycila::ESPConnect espConnect(server);
 WiFiEventHandler onSoftAPModeStationConnected;
 WiFiEventHandler onStationModeConnected;
 WiFiEventHandler onStationModeGotIP;

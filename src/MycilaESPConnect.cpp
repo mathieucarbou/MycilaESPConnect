@@ -104,47 +104,47 @@ static const char* NetworkStateNames[] = {
   "PORTAL_TIMEOUT",
 };
 
-const char* ESPConnectClass::getStateName() const {
+const char* Mycila::ESPConnect::getStateName() const {
   return NetworkStateNames[static_cast<int>(_state)];
 }
 
-const char* ESPConnectClass::getStateName(ESPConnectState state) const {
+const char* Mycila::ESPConnect::getStateName(Mycila::ESPConnect::State state) const {
   return NetworkStateNames[static_cast<int>(state)];
 }
 
-ESPConnectMode ESPConnectClass::getMode() const {
+Mycila::ESPConnect::Mode Mycila::ESPConnect::getMode() const {
   switch (_state) {
-    case ESPConnectState::AP_STARTED:
-    case ESPConnectState::PORTAL_STARTED:
-      return ESPConnectMode::AP;
+    case Mycila::ESPConnect::State::AP_STARTED:
+    case Mycila::ESPConnect::State::PORTAL_STARTED:
+      return Mycila::ESPConnect::Mode::AP;
       break;
-    case ESPConnectState::NETWORK_CONNECTED:
-    case ESPConnectState::NETWORK_DISCONNECTED:
-    case ESPConnectState::NETWORK_RECONNECTING:
+    case Mycila::ESPConnect::State::NETWORK_CONNECTED:
+    case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
+    case Mycila::ESPConnect::State::NETWORK_RECONNECTING:
 #ifdef ESPCONNECT_ETH_SUPPORT
       if (ETH.linkUp() && ETH.localIP()[0] != 0)
-        return ESPConnectMode::ETH;
+        return Mycila::ESPConnect::Mode::ETH;
 #endif
       if (WiFi.localIP()[0] != 0)
-        return ESPConnectMode::STA;
-      return ESPConnectMode::NONE;
+        return Mycila::ESPConnect::Mode::STA;
+      return Mycila::ESPConnect::Mode::NONE;
     default:
-      return ESPConnectMode::NONE;
+      return Mycila::ESPConnect::Mode::NONE;
   }
 }
 
-const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
+const String Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mode) const {
   String mac = emptyString;
 
   switch (mode) {
-    case ESPConnectMode::AP:
+    case Mycila::ESPConnect::Mode::AP:
       mac = WiFi.softAPmacAddress();
       break;
-    case ESPConnectMode::STA:
+    case Mycila::ESPConnect::Mode::STA:
       mac = WiFi.macAddress();
       break;
 #ifdef ESPCONNECT_ETH_SUPPORT
-    case ESPConnectMode::ETH:
+    case Mycila::ESPConnect::Mode::ETH:
       mac = ETH.linkUp() ? ETH.macAddress() : emptyString;
       break;
 #endif
@@ -158,9 +158,9 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
 
 #ifdef ESP8266
   switch (mode) {
-    case ESPConnectMode::AP:
+    case Mycila::ESPConnect::Mode::AP:
       return WiFi.softAPmacAddress();
-    case ESPConnectMode::STA:
+    case Mycila::ESPConnect::Mode::STA:
       return WiFi.macAddress();
     default:
       // ETH not supported with ESP8266
@@ -171,14 +171,14 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
   esp_mac_type_t type = esp_mac_type_t::ESP_MAC_IEEE802154;
 
   switch (mode) {
-    case ESPConnectMode::AP:
+    case Mycila::ESPConnect::Mode::AP:
       type = ESP_MAC_WIFI_SOFTAP;
       break;
-    case ESPConnectMode::STA:
+    case Mycila::ESPConnect::Mode::STA:
       type = ESP_MAC_WIFI_STA;
       break;
   #ifdef ESPCONNECT_ETH_SUPPORT
-    case ESPConnectMode::ETH:
+    case Mycila::ESPConnect::Mode::ETH:
       type = ESP_MAC_ETH;
       break;
   #endif
@@ -199,15 +199,15 @@ const String ESPConnectClass::getMACAddress(ESPConnectMode mode) const {
 #endif
 }
 
-const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
+const IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) const {
   const wifi_mode_t wifiMode = WiFi.getMode();
   switch (mode) {
-    case ESPConnectMode::AP:
+    case Mycila::ESPConnect::Mode::AP:
       return wifiMode == WIFI_MODE_AP || wifiMode == WIFI_MODE_APSTA ? WiFi.softAPIP() : IPAddress();
-    case ESPConnectMode::STA:
+    case Mycila::ESPConnect::Mode::STA:
       return wifiMode == WIFI_MODE_STA ? WiFi.localIP() : IPAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
-    case ESPConnectMode::ETH:
+    case Mycila::ESPConnect::Mode::ETH:
       return ETH.linkUp() ? ETH.localIP() : IPAddress();
 #endif
     default:
@@ -215,7 +215,7 @@ const IPAddress ESPConnectClass::getIPAddress(ESPConnectMode mode) const {
   }
 }
 
-const String ESPConnectClass::getWiFiSSID() const {
+const String Mycila::ESPConnect::getWiFiSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
     case WIFI_MODE_APSTA:
@@ -227,7 +227,7 @@ const String ESPConnectClass::getWiFiSSID() const {
   }
 }
 
-const String ESPConnectClass::getWiFiBSSID() const {
+const String Mycila::ESPConnect::getWiFiBSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
     case WIFI_MODE_APSTA:
@@ -239,21 +239,21 @@ const String ESPConnectClass::getWiFiBSSID() const {
   }
 }
 
-int8_t ESPConnectClass::getWiFiRSSI() const {
+int8_t Mycila::ESPConnect::getWiFiRSSI() const {
   return WiFi.getMode() == WIFI_MODE_STA ? WiFi.RSSI() : 0;
 }
 
-int8_t ESPConnectClass::getWiFiSignalQuality() const {
+int8_t Mycila::ESPConnect::getWiFiSignalQuality() const {
   return WiFi.getMode() == WIFI_MODE_STA ? _wifiSignalQuality(WiFi.RSSI()) : 0;
 }
 
-int8_t ESPConnectClass::_wifiSignalQuality(int32_t rssi) {
+int8_t Mycila::ESPConnect::_wifiSignalQuality(int32_t rssi) {
   int32_t s = map(rssi, -90, -30, 0, 100);
   return s > 100 ? 100 : (s < 0 ? 0 : s);
 }
 
-void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword) {
-  if (_state != ESPConnectState::NETWORK_DISABLED)
+void Mycila::ESPConnect::begin(const String& hostname, const String& apSSID, const String& apPassword) {
+  if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
   _autoSave = true;
@@ -268,14 +268,13 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
   LOGD(TAG, " - AP: %d", ap);
   LOGD(TAG, " - SSID: %s", ssid.c_str());
 
-  begin(httpd, hostname, apSSID, apPassword, {ssid, password, ap});
+  begin(hostname, apSSID, apPassword, {ssid, password, ap});
 }
 
-void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const String& apSSID, const String& apPassword, const ESPConnectConfig& config) {
-  if (_state != ESPConnectState::NETWORK_DISABLED)
+void Mycila::ESPConnect::begin(const String& hostname, const String& apSSID, const String& apPassword, const Mycila::ESPConnect::Config& config) {
+  if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
-  _httpd = &httpd;
   _hostname = hostname;
   _apSSID = apSSID;
   _apPassword = apPassword;
@@ -292,15 +291,15 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
     this->_onWiFiEvent(ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   });
 #else
-  _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnectClass::_onWiFiEvent, this, std::placeholders::_1));
+  _wifiEventListenerId = WiFi.onEvent(std::bind(&ESPConnect::_onWiFiEvent, this, std::placeholders::_1));
 #endif
 
-  _state = ESPConnectState::NETWORK_ENABLED;
+  _state = Mycila::ESPConnect::State::NETWORK_ENABLED;
 
   // blocks like the old behaviour
   if (_blocking) {
     LOGI(TAG, "Starting ESPConnect in blocking mode...");
-    while (_state != ESPConnectState::AP_STARTED && _state != ESPConnectState::NETWORK_CONNECTED) {
+    while (_state != Mycila::ESPConnect::State::AP_STARTED && _state != Mycila::ESPConnect::State::NETWORK_CONNECTED) {
       loop();
       delay(100);
     }
@@ -309,13 +308,13 @@ void ESPConnectClass::begin(AsyncWebServer& httpd, const String& hostname, const
   }
 }
 
-void ESPConnectClass::end() {
-  if (_state == ESPConnectState::NETWORK_DISABLED)
+void Mycila::ESPConnect::end() {
+  if (_state == Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
   LOGI(TAG, "Stopping ESPConnect...");
   _lastTime = -1;
   _autoSave = false;
-  _setState(ESPConnectState::NETWORK_DISABLED);
+  _setState(Mycila::ESPConnect::State::NETWORK_DISABLED);
 #ifndef ESP8266
   WiFi.removeEvent(_wifiEventListenerId);
 #endif
@@ -325,25 +324,25 @@ void ESPConnectClass::end() {
   _httpd = nullptr;
 }
 
-void ESPConnectClass::loop() {
+void Mycila::ESPConnect::loop() {
   if (_dnsServer != nullptr)
     _dnsServer->processNextRequest();
 
   // first check if we have to enter AP mode
-  if (_state == ESPConnectState::NETWORK_ENABLED && _config.apMode) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && _config.apMode) {
     _startAP();
   }
 
   // start captive portal when network enabled but not in ap mode and no wifi info and no ethernet
   // portal wil be interrupted when network connected
 #ifndef ESPCONNECT_ETH_SUPPORT
-  if (_state == ESPConnectState::NETWORK_ENABLED && _config.wifiSSID.isEmpty()) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && _config.wifiSSID.isEmpty()) {
     _startAP();
   }
 #endif
 
   // otherwise, tries to connect to WiFi or ethernet
-  if (_state == ESPConnectState::NETWORK_ENABLED) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED) {
 #ifdef ESPCONNECT_ETH_SUPPORT
     _startEthernet();
 #endif
@@ -352,58 +351,58 @@ void ESPConnectClass::loop() {
   }
 
   // connection to WiFi or Ethernet times out ?
-  if (_state == ESPConnectState::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
     WiFi.disconnect(true, true);
-    _setState(ESPConnectState::NETWORK_TIMEOUT);
+    _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
   }
 
   // start captive portal on connect timeout
-  if (_state == ESPConnectState::NETWORK_TIMEOUT) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_TIMEOUT) {
     _startAP();
   }
 
   // timeout portal if we failed to connect to WiFi (we got a SSID) and portal duration is passed
   // in order to restart and try again to connect to the configured WiFi
-  if (_state == ESPConnectState::PORTAL_STARTED && !_config.wifiSSID.isEmpty() && _durationPassed(_portalTimeout)) {
-    _setState(ESPConnectState::PORTAL_TIMEOUT);
+  if (_state == Mycila::ESPConnect::State::PORTAL_STARTED && !_config.wifiSSID.isEmpty() && _durationPassed(_portalTimeout)) {
+    _setState(Mycila::ESPConnect::State::PORTAL_TIMEOUT);
   }
 
   // disconnect from network ? reconnect!
-  if (_state == ESPConnectState::NETWORK_DISCONNECTED) {
-    _setState(ESPConnectState::NETWORK_RECONNECTING);
+  if (_state == Mycila::ESPConnect::State::NETWORK_DISCONNECTED) {
+    _setState(Mycila::ESPConnect::State::NETWORK_RECONNECTING);
   }
 
-  if (_state == ESPConnectState::AP_STARTED || _state == ESPConnectState::NETWORK_CONNECTED) {
+  if (_state == Mycila::ESPConnect::State::AP_STARTED || _state == Mycila::ESPConnect::State::NETWORK_CONNECTED) {
     _disableCaptivePortal();
   }
 
-  if (_state == ESPConnectState::PORTAL_COMPLETE || _state == ESPConnectState::PORTAL_TIMEOUT) {
+  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE || _state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
     _stopAP();
     if (_autoRestart) {
       LOGW(TAG, "Auto Restart of ESP...");
       ESP.restart();
     } else
-      _setState(ESPConnectState::NETWORK_ENABLED);
+      _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
   }
 }
 
-void ESPConnectClass::clearConfiguration() {
+void Mycila::ESPConnect::clearConfiguration() {
   Preferences preferences;
   preferences.begin("espconnect", false);
   preferences.clear();
   preferences.end();
 }
 
-void ESPConnectClass::toJson(const JsonObject& root) const {
+void Mycila::ESPConnect::toJson(const JsonObject& root) const {
   root["ip_address"] = getIPAddress().toString();
-  root["ip_address_ap"] = getIPAddress(ESPConnectMode::AP).toString();
-  root["ip_address_eth"] = getIPAddress(ESPConnectMode::ETH).toString();
-  root["ip_address_sta"] = getIPAddress(ESPConnectMode::STA).toString();
+  root["ip_address_ap"] = getIPAddress(Mycila::ESPConnect::Mode::AP).toString();
+  root["ip_address_eth"] = getIPAddress(Mycila::ESPConnect::Mode::ETH).toString();
+  root["ip_address_sta"] = getIPAddress(Mycila::ESPConnect::Mode::STA).toString();
   root["mac_address"] = getMACAddress();
-  root["mac_address_ap"] = getMACAddress(ESPConnectMode::AP);
-  root["mac_address_eth"] = getMACAddress(ESPConnectMode::ETH);
-  root["mac_address_sta"] = getMACAddress(ESPConnectMode::STA);
-  root["mode"] = getMode() == ESPConnectMode::AP ? "AP" : (getMode() == ESPConnectMode::STA ? "STA" : (getMode() == ESPConnectMode::ETH ? "ETH" : "NONE"));
+  root["mac_address_ap"] = getMACAddress(Mycila::ESPConnect::Mode::AP);
+  root["mac_address_eth"] = getMACAddress(Mycila::ESPConnect::Mode::ETH);
+  root["mac_address_sta"] = getMACAddress(Mycila::ESPConnect::Mode::STA);
+  root["mode"] = getMode() == Mycila::ESPConnect::Mode::AP ? "AP" : (getMode() == Mycila::ESPConnect::Mode::STA ? "STA" : (getMode() == Mycila::ESPConnect::Mode::ETH ? "ETH" : "NONE"));
   root["state"] = getStateName();
   root["wifi_bssid"] = getWiFiBSSID();
   root["wifi_rssi"] = getWiFiRSSI();
@@ -411,16 +410,16 @@ void ESPConnectClass::toJson(const JsonObject& root) const {
   root["wifi_ssid"] = getWiFiSSID();
 }
 
-void ESPConnectClass::_setState(ESPConnectState state) {
+void Mycila::ESPConnect::_setState(Mycila::ESPConnect::State state) {
   if (_state == state)
     return;
 
-  const ESPConnectState previous = _state;
+  const Mycila::ESPConnect::State previous = _state;
   _state = state;
   LOGD(TAG, "State: %s => %s", getStateName(previous), getStateName(state));
 
   // be sure to save anything before auto restart and callback
-  if (_autoSave && _state == ESPConnectState::PORTAL_COMPLETE) {
+  if (_autoSave && _state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
     LOGD(TAG, "Saving config...");
     LOGD(TAG, " - AP: %d", _config.apMode);
     LOGD(TAG, " - SSID: %s", _config.wifiSSID.c_str());
@@ -440,8 +439,8 @@ void ESPConnectClass::_setState(ESPConnectState state) {
 }
 
 #ifdef ESPCONNECT_ETH_SUPPORT
-void ESPConnectClass::_startEthernet() {
-  _setState(ESPConnectState::NETWORK_CONNECTING);
+void Mycila::ESPConnect::_startEthernet() {
+  _setState(Mycila::ESPConnect::State::NETWORK_CONNECTING);
 
   #if defined(ETH_PHY_POWER) && ETH_PHY_POWER > -1
   pinMode(ETH_PHY_POWER, OUTPUT);
@@ -479,8 +478,8 @@ void ESPConnectClass::_startEthernet() {
 }
 #endif
 
-void ESPConnectClass::_startSTA() {
-  _setState(ESPConnectState::NETWORK_CONNECTING);
+void Mycila::ESPConnect::_startSTA() {
+  _setState(Mycila::ESPConnect::State::NETWORK_CONNECTING);
 
   LOGI(TAG, "Starting WiFi...");
 
@@ -498,8 +497,8 @@ void ESPConnectClass::_startSTA() {
   LOGD(TAG, "WiFi started.");
 }
 
-void ESPConnectClass::_startAP() {
-  _setState(_config.apMode ? ESPConnectState::AP_STARTING : ESPConnectState::PORTAL_STARTING);
+void Mycila::ESPConnect::_startAP() {
+  _setState(_config.apMode ? Mycila::ESPConnect::State::AP_STARTING : Mycila::ESPConnect::State::PORTAL_STARTING);
 
   LOGI(TAG, "Starting Access Point...");
 
@@ -535,7 +534,7 @@ void ESPConnectClass::_startAP() {
     _enableCaptivePortal();
 }
 
-void ESPConnectClass::_stopAP() {
+void Mycila::ESPConnect::_stopAP() {
   _disableCaptivePortal();
   LOGI(TAG, "Stopping Access Point...");
   _lastTime = -1;
@@ -548,7 +547,7 @@ void ESPConnectClass::_stopAP() {
   LOGD(TAG, "Access Point stopped.");
 }
 
-void ESPConnectClass::_enableCaptivePortal() {
+void Mycila::ESPConnect::_enableCaptivePortal() {
   LOGI(TAG, "Enable Captive Portal...");
 
 #ifndef ESP8266
@@ -616,7 +615,7 @@ void ESPConnectClass::_enableCaptivePortal() {
       _config.apMode = (request->hasParam("ap_mode", true) ? request->getParam("ap_mode", true)->value() : emptyString) == "true";
       if (_config.apMode) {
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
-        _setState(ESPConnectState::PORTAL_COMPLETE);
+        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
       } else {
         String ssid = request->hasParam("ssid", true) ? request->getParam("ssid", true)->value() : emptyString;
         String password = request->hasParam("password", true) ? request->getParam("password", true)->value() : emptyString;
@@ -627,7 +626,7 @@ void ESPConnectClass::_enableCaptivePortal() {
         _config.wifiSSID = ssid;
         _config.wifiPassword = password;
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
-        _setState(ESPConnectState::PORTAL_COMPLETE);
+        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
       }
     });
   }
@@ -639,7 +638,7 @@ void ESPConnectClass::_enableCaptivePortal() {
       return request->send(response);
     });
     _homeHandler->setFilter([&](__unused AsyncWebServerRequest* request) {
-      return _state == ESPConnectState::PORTAL_STARTED;
+      return _state == Mycila::ESPConnect::State::PORTAL_STARTED;
     });
   }
 
@@ -656,7 +655,7 @@ void ESPConnectClass::_enableCaptivePortal() {
   _lastTime = millis();
 }
 
-void ESPConnectClass::_disableCaptivePortal() {
+void Mycila::ESPConnect::_disableCaptivePortal() {
   if (_homeHandler == nullptr)
     return;
   LOGI(TAG, "Disable Captive Portal...");
@@ -681,8 +680,8 @@ void ESPConnectClass::_disableCaptivePortal() {
   }
 }
 
-void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
-  if (_state == ESPConnectState::NETWORK_DISABLED)
+void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
   switch (event) {
@@ -695,34 +694,34 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       break;
 
     case ARDUINO_EVENT_ETH_GOT_IP:
-      if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING || _state == ESPConnectState::PORTAL_STARTING || _state == ESPConnectState::PORTAL_STARTED) {
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING || _state == Mycila::ESPConnect::State::PORTAL_STARTING || _state == Mycila::ESPConnect::State::PORTAL_STARTED) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_GOT_IP", getStateName());
-        if (_state == ESPConnectState::PORTAL_STARTING || _state == ESPConnectState::PORTAL_STARTED) {
+        if (_state == Mycila::ESPConnect::State::PORTAL_STARTING || _state == Mycila::ESPConnect::State::PORTAL_STARTED) {
           _stopAP();
         }
         _lastTime = -1;
   #ifndef ESPCONNECT_NO_MDNS
         MDNS.begin(_hostname.c_str());
   #endif
-        _setState(ESPConnectState::NETWORK_CONNECTED);
+        _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
       }
       break;
     case ARDUINO_EVENT_ETH_DISCONNECTED:
-      if (_state == ESPConnectState::NETWORK_CONNECTED && WiFi.localIP()[0] == 0) {
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTED && WiFi.localIP()[0] == 0) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_DISCONNECTED", getStateName());
-        _setState(ESPConnectState::NETWORK_DISCONNECTED);
+        _setState(Mycila::ESPConnect::State::NETWORK_DISCONNECTED);
       }
       break;
 #endif
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      if (_state == ESPConnectState::NETWORK_CONNECTING || _state == ESPConnectState::NETWORK_RECONNECTING) {
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
         _lastTime = -1;
 #ifndef ESPCONNECT_NO_MDNS
         MDNS.begin(_hostname.c_str());
 #endif
-        _setState(ESPConnectState::NETWORK_CONNECTED);
+        _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
       }
       break;
 
@@ -734,13 +733,13 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
       } else {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
       }
-      if (_state == ESPConnectState::NETWORK_CONNECTED) {
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTED) {
         // we have to move to state disconnected only if we are not connected to ethernet
 #ifdef ESPCONNECT_ETH_SUPPORT
         if (ETH.linkUp() && ETH.localIP()[0] != 0)
           return;
 #endif
-        _setState(ESPConnectState::NETWORK_DISCONNECTED);
+        _setState(Mycila::ESPConnect::State::NETWORK_DISCONNECTED);
       }
       break;
 
@@ -748,12 +747,12 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
 #ifndef ESPCONNECT_NO_MDNS
       MDNS.begin(_hostname.c_str());
 #endif
-      if (_state == ESPConnectState::AP_STARTING) {
+      if (_state == Mycila::ESPConnect::State::AP_STARTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
-        _setState(ESPConnectState::AP_STARTED);
-      } else if (_state == ESPConnectState::PORTAL_STARTING) {
+        _setState(Mycila::ESPConnect::State::AP_STARTED);
+      } else if (_state == Mycila::ESPConnect::State::PORTAL_STARTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
-        _setState(ESPConnectState::PORTAL_STARTED);
+        _setState(Mycila::ESPConnect::State::PORTAL_STARTED);
       }
       break;
 
@@ -762,12 +761,10 @@ void ESPConnectClass::_onWiFiEvent(WiFiEvent_t event) {
   }
 }
 
-bool ESPConnectClass::_durationPassed(uint32_t intervalSec) {
+bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec) {
   if (_lastTime >= 0 && millis() - (uint32_t)_lastTime >= intervalSec * 1000) {
     _lastTime = -1;
     return true;
   }
   return false;
 }
-
-ESPConnectClass ESPConnect;
