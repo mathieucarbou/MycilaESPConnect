@@ -46,8 +46,8 @@ He is making great Arduino libraries.
 
 2 flavors of `begin()` methods:
 
-1. `ESPConnect.begin(server, "hostname", "ssid", "password")` / `ESPConnect.begin(server, "hostname", "ssid")`
-2. `ESPConnect.begin(server, "hostname", "ssid", "password", Mycila::ESPConnect::Config)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
+1. `ESPConnect.begin("hostname", "ssid", "password")` / `ESPConnect.begin("hostname", "ssid")`
+2. `ESPConnect.begin("hostname", "ssid", "password", Mycila::ESPConnect::Config)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
 
 The first flavors will automatically handle the persistance of user choices and reload them at startup.
 
@@ -67,7 +67,7 @@ Please have a look at the self-documented API for the other methods and teh exam
 
   espConnect.setAutoRestart(true);
   espConnect.setBlocking(true);
-  espConnect.begin(server, "arduino", "Captive Portal SSID");
+  espConnect.begin("arduino", "Captive Portal SSID");
   Serial.println("ESPConnect completed!");
 ```
 
@@ -84,7 +84,7 @@ void setup() {
 
   espConnect.setAutoRestart(true);
   espConnect.setBlocking(false);
-  espConnect.begin(server, "arduino", "Captive Portal SSID");
+  espConnect.begin("arduino", "Captive Portal SSID");
   Serial.println("ESPConnect started!");
 }
 
@@ -141,7 +141,7 @@ espConnect.setIPConfig(ipConfig);
     .apMode = ...
   };
 
-  espConnect.begin(server, "arduino", "Captive Portal SSID", "", config);
+  espConnect.begin("arduino", "Captive Portal SSID", "", config);
 ```
 
 ### ESP8266 Specifics
