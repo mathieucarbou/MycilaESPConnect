@@ -352,7 +352,9 @@ void Mycila::ESPConnect::loop() {
 
   // connection to WiFi or Ethernet times out ?
   if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
-    WiFi.disconnect(true, true);
+    if (WiFi.getMode() != WIFI_MODE_NULL) {
+      WiFi.disconnect(true, true);
+    }
     _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
   }
 
@@ -392,9 +394,11 @@ void Mycila::ESPConnect::setIPConfig(const IPConfig& ipConfig) {
 #ifdef ESPCONNECT_ETH_SUPPORT
   LOGI(TAG, "Changing Ethernet IP Configuration...");
   ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+  LOGI(TAG, "Ethernet reconfigured with IP: %s", _ipConfig.ip.toString().c_str());
 #else
   LOGI(TAG, "Changing WiFi IP Configuration...");
   WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+  LOGI(TAG, "WiFi reconfigured with IP: %s", _ipConfig.ip.toString().c_str());
 #endif
 }
 
@@ -481,8 +485,9 @@ void Mycila::ESPConnect::_startEthernet() {
   #endif
 
   if (success) {
-    LOGD(TAG, "ETH started.");
+    LOGI(TAG, "Ethernet started.");
     ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+    LOGI(TAG, "Ethernet configured with IP: %s", _ipConfig.ip.toString().c_str());
   } else {
     LOGE(TAG, "ETH failed to start!");
   }
@@ -504,6 +509,7 @@ void Mycila::ESPConnect::_startSTA() {
 
 #ifndef ESPCONNECT_ETH_SUPPORT
   WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+  LOGI(TAG, "WiFi configured with IP: %s", _ipConfig.ip.toString().c_str());
 #endif
 
   LOGD(TAG, "Connecting to SSID: %s...", _config.wifiSSID.c_str());
