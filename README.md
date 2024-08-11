@@ -46,7 +46,7 @@ He is making great Arduino libraries.
 2 flavors of `begin()` methods:
 
 1. `ESPConnect.begin(server, "hostname", "ssid", "password")` / `ESPConnect.begin(server, "hostname", "ssid")`
-2. `ESPConnect.begin(server, "hostname", "ssid", "password", ESPConnectConfig)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
+2. `ESPConnect.begin(server, "hostname", "ssid", "password", Mycila::ESPConnect::Config)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
 
 The first flavors will automatically handle the persistance of user choices and reload them at startup.
 
@@ -57,13 +57,16 @@ Please have a look at the self-documented API for the other methods and teh exam
 ### Blocking mode
 
 ```cpp
-  ESPConnect.listen([](__unused ESPConnectState previous, __unused ESPConnectState state) {
+  AsyncWebServer server(80);
+  Mycila::ESPConnect espConnect(server);
+
+  espConnect.listen([](__unused Mycila::ESPConnect::State previous, __unused Mycila::ESPConnect::State state) {
     // ...
   });
 
-  ESPConnect.setAutoRestart(true);
-  ESPConnect.setBlocking(true);
-  ESPConnect.begin(server, "arduino", "Captive Portal SSID");
+  espConnect.setAutoRestart(true);
+  espConnect.setBlocking(true);
+  espConnect.begin(server, "arduino", "Captive Portal SSID");
   Serial.println("ESPConnect completed!");
 ```
 
@@ -71,30 +74,36 @@ Please have a look at the self-documented API for the other methods and teh exam
 
 ```cpp
 void setup() {
-  ESPConnect.listen([](__unused ESPConnectState previous, __unused ESPConnectState state) {
+  AsyncWebServer server(80);
+  Mycila::ESPConnect espConnect(server);
+
+  espConnect.listen([](__unused Mycila::ESPConnect::State previous, __unused Mycila::ESPConnect::State state) {
     // ...
   });
 
-  ESPConnect.setAutoRestart(true);
-  ESPConnect.setBlocking(false);
-  ESPConnect.begin(server, "arduino", "Captive Portal SSID");
+  espConnect.setAutoRestart(true);
+  espConnect.setBlocking(false);
+  espConnect.begin(server, "arduino", "Captive Portal SSID");
   Serial.println("ESPConnect started!");
 }
 
 void loop() {
-  ESPConnect.loop();
+  espConnect.loop();
 }
 ```
 
 ### Use an external configuration system
 
 ```cpp
-  ESPConnect.listen([](__unused ESPConnectState previous, __unused ESPConnectState state) {
+  AsyncWebServer server(80);
+  Mycila::ESPConnect espConnect(server);
+
+  espConnect.listen([](__unused Mycila::ESPConnect::State previous, __unused Mycila::ESPConnect::State state) {
     switch (state) {
-      case ESPConnectState::PORTAL_COMPLETE:
-        bool apMode = ESPConnect.hasConfiguredAPMode();
-        String wifiSSID = ESPConnect.getConfiguredWiFiSSID();
-        String wifiPassword = ESPConnect.getConfiguredWiFiPassword();
+      case Mycila::ESPConnect::State::PORTAL_COMPLETE:
+        bool apMode = espConnect.hasConfiguredAPMode();
+        String wifiSSID = espConnect.getConfiguredWiFiSSID();
+        String wifiPassword = espConnect.getConfiguredWiFiPassword();
         if (apMode) {
           Serial.println("====> Captive Portal: Access Point configured");
         } else {
@@ -108,17 +117,17 @@ void loop() {
     }
   });
 
-  ESPConnect.setAutoRestart(true);
-  ESPConnect.setBlocking(true);
+  espConnect.setAutoRestart(true);
+  espConnect.setBlocking(true);
 
   // load config from external system
-  ESPConnectConfig config = {
+  Mycila::ESPConnect::Config config = {
     .wifiSSID = ...,
     .wifiPassword = ...,
     .apMode = ...
   };
 
-  ESPConnect.begin(server, "arduino", "Captive Portal SSID", "", config);
+  espConnect.begin(server, "arduino", "Captive Portal SSID", "", config);
 ```
 
 ### ESP8266 Specifics
@@ -193,7 +202,7 @@ Note: this project is making use of the `ETHClass` library from [Lewis He](https
 You can customize the logo by providing a web handler for `/logo`:
 
 ```c++
-  webServer.on("/logo", HTTP_GET, [](AsyncWebServerRequest* request) {
+  server.on("/logo", HTTP_GET, [](AsyncWebServerRequest* request) {
     AsyncWebServerResponse* response = request->beginResponse(200, "image/png", logo_png_gz_start, logo_png_gz_end - logo_png_gz_start);
     response->addHeader("Content-Encoding", "gzip");
     response->addHeader("Cache-Control", "public, max-age=900");

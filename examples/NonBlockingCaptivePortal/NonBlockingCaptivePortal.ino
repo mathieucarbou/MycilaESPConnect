@@ -1,6 +1,7 @@
 #include <MycilaESPConnect.h>
 
 AsyncWebServer server(80);
+Mycila::ESPConnect espConnect(server);
 uint32_t lastLog = 0;
 String hostname = "arduino-1";
 
@@ -20,7 +21,7 @@ void setup() {
   // clear persisted config
   server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
     Serial.println("Clearing configuration...");
-    ESPConnect.clearConfiguration();
+    espConnect.clearConfiguration();
     request->send(200);
     ESP.restart();
   });
@@ -32,23 +33,23 @@ void setup() {
   });
 
   // network state listener is required here in async mode
-  ESPConnect.listen([](__unused ESPConnectState previous, ESPConnectState state) {
+  espConnect.listen([](__unused Mycila::ESPConnect::State previous, Mycila::ESPConnect::State state) {
     JsonDocument doc;
-    ESPConnect.toJson(doc.to<JsonObject>());
+    espConnect.toJson(doc.to<JsonObject>());
     serializeJson(doc, Serial);
     Serial.println();
 
     switch (state) {
-      case ESPConnectState::NETWORK_CONNECTED:
-      case ESPConnectState::AP_STARTED:
+      case Mycila::ESPConnect::State::NETWORK_CONNECTED:
+      case Mycila::ESPConnect::State::AP_STARTED:
         // serve your home page here
         server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
           return request->send(200, "text/plain", "Hello World!");
-        }).setFilter([](__unused AsyncWebServerRequest* request) { return ESPConnect.getState() != ESPConnectState::PORTAL_STARTED; });
+        }).setFilter([](__unused AsyncWebServerRequest* request) { return espConnect.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
         server.begin();
         break;
 
-      case ESPConnectState::NETWORK_DISCONNECTED:
+      case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
         server.end();
         break;
 
@@ -57,16 +58,16 @@ void setup() {
     }
   });
 
-  ESPConnect.setAutoRestart(true);
-  ESPConnect.setBlocking(false);
+  espConnect.setAutoRestart(true);
+  espConnect.setBlocking(false);
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
-  ESPConnect.begin(server, hostname.c_str(), "Captive Portal SSID");
+  espConnect.begin(hostname.c_str(), "Captive Portal SSID");
 
   Serial.println("====> setup() completed...");
 }
 
 void loop() {
-  ESPConnect.loop();
+  espConnect.loop();
 }

@@ -45,7 +45,7 @@ jobs:
 
   arduino:
     name: Arduino
-    needs: cpplint
+    # needs: cpplint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
