@@ -219,9 +219,9 @@ const String Mycila::ESPConnect::getWiFiSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
     case WIFI_MODE_APSTA:
-      return WiFi.softAPSSID();
+      return _apSSID;
     case WIFI_MODE_STA:
-      return WiFi.SSID();
+      return _config.wifiSSID;
     default:
       return emptyString;
   }
@@ -386,6 +386,18 @@ void Mycila::ESPConnect::loop() {
   }
 }
 
+void Mycila::ESPConnect::setIPConfig(const IPConfig& ipConfig) {
+  _ipConfig = ipConfig;
+
+#ifdef ESPCONNECT_ETH_SUPPORT
+  LOGI(TAG, "Changing Ethernet IP Configuration...");
+  ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+#else
+  LOGI(TAG, "Changing WiFi IP Configuration...");
+  WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+#endif
+}
+
 void Mycila::ESPConnect::clearConfiguration() {
   Preferences preferences;
   preferences.begin("espconnect", false);
@@ -454,27 +466,28 @@ void Mycila::ESPConnect::_startEthernet() {
   #endif
 
   LOGI(TAG, "Starting Ethernet...");
+  bool success = true;
+
   #if defined(ESPCONNECT_ETH_SPI_SUPPORT)
     #if ESP_IDF_VERSION_MAJOR >= 5
   // https://github.com/espressif/arduino-esp32/tree/master/libraries/Ethernet/examples
   SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
-  if (!ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI)) {
-    LOGE(TAG, "ETH failed to start!");
-  }
+  success = ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI);
     #else
-  if (!ETH.beginSPI(ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_SPI_SCK, ETH_PHY_CS, ETH_PHY_RST, ETH_PHY_IRQ)) {
-    LOGE(TAG, "ETH failed to start!");
-  }
+  success = ETH.beginSPI(ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_SPI_SCK, ETH_PHY_CS, ETH_PHY_RST, ETH_PHY_IRQ);
     #endif
   #else
-  if (!ETH.begin()) {
-    LOGE(TAG, "ETH failed to start!");
-  }
+  success = ETH.begin();
   #endif
 
-  _lastTime = millis();
+  if (success) {
+    LOGD(TAG, "ETH started.");
+    ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+  } else {
+    LOGE(TAG, "ETH failed to start!");
+  }
 
-  LOGD(TAG, "ETH started.");
+  _lastTime = millis();
 }
 #endif
 
@@ -488,6 +501,10 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
   WiFi.mode(WIFI_STA);
+
+#ifndef ESPCONNECT_ETH_SUPPORT
+  WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+#endif
 
   LOGD(TAG, "Connecting to SSID: %s...", _config.wifiSSID.c_str());
   WiFi.begin(_config.wifiSSID, _config.wifiPassword);
@@ -633,7 +650,7 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
 
   if (_homeHandler == nullptr) {
     _homeHandler = &_httpd->on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-      AsyncWebServerResponse *response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
+      AsyncWebServerResponse* response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
       response->addHeader("Content-Encoding", "gzip");
       return request->send(response);
     });
