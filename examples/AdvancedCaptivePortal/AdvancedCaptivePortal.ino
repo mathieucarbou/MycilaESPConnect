@@ -94,5 +94,4 @@ void setup() {
 
 void loop() {
   espConnect.loop();
-  delay(100);
 }

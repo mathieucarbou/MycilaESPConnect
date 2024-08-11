@@ -34,6 +34,7 @@ He is making great Arduino libraries.
 - **Ethernet support**
 - **Ready for Arduino 3 (ESP-IDF 5.1)**
 - **ESP8266 support** (except for Ethernet)
+- **Supports Static IP configuration**
 
 ## Usage
 
@@ -90,6 +91,19 @@ void setup() {
 void loop() {
   espConnect.loop();
 }
+```
+
+### Set static IP
+
+```cpp
+Mycila::ESPConnect::IPConfig ipConfig;
+
+ipConfig.ip.fromString("192.168.125.99");
+ipConfig.gateway.fromString("192.168.125.1");
+ipConfig.subnet.fromString("255.255.255.0");
+ipConfig.dns.fromString("192.168.125.1");
+
+espConnect.setIPConfig(ipConfig);
 ```
 
 ### Use an external configuration system

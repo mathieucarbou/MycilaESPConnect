@@ -82,6 +82,16 @@ namespace Mycila {
       typedef std::function<void(State previous, State state)> StateCallback;
 
       typedef struct {
+          // Static IP address to use when connecting to WiFi (STA mode) or Ethernet
+          // If not set, DHCP will be used
+          IPAddress ip = INADDR_NONE;
+          // Subnet mask: 255.255.255.0
+          IPAddress subnet = INADDR_NONE;
+          IPAddress gateway = INADDR_NONE;
+          IPAddress dns = INADDR_NONE;
+      } IPConfig;
+
+      typedef struct {
           // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
           String wifiSSID;
           // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
@@ -166,6 +176,12 @@ namespace Mycila {
       // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
       bool hasConfiguredAPMode() const { return _config.apMode; }
 
+      // IP configuration used for WiFi or ETH
+      const IPConfig& getIPConfig() const { return _ipConfig; }
+      // Static IP configuration: by default, DHCP is used
+      // The static IP configuration applies to the WiFi STA connection, except if ETH is used for ETH board, then it applies only to the Ethernet connection.
+      void setIPConfig(const IPConfig& ipConfig);
+
       // Maximum duration that the captive portal will be active before closing
       uint32_t getCaptivePortalTimeout() const { return _portalTimeout; }
       // Maximum duration that the captive portal will be active before closing
@@ -205,6 +221,7 @@ namespace Mycila {
       uint32_t _scanStart = 0;
       uint32_t _scanTimeout = ESPCONNECT_PORTAL_SCAN_TIMEOUT;
       Config _config;
+      IPConfig _ipConfig;
 #ifndef ESP8266
       WiFiEventId_t _wifiEventListenerId = 0;
 #endif
