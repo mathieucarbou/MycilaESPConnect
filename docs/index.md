@@ -6,6 +6,8 @@
 
 Simple & Easy Network Manager for ESP32 with WiFi, Ethernet and Captive Portal support
 
+[![](https://oss.carbou.me/MycilaESPConnect/screenshot.png)](https://oss.carbou.me/MycilaESPConnect/screenshot.png)
+
 This library is based on the UI from [https://github.com/ayushsharma82/ESPConnect](https://github.com/ayushsharma82/ESPConnect) (and this part falls under GPL v3).
 I highly recommend looking at all OSS projects (and products) from [@ayushsharma82](https://github.com/ayushsharma82).
 He is making great Arduino libraries.
@@ -40,14 +42,14 @@ He is making great Arduino libraries.
 
 ### API
 
-- `ESPConnect.setAutoRestart(bool)`: will automatically restart the ESP after the captive portal times out, or after the captive portal has been answered by te user
-- `ESPConnect.setBlocking(bool)`: will block the execution of the program in the begin code to handle the connect. If false, the setup code will continue in the background and the network setup will be done in the background from the main loop.
-- `ESPConnect.listen()`: register a callback for all ESPConnect events
+- `espConnect.setAutoRestart(bool)`: will automatically restart the ESP after the captive portal times out, or after the captive portal has been answered by te user
+- `espConnect.setBlocking(bool)`: will block the execution of the program in the begin code to handle the connect. If false, the setup code will continue in the background and the network setup will be done in the background from the main loop.
+- `espConnect.listen()`: register a callback for all ESPConnect events
 
 2 flavors of `begin()` methods:
 
-1. `ESPConnect.begin("hostname", "ssid", "password")` / `ESPConnect.begin("hostname", "ssid")`
-2. `ESPConnect.begin("hostname", "ssid", "password", Mycila::ESPConnect::Config)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
+1. `espConnect.begin("hostname", "ssid", "password")` / `espConnect.begin("hostname", "ssid")`
+2. `espConnect.begin("hostname", "ssid", "password", Mycila::ESPConnect::Config)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
 
 The first flavors will automatically handle the persistance of user choices and reload them at startup.
 
