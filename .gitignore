@@ -2,7 +2,6 @@
 .lh
 /.pio
 /.vscode/*
-!/.vscode/settings.json
 /logs
 /portal/node_modules/
 /portal/public/build/
