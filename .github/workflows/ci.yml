@@ -99,7 +99,7 @@ jobs:
       - name: Build AdvancedCaptivePortal
         run: arduino-cli compile --library . --warnings all -b ${{ matrix.board }} "examples/AdvancedCaptivePortal/AdvancedCaptivePortal.ino"
 
-  platformio-ci:
+  platformio-ci-esp32:
     name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
     runs-on: ubuntu-latest
     strategy:
@@ -175,6 +175,49 @@ jobs:
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
 
+  platformio-ci-esp8266:
+    name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: espressif8266
+            board: huzzah
+          - platform: espressif8266
+            board: d1_mini
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-pio
+          path: |
+            ~/.cache/pip
+            ~/.platformio
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - run: PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+    
   platformio-eth:
     name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
     runs-on: ubuntu-latest
