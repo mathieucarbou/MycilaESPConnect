@@ -186,7 +186,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [arduino-2, arduino-3, arduino-310rc1]
-        board: [esp32_poe, wt32-eth01, lilygo-eth-lite-s3]
+        board: [esp32-poe, wt32-eth01, lilygo-eth-lite-s3]
 
     steps:
       - name: Checkout
