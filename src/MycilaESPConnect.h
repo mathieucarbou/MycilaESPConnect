@@ -9,12 +9,6 @@
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 
-#ifdef ESP8266
-  #include <ESP8266WiFi.h>
-#else
-  #include <WiFi.h>
-#endif
-
 #define ESPCONNECT_VERSION          "5.0.2"
 #define ESPCONNECT_VERSION_MAJOR    5
 #define ESPCONNECT_VERSION_MINOR    0
