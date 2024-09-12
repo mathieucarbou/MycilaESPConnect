@@ -117,26 +117,26 @@ jobs:
           - platform: espressif32@6.8.1
             board: esp32-gateway
 
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.04/platform-espressif32.zip
+          - platform: 51.03.04
             board: esp32dev
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.04/platform-espressif32.zip
+          - platform: 51.03.04
             board: esp32-s2-saola-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.04/platform-espressif32.zip
+          - platform: 51.03.04
             board: esp32-s3-devkitc-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.04/platform-espressif32.zip
+          - platform: 51.03.04
             board: esp32-c3-devkitc-02
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.04/platform-espressif32.zip
+          - platform: 51.03.04
             board: esp32-c6-devkitc-1
 
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.10%2Brc1/platform-espressif32.zip
+          - platform: 53.03.10-rc1
             board: esp32dev
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.10%2Brc1/platform-espressif32.zip
+          - platform: 53.03.10-rc1
             board: esp32-s2-saola-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.10%2Brc1/platform-espressif32.zip
+          - platform: 53.03.10-rc1
             board: esp32-s3-devkitc-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.10%2Brc1/platform-espressif32.zip
+          - platform: 53.03.10-rc1
             board: esp32-c3-devkitc-02
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.10%2Brc1/platform-espressif32.zip
+          - platform: 53.03.10-rc1
             board: esp32-c6-devkitc-1
 
     steps:
@@ -161,15 +161,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install --upgrade platformio
 
-      - run: PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
-      - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
-      - run: PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
-      - run: PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
+      - run: PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
+      - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
+      - run: PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
+      - run: PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
 
-      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
-      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
-      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
-      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ci
 
   platformio-ci-esp8266:
     name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
