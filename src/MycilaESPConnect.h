@@ -106,7 +106,7 @@ namespace Mycila {
       // 4. If STA mode times out, or nothing configured, starts the captive portal
       //
       // Using this method will activate auto-load and auto-save of the configuration
-      void begin(const String& hostname, const String& apSSID, const String& apPassword = emptyString); // NOLINT
+      void begin(const char* hostname, const char* apSSID, const char* apPassword = ""); // NOLINT
 
       // Start ESPConnect:
       //
@@ -115,7 +115,7 @@ namespace Mycila {
       // 3. If STA mode fails, or empty WiFi credentials were passed, starts the captive portal
       //
       // Using this method will NOT auto-load or auto-save any configuration
-      void begin(const String& hostname, const String& apSSID, const String& apPassword, const Config& config); // NOLINT
+      void begin(const char* hostname, const char* apSSID, const char* apPassword, const Config& config); // NOLINT
 
       // loop() method to be called from main loop()
       void loop();

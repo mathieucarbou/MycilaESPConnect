@@ -252,7 +252,7 @@ int8_t Mycila::ESPConnect::_wifiSignalQuality(int32_t rssi) {
   return s > 100 ? 100 : (s < 0 ? 0 : s);
 }
 
-void Mycila::ESPConnect::begin(const String& hostname, const String& apSSID, const String& apPassword) {
+void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const char* apPassword) {
   if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
@@ -271,7 +271,7 @@ void Mycila::ESPConnect::begin(const String& hostname, const String& apSSID, con
   begin(hostname, apSSID, apPassword, {ssid, password, ap});
 }
 
-void Mycila::ESPConnect::begin(const String& hostname, const String& apSSID, const String& apPassword, const Mycila::ESPConnect::Config& config) {
+void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const char* apPassword, const Mycila::ESPConnect::Config& config) {
   if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
