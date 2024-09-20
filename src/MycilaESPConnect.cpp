@@ -474,7 +474,6 @@ void Mycila::ESPConnect::_startEthernet() {
   if (success) {
     LOGI(TAG, "Ethernet started.");
     if (_ipConfig.ip) {
-
       LOGI(TAG, "Set Ethernet Static IP Configuration:");
       LOGI(TAG, " - IP: %s", _ipConfig.ip.toString().c_str());
       LOGI(TAG, " - Gateway: %s", _ipConfig.gateway.toString().c_str());
