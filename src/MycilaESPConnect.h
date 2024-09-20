@@ -78,11 +78,11 @@ namespace Mycila {
       typedef struct {
           // Static IP address to use when connecting to WiFi (STA mode) or Ethernet
           // If not set, DHCP will be used
-          IPAddress ip = INADDR_NONE;
+          IPAddress ip;
           // Subnet mask: 255.255.255.0
-          IPAddress subnet = INADDR_NONE;
-          IPAddress gateway = INADDR_NONE;
-          IPAddress dns = INADDR_NONE;
+          IPAddress subnet;
+          IPAddress gateway;
+          IPAddress dns;
       } IPConfig;
 
       typedef struct {
@@ -174,7 +174,7 @@ namespace Mycila {
       const IPConfig& getIPConfig() const { return _ipConfig; }
       // Static IP configuration: by default, DHCP is used
       // The static IP configuration applies to the WiFi STA connection, except if ETH is used for ETH board, then it applies only to the Ethernet connection.
-      void setIPConfig(const IPConfig& ipConfig);
+      void setIPConfig(const IPConfig& ipConfig) { _ipConfig = ipConfig; }
 
       // Maximum duration that the captive portal will be active before closing
       uint32_t getCaptivePortalTimeout() const { return _portalTimeout; }

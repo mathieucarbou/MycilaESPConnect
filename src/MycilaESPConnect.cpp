@@ -353,6 +353,7 @@ void Mycila::ESPConnect::loop() {
   // connection to WiFi or Ethernet times out ?
   if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
     if (WiFi.getMode() != WIFI_MODE_NULL) {
+      WiFi.config((uint32_t)0x00000000, (uint32_t)0x00000000, (uint32_t)0x00000000, (uint32_t)0x00000000);
       WiFi.disconnect(true, true);
     }
     _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
@@ -386,20 +387,6 @@ void Mycila::ESPConnect::loop() {
     } else
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
   }
-}
-
-void Mycila::ESPConnect::setIPConfig(const IPConfig& ipConfig) {
-  _ipConfig = ipConfig;
-
-#ifdef ESPCONNECT_ETH_SUPPORT
-  LOGI(TAG, "Changing Ethernet IP Configuration...");
-  ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
-  LOGI(TAG, "Ethernet reconfigured with IP: %s", _ipConfig.ip.toString().c_str());
-#else
-  LOGI(TAG, "Changing WiFi IP Configuration...");
-  WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
-  LOGI(TAG, "WiFi reconfigured with IP: %s", _ipConfig.ip.toString().c_str());
-#endif
 }
 
 void Mycila::ESPConnect::clearConfiguration() {
@@ -486,8 +473,16 @@ void Mycila::ESPConnect::_startEthernet() {
 
   if (success) {
     LOGI(TAG, "Ethernet started.");
-    ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
-    LOGI(TAG, "Ethernet configured with IP: %s", _ipConfig.ip.toString().c_str());
+    if (_ipConfig.ip) {
+
+      LOGI(TAG, "Set Ethernet Static IP Configuration:");
+      LOGI(TAG, " - IP: %s", _ipConfig.ip.toString().c_str());
+      LOGI(TAG, " - Gateway: %s", _ipConfig.gateway.toString().c_str());
+      LOGI(TAG, " - Subnet: %s", _ipConfig.subnet.toString().c_str());
+      LOGI(TAG, " - DNS: %s", _ipConfig.dns.toString().c_str());
+
+      ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+    }
   } else {
     LOGE(TAG, "ETH failed to start!");
   }
@@ -508,8 +503,15 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.mode(WIFI_STA);
 
 #ifndef ESPCONNECT_ETH_SUPPORT
-  WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
-  LOGI(TAG, "WiFi configured with IP: %s", _ipConfig.ip.toString().c_str());
+  if (_ipConfig.ip) {
+    LOGI(TAG, "Set WiFi Static IP Configuration:");
+    LOGI(TAG, " - IP: %s", _ipConfig.ip.toString().c_str());
+    LOGI(TAG, " - Gateway: %s", _ipConfig.gateway.toString().c_str());
+    LOGI(TAG, " - Subnet: %s", _ipConfig.subnet.toString().c_str());
+    LOGI(TAG, " - DNS: %s", _ipConfig.dns.toString().c_str());
+
+    WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+  }
 #endif
 
   LOGD(TAG, "Connecting to SSID: %s...", _config.wifiSSID.c_str());
