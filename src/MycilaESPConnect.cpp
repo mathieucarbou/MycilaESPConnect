@@ -4,6 +4,8 @@
  */
 #include "MycilaESPConnect.h"
 
+#include <cstdio>
+
 #ifdef ESP8266
   #ifndef ESPCONNECT_NO_MDNS
     #include <ESP8266mDNS.h>
@@ -353,7 +355,7 @@ void Mycila::ESPConnect::loop() {
   // connection to WiFi or Ethernet times out ?
   if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
     if (WiFi.getMode() != WIFI_MODE_NULL) {
-      WiFi.config((uint32_t)0x00000000, (uint32_t)0x00000000, (uint32_t)0x00000000, (uint32_t)0x00000000);
+      WiFi.config(static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000));
       WiFi.disconnect(true, true);
     }
     _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
@@ -786,7 +788,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 }
 
 bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec) {
-  if (_lastTime >= 0 && millis() - (uint32_t)_lastTime >= intervalSec * 1000) {
+  if (_lastTime >= 0 && millis() - static_cast<uint32_t>(_lastTime) >= intervalSec * 1000) {
     _lastTime = -1;
     return true;
   }
