@@ -22,10 +22,6 @@
   #define ESPCONNECT_PORTAL_TIMEOUT 180
 #endif
 
-#ifndef ESPCONNECT_PORTAL_SCAN_TIMEOUT
-  #define ESPCONNECT_PORTAL_SCAN_TIMEOUT 20
-#endif
-
 namespace Mycila {
   class ESPConnect {
     public:
@@ -212,8 +208,6 @@ namespace Mycila {
       String _apPassword = emptyString;
       uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
       uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
-      uint32_t _scanStart = 0;
-      uint32_t _scanTimeout = ESPCONNECT_PORTAL_SCAN_TIMEOUT;
       Config _config;
       IPConfig _ipConfig;
 #ifndef ESP8266
@@ -240,6 +234,7 @@ namespace Mycila {
       void _disableCaptivePortal();
       void _onWiFiEvent(WiFiEvent_t event);
       bool _durationPassed(uint32_t intervalSec);
+      void _scan();
 #ifdef ESPCONNECT_ETH_SUPPORT
       void _startEthernet();
 #endif

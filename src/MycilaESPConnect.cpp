@@ -497,10 +497,16 @@ void Mycila::ESPConnect::_startSTA() {
 
   LOGI(TAG, "Starting WiFi...");
 
+#ifndef ESP8266
+  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+  WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
+#endif
+
   WiFi.setHostname(_hostname.c_str());
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
+
   WiFi.mode(WIFI_STA);
 
 #ifndef ESPCONNECT_ETH_SUPPORT
@@ -528,14 +534,18 @@ void Mycila::ESPConnect::_startAP() {
 
   LOGI(TAG, "Starting Access Point...");
 
-  WiFi.setHostname(_hostname.c_str());
 #ifndef ESP8266
   WiFi.softAPsetHostname(_hostname.c_str());
+  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+  WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
 #endif
+
+  WiFi.setHostname(_hostname.c_str());
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
   WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
+
   WiFi.mode(_config.apMode ? WIFI_AP : WIFI_AP_STA);
 
   if (_apPassword.isEmpty() || _apPassword.length() < 8) {
@@ -575,45 +585,27 @@ void Mycila::ESPConnect::_stopAP() {
 
 void Mycila::ESPConnect::_enableCaptivePortal() {
   LOGI(TAG, "Enable Captive Portal...");
-
-#ifndef ESP8266
-  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
-  WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
-#endif
-  WiFi.scanNetworks(true);
-  _scanStart = millis();
+  _scan();
 
   if (_scanHandler == nullptr) {
     _scanHandler = &_httpd->on("/espconnect/scan", HTTP_GET, [&](AsyncWebServerRequest* request) {
       int n = WiFi.scanComplete();
 
-      // scan still running ? wait...
       if (n == WIFI_SCAN_RUNNING) {
-        return request->send(202);
+        // scan still running ? wait...
+        request->send(202);
 
+      } else if (n == WIFI_SCAN_FAILED) {
         // scan error or finished with no result ?
-      } else if (n == 0 || n == WIFI_SCAN_FAILED) {
-        // timeout ?
-        const bool timedOut = millis() - _scanStart > _scanTimeout;
-
         // re-scan
-        WiFi.scanDelete();
-        WiFi.scanNetworks(true);
-        _scanStart = millis();
+        _scan();
+        request->send(202);
 
-        // send empty json response, to let the user choose AP mode if timeout, or still ask client to wait
-        if (timedOut) {
-          AsyncJsonResponse* response = new AsyncJsonResponse(true);
-          response->setLength();
-          return request->send(response);
-        } else {
-          return request->send(202);
-        }
-
-        // scan results ?
       } else {
+        // scan results ?
         AsyncJsonResponse* response = new AsyncJsonResponse(true);
         JsonArray json = response->getRoot();
+
         // we have some results
         for (int i = 0; i < n; ++i) {
 #if ARDUINOJSON_VERSION_MAJOR == 6
@@ -626,12 +618,10 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
           entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
           entry["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
         }
-        // clean up and start scanning again in background
+
         WiFi.scanDelete();
-        WiFi.scanNetworks(true);
-        _scanStart = millis();
         response->setLength();
-        return request->send(response);
+        request->send(response);
       }
     });
   }
@@ -684,22 +674,30 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
 void Mycila::ESPConnect::_disableCaptivePortal() {
   if (_homeHandler == nullptr)
     return;
+
   LOGI(TAG, "Disable Captive Portal...");
+
+  WiFi.scanDelete();
+
 #ifndef ESPCONNECT_NO_MDNS
   #ifndef ESP8266
   mdns_service_remove("_http", "_tcp");
   #endif
 #endif
+
   _httpd->end();
   _httpd->onNotFound(nullptr);
+
   if (_connectHandler != nullptr) {
     _httpd->removeHandler(_connectHandler);
     _connectHandler = nullptr;
   }
+
   if (_scanHandler != nullptr) {
     _httpd->removeHandler(_scanHandler);
     _scanHandler = nullptr;
   }
+
   if (_homeHandler != nullptr) {
     _httpd->removeHandler(_homeHandler);
     _homeHandler = nullptr;
@@ -793,4 +791,13 @@ bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec) {
     return true;
   }
   return false;
+}
+
+void Mycila::ESPConnect::_scan() {
+  WiFi.scanDelete();
+#ifndef ESP8266
+  WiFi.scanNetworks(true, false, false, 500, 0, nullptr, nullptr);
+#else
+  WiFi.scanNetworks(true);
+#endif
 }
