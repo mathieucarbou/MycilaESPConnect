@@ -64,13 +64,13 @@
       </div>
       <div class="row">
         <div class="column column-100">
-          <input type="text" placeholder="SSID" id="ssid" value={ssid} disabled={loading} required>
+          <input type="text" placeholder="SSID" id="ssid" value={ssid} disabled={loading} autocomplete="off" required>
         </div>
       </div>
       {#if !open}
       <div class="row">
         <div class="column column-100">
-          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} required minlength="8">
+          <input type="text" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" required minlength="8">
         </div>
       </div>
       {/if}
