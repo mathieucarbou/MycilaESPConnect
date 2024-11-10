@@ -131,17 +131,17 @@ namespace Mycila {
       // returns the current default mode of the ESP (STA, AP, ETH). ETH has priority over STA if both are connected
       Mode getMode() const;
 
-      inline bool isConnected() const { return getIPAddress()[0] != 0; }
+      bool isConnected() const { return getIPAddress()[0] != 0; }
 
-      inline const String getMACAddress() const { return getMACAddress(getMode()); }
+      const String getMACAddress() const { return getMACAddress(getMode()); }
       const String getMACAddress(Mode mode) const;
 
       // Returns the IP address of the current Ethernet, WiFi, or IP address of the AP or captive portal, or empty if not available
-      inline const IPAddress getIPAddress() const { return getIPAddress(getMode()); }
+      const IPAddress getIPAddress() const { return getIPAddress(getMode()); }
       const IPAddress getIPAddress(Mode mode) const;
 
       // Returns the SSID of the current WiFi, or SSID of the AP or captive portal, or empty if not available
-      const String getWiFiSSID() const;
+      const String& getWiFiSSID() const;
       // Returns the BSSID of the current WiFi, or BSSID of the AP or captive portal, or empty if not available
       const String getWiFiBSSID() const;
       // Returns the RSSI of the current WiFi, or -1 if not available

@@ -136,7 +136,7 @@ Mycila::ESPConnect::Mode Mycila::ESPConnect::getMode() const {
 }
 
 const String Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mode) const {
-  String mac = emptyString;
+  String mac;
 
   switch (mode) {
     case Mycila::ESPConnect::Mode::AP:
@@ -197,7 +197,7 @@ const String Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mode) co
 
   char buffer[18] = {0};
   snprintf(buffer, sizeof(buffer), "%02X:%02X:%02X:%02X:%02X:%02X", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]);
-  return String(buffer);
+  return buffer;
 #endif
 }
 
@@ -217,7 +217,7 @@ const IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) 
   }
 }
 
-const String Mycila::ESPConnect::getWiFiSSID() const {
+const String& Mycila::ESPConnect::getWiFiSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
     case WIFI_MODE_APSTA:
@@ -432,8 +432,8 @@ void Mycila::ESPConnect::_setState(Mycila::ESPConnect::State state) {
     preferences.begin("espconnect", false);
     preferences.putBool("ap", _config.apMode);
     if (!_config.apMode) {
-      preferences.putString("ssid", _config.wifiSSID);
-      preferences.putString("password", _config.wifiPassword);
+      preferences.putString("ssid", _config.wifiSSID.c_str());
+      preferences.putString("password", _config.wifiPassword.c_str());
     }
     preferences.end();
   }
