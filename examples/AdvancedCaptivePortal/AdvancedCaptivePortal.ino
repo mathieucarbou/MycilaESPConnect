@@ -77,8 +77,8 @@ void setup() {
   Preferences preferences;
   preferences.begin("app", true);
   Mycila::ESPConnect::Config config = {
-    .wifiSSID = preferences.isKey("ssid") ? preferences.getString("ssid", emptyString) : emptyString,
-    .wifiPassword = preferences.isKey("password") ? preferences.getString("password", emptyString) : emptyString,
+    .wifiSSID = (preferences.isKey("ssid") ? preferences.getString("ssid", emptyString) : emptyString).c_str(),
+    .wifiPassword = (preferences.isKey("password") ? preferences.getString("password", emptyString) : emptyString).c_str(),
     .apMode = preferences.isKey("ap") ? preferences.getBool("ap", false) : false};
   preferences.end();
 

@@ -4,7 +4,7 @@ AsyncWebServer server(80);
 Mycila::ESPConnect espConnect(server);
 uint32_t lastLog = 0;
 uint32_t lastChange = 0;
-String hostname = "arduino-1";
+const char* hostname = "arduino-1";
 
 void setup() {
   Serial.begin(115200);
@@ -50,7 +50,7 @@ void setup() {
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
 
-  espConnect.begin(hostname.c_str(), "Captive Portal SSID");
+  espConnect.begin(hostname, "Captive Portal SSID");
 
   Serial.println("====> setup() completed...");
 }

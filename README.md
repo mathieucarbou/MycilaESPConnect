@@ -124,8 +124,8 @@ espConnect.setIPConfig(ipConfig);
     switch (state) {
       case Mycila::ESPConnect::State::PORTAL_COMPLETE:
         bool apMode = espConnect.hasConfiguredAPMode();
-        String wifiSSID = espConnect.getConfiguredWiFiSSID();
-        String wifiPassword = espConnect.getConfiguredWiFiPassword();
+        std::string wifiSSID = espConnect.getConfiguredWiFiSSID();
+        std::string wifiPassword = espConnect.getConfiguredWiFiPassword();
         if (apMode) {
           Serial.println("====> Captive Portal: Access Point configured");
         } else {
