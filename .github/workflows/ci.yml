@@ -50,15 +50,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: espressif32@6.9.0
+          - platform: espressif32@6.10.0
             board: esp32dev
-          - platform: espressif32@6.9.0
+          - platform: espressif32@6.10.0
             board: esp32-s2-saola-1
-          - platform: espressif32@6.9.0
+          - platform: espressif32@6.10.0
             board: esp32-s3-devkitc-1
-          - platform: espressif32@6.9.0
+          - platform: espressif32@6.10.0
             board: esp32-c3-devkitc-02
-          - platform: espressif32@6.9.0
+          - platform: espressif32@6.10.0
             board: esp32-gateway
 
           - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.05/platform-espressif32.zip
