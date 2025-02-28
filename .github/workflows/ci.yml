@@ -61,26 +61,26 @@ jobs:
           - platform: espressif32@6.10.0
             board: esp32-gateway
 
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.05/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
             board: esp32dev
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.05/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
             board: esp32-s2-saola-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.05/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
             board: esp32-s3-devkitc-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.05/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
             board: esp32-c3-devkitc-02
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/51.03.05/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
             board: esp32-c6-devkitc-1
 
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20-rc1/platform-espressif32.zip
             board: esp32dev
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20-rc1/platform-espressif32.zip
             board: esp32-s2-saola-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20-rc1/platform-espressif32.zip
             board: esp32-s3-devkitc-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20-rc1/platform-espressif32.zip
             board: esp32-c3-devkitc-02
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/53.03.13/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20-rc1/platform-espressif32.zip
             board: esp32-c6-devkitc-1
 
     steps:
@@ -164,7 +164,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [arduino-2, arduino-3, arduino-311]
+        platform: [arduino-2, arduino-3, arduino-3-latest]
         board: [esp32-poe, wt32-eth01, lilygo-eth-lite-s3]
 
     steps:
