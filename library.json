@@ -15,7 +15,7 @@
       "maintainer": true
     }
   ],
-  "license": "GPL-3.0-or-later",
+  "license": "MIT",
   "frameworks": "arduino",
   "platforms": [
     "espressif8266",
