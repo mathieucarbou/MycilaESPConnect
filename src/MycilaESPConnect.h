@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 /*
  * Copyright (C) 2023-2025 Mathieu Carbou
  */
@@ -199,7 +199,7 @@ namespace Mycila {
       // load configuration from NVS
       void loadConfiguration() { loadConfiguration(_config); }
       // load configuration from NVS
-      static void loadConfiguration(Config& config);
+      static void loadConfiguration(Config& config); // NOLINT
 
       // save configuration to NVS
       void saveConfiguration() { saveConfiguration(_config); }
