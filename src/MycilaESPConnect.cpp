@@ -45,7 +45,9 @@
   #endif
 #endif
 
-#include "./espconnect_webpage.h"
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
+  #include "./espconnect_webpage.h"
+#endif
 
 #ifdef MYCILA_LOGGER_SUPPORT
   #include <MycilaLogger.h>
@@ -613,6 +615,9 @@ void Mycila::ESPConnect::_stopAP() {
 }
 
 void Mycila::ESPConnect::_enableCaptivePortal() {
+#ifdef ESPCONNECT_NO_CAPTIVE_PORTAL
+  LOGE(TAG, "Captive Portal was disabled with ESPCONNECT_NO_CAPTIVE_PORTAL: you must provide a valid network configuration.");
+#else
   LOGI(TAG, "Enable Captive Portal...");
   _scan();
 
@@ -637,11 +642,11 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
 
         // we have some results
         for (int i = 0; i < n; ++i) {
-#if ARDUINOJSON_VERSION_MAJOR == 6
+  #if ARDUINOJSON_VERSION_MAJOR == 6
           JsonObject entry = json.createNestedObject();
-#else
+  #else
             JsonObject entry = json.add<JsonObject>();
-#endif
+  #endif
           entry["name"] = WiFi.SSID(i);
           entry["rssi"] = WiFi.RSSI(i);
           entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
@@ -698,9 +703,11 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
   });
 
   _httpd->begin();
-#ifndef ESPCONNECT_NO_MDNS
+  #ifndef ESPCONNECT_NO_MDNS
   MDNS.addService("http", "tcp", 80);
+  #endif
 #endif
+
   _lastTime = millis();
 }
 

@@ -24,6 +24,9 @@
   #define ESPCONNECT_PORTAL_TIMEOUT 180
 #endif
 
+//  Uncomment to disable the captive portal handler and UI
+// #define ESPCONNECT_NO_CAPTIVE_PORTAL
+
 namespace Mycila {
   class ESPConnect {
     public:
