@@ -109,11 +109,13 @@ jobs:
       - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
+      - run: PLATFORMIO_SRC_DIR=examples/LoadSaveConfig PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
 
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/LoadSaveConfig PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
 
   platformio-ci-esp8266:
     name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
@@ -152,12 +154,14 @@ jobs:
       - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      - run: PLATFORMIO_SRC_DIR=examples/LoadSaveConfig PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
 
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
-    
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/LoadSaveConfig PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
+      
   platformio-eth:
     name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
     runs-on: ubuntu-latest
@@ -193,8 +197,10 @@ jobs:
       - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
       - run: PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
       - run: PLATFORMIO_SRC_DIR=examples/WiFiStaticIP pio run -e ${{ matrix.board }}-${{ matrix.platform }}
+      - run: PLATFORMIO_SRC_DIR=examples/LoadSaveConfig pio run -e ${{ matrix.board }}-${{ matrix.platform }}
 
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/WiFiStaticIP pio run -e ${{ matrix.board }}-${{ matrix.platform }}
+      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_MDNS" PLATFORMIO_SRC_DIR=examples/LoadSaveConfig pio run -e ${{ matrix.board }}-${{ matrix.platform }}

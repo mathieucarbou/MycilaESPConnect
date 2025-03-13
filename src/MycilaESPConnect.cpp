@@ -260,22 +260,9 @@ void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const c
     return;
 
   _autoSave = true;
-
-  LOGD(TAG, "Loading config...");
-  Preferences preferences;
-  preferences.begin("espconnect", true);
-  std::string ssid;
-  std::string password;
-  if (preferences.isKey("ssid"))
-    ssid = preferences.getString("ssid").c_str();
-  if (preferences.isKey("password"))
-    password = preferences.getString("password").c_str();
-  bool ap = preferences.isKey("ap") ? preferences.getBool("ap", false) : false;
-  preferences.end();
-  LOGD(TAG, " - AP: %d", ap);
-  LOGD(TAG, " - SSID: %s", ssid.c_str());
-
-  begin(hostname, apSSID, apPassword, {ssid, password, ap});
+  Config config;
+  loadConfiguration(config);
+  begin(hostname, apSSID, apPassword, config);
 }
 
 void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const char* apPassword, const Mycila::ESPConnect::Config& config) {
@@ -396,7 +383,54 @@ void Mycila::ESPConnect::loop() {
   }
 }
 
+void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
+  LOGD(TAG, "Loading config...");
+  Preferences preferences;
+  preferences.begin("espconnect", true);
+  config.apMode = preferences.isKey("ap") ? preferences.getBool("ap", false) : false;
+  if (preferences.isKey("ssid"))
+    config.wifiSSID = preferences.getString("ssid").c_str();
+  if (preferences.isKey("password"))
+    config.wifiPassword = preferences.getString("password").c_str();
+  if (preferences.isKey("ip"))
+    config.ipConfig.ip.fromString(preferences.getString("ip"));
+  if (preferences.isKey("subnet"))
+    config.ipConfig.subnet.fromString(preferences.getString("subnet"));
+  if (preferences.isKey("gateway"))
+    config.ipConfig.gateway.fromString(preferences.getString("gateway"));
+  if (preferences.isKey("dns"))
+    config.ipConfig.dns.fromString(preferences.getString("dns"));
+  preferences.end();
+  LOGD(TAG, " - AP: %d", config.apMode);
+  LOGD(TAG, " - SSID: %s", config.wifiSSID.c_str());
+  LOGD(TAG, " - IP: %s", config.ipConfig.ip.toString().c_str());
+  LOGD(TAG, " - Subnet: %s", config.ipConfig.subnet.toString().c_str());
+  LOGD(TAG, " - Gateway: %s", config.ipConfig.gateway.toString().c_str());
+  LOGD(TAG, " - DNS: %s", config.ipConfig.dns.toString().c_str());
+}
+
+void Mycila::ESPConnect::saveConfiguration(const Mycila::ESPConnect::Config& config) {
+  LOGD(TAG, "Saving config...");
+  LOGD(TAG, " - AP: %d", config.apMode);
+  LOGD(TAG, " - SSID: %s", config.wifiSSID.c_str());
+  LOGD(TAG, " - IP: %s", config.ipConfig.ip.toString().c_str());
+  LOGD(TAG, " - Subnet: %s", config.ipConfig.subnet.toString().c_str());
+  LOGD(TAG, " - Gateway: %s", config.ipConfig.gateway.toString().c_str());
+  LOGD(TAG, " - DNS: %s", config.ipConfig.dns.toString().c_str());
+  Preferences preferences;
+  preferences.begin("espconnect", false);
+  preferences.putBool("ap", config.apMode);
+  preferences.putString("ssid", config.wifiSSID.c_str());
+  preferences.putString("password", config.wifiPassword.c_str());
+  preferences.putString("ip", config.ipConfig.ip.toString().c_str());
+  preferences.putString("subnet", config.ipConfig.subnet.toString().c_str());
+  preferences.putString("gateway", config.ipConfig.gateway.toString().c_str());
+  preferences.putString("dns", config.ipConfig.dns.toString().c_str());
+  preferences.end();
+}
+
 void Mycila::ESPConnect::clearConfiguration() {
+  LOGD(TAG, "Clearing config...");
   Preferences preferences;
   preferences.begin("espconnect", false);
   preferences.clear();
@@ -430,17 +464,7 @@ void Mycila::ESPConnect::_setState(Mycila::ESPConnect::State state) {
 
   // be sure to save anything before auto restart and callback
   if (_autoSave && _state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
-    LOGD(TAG, "Saving config...");
-    LOGD(TAG, " - AP: %d", _config.apMode);
-    LOGD(TAG, " - SSID: %s", _config.wifiSSID.c_str());
-    Preferences preferences;
-    preferences.begin("espconnect", false);
-    preferences.putBool("ap", _config.apMode);
-    if (!_config.apMode) {
-      preferences.putString("ssid", _config.wifiSSID.c_str());
-      preferences.putString("password", _config.wifiPassword.c_str());
-    }
-    preferences.end();
+    saveConfiguration();
   }
 
   // make sure callback is called before auto restart
@@ -480,14 +504,14 @@ void Mycila::ESPConnect::_startEthernet() {
 
   if (success) {
     LOGI(TAG, "Ethernet started.");
-    if (_ipConfig.ip) {
+    if (_config.ipConfig.ip) {
       LOGI(TAG, "Set Ethernet Static IP Configuration:");
-      LOGI(TAG, " - IP: %s", _ipConfig.ip.toString().c_str());
-      LOGI(TAG, " - Gateway: %s", _ipConfig.gateway.toString().c_str());
-      LOGI(TAG, " - Subnet: %s", _ipConfig.subnet.toString().c_str());
-      LOGI(TAG, " - DNS: %s", _ipConfig.dns.toString().c_str());
+      LOGI(TAG, " - IP: %s", _config.ipConfig.ip.toString().c_str());
+      LOGI(TAG, " - Gateway: %s", _config.ipConfig.gateway.toString().c_str());
+      LOGI(TAG, " - Subnet: %s", _config.ipConfig.subnet.toString().c_str());
+      LOGI(TAG, " - DNS: %s", _config.ipConfig.dns.toString().c_str());
 
-      ETH.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+      ETH.config(_config.ipConfig.ip, _config.ipConfig.gateway, _config.ipConfig.subnet, _config.ipConfig.dns);
     }
   } else {
     LOGE(TAG, "ETH failed to start!");
@@ -515,14 +539,14 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.mode(WIFI_STA);
 
 #ifndef ESPCONNECT_ETH_SUPPORT
-  if (_ipConfig.ip) {
+  if (_config.ipConfig.ip) {
     LOGI(TAG, "Set WiFi Static IP Configuration:");
-    LOGI(TAG, " - IP: %s", _ipConfig.ip.toString().c_str());
-    LOGI(TAG, " - Gateway: %s", _ipConfig.gateway.toString().c_str());
-    LOGI(TAG, " - Subnet: %s", _ipConfig.subnet.toString().c_str());
-    LOGI(TAG, " - DNS: %s", _ipConfig.dns.toString().c_str());
+    LOGI(TAG, " - IP: %s", _config.ipConfig.ip.toString().c_str());
+    LOGI(TAG, " - Gateway: %s", _config.ipConfig.gateway.toString().c_str());
+    LOGI(TAG, " - Subnet: %s", _config.ipConfig.subnet.toString().c_str());
+    LOGI(TAG, " - DNS: %s", _config.ipConfig.dns.toString().c_str());
 
-    WiFi.config(_ipConfig.ip, _ipConfig.gateway, _ipConfig.subnet, _ipConfig.dns);
+    WiFi.config(_config.ipConfig.ip, _config.ipConfig.gateway, _config.ipConfig.subnet, _config.ipConfig.dns);
   }
 #endif
 

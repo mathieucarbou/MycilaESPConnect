@@ -90,6 +90,8 @@ namespace Mycila {
           std::string wifiPassword;
           // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
           bool apMode;
+          // Static IP configuration to use (if any)
+          IPConfig ipConfig;
       } Config;
 
     public:
@@ -169,10 +171,10 @@ namespace Mycila {
       bool hasConfiguredAPMode() const { return _config.apMode; }
 
       // IP configuration used for WiFi or ETH
-      const IPConfig& getIPConfig() const { return _ipConfig; }
+      const IPConfig& getIPConfig() const { return _config.ipConfig; }
       // Static IP configuration: by default, DHCP is used
       // The static IP configuration applies to the WiFi STA connection, except if ETH is used for ETH board, then it applies only to the Ethernet connection.
-      void setIPConfig(const IPConfig& ipConfig) { _ipConfig = ipConfig; }
+      void setIPConfig(const IPConfig& ipConfig) { _config.ipConfig = ipConfig; }
 
       // Maximum duration that the captive portal will be active before closing
       uint32_t getCaptivePortalTimeout() const { return _portalTimeout; }
@@ -194,6 +196,16 @@ namespace Mycila {
       // Whether ESPConnect will restart the ESP if the captive portal times out or once it has completed (old behaviour)
       void setAutoRestart(bool autoRestart) { _autoRestart = autoRestart; }
 
+      // load configuration from NVS
+      void loadConfiguration() { loadConfiguration(_config); }
+      // load configuration from NVS
+      static void loadConfiguration(Config& config);
+
+      // save configuration to NVS
+      void saveConfiguration() { saveConfiguration(_config); }
+      // save configuration to NVS
+      static void saveConfiguration(const Config& config);
+
       // when using auto-load and save of configuration, this method can clear saved states.
       void clearConfiguration();
 
@@ -211,7 +223,6 @@ namespace Mycila {
       uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
       uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
       Config _config;
-      IPConfig _ipConfig;
 #ifndef ESP8266
       WiFiEventId_t _wifiEventListenerId = 0;
 #endif
