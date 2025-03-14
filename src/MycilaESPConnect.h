@@ -4,10 +4,14 @@
  */
 #pragma once
 
-#include <ArduinoJson.h>
-#include <AsyncJson.h>
 #include <DNSServer.h>
-#include <ESPAsyncWebServer.h>
+#include <WiFi.h>
+
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
+  #include <ArduinoJson.h>
+  #include <AsyncJson.h>
+  #include <ESPAsyncWebServer.h>
+#endif
 
 #include <string>
 
@@ -23,9 +27,6 @@
 #ifndef ESPCONNECT_PORTAL_TIMEOUT
   #define ESPCONNECT_PORTAL_TIMEOUT 180
 #endif
-
-//  Uncomment to disable the captive portal handler and UI
-// #define ESPCONNECT_NO_CAPTIVE_PORTAL
 
 namespace Mycila {
   class ESPConnect {
@@ -98,7 +99,11 @@ namespace Mycila {
       } Config;
 
     public:
+#ifdef ESPCONNECT_NO_CAPTIVE_PORTAL
+      ESPConnect() {}
+#else
       explicit ESPConnect(AsyncWebServer& httpd) : _httpd(&httpd) {}
+#endif
       ~ESPConnect() { end(); }
 
       // Start ESPConnect:
@@ -164,8 +169,10 @@ namespace Mycila {
       // Password used for the captive portal or in AP mode
       const std::string& getAccessPointPassword() const { return _apPassword; }
 
-      // Returns the current configuration loaded or passed from begin() or from captive portal
+      // Returns the current immutable configuration loaded or passed from begin() or from captive portal
       const Config& getConfig() const { return _config; }
+      // Returns the current mutable configuration loaded or passed from begin() or from captive portal
+      Config& getConfig() { return _config; }
       // Set the current configuration
       void setConfig(const Config& config) { _config = config; }
 
@@ -215,10 +222,17 @@ namespace Mycila {
       // when using auto-load and save of configuration, this method can clear saved states.
       void clearConfiguration();
 
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       void toJson(const JsonObject& root) const;
+#endif
 
     private:
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       AsyncWebServer* _httpd = nullptr;
+      AsyncCallbackWebHandler* _scanHandler = nullptr;
+      AsyncCallbackWebHandler* _connectHandler = nullptr;
+      AsyncCallbackWebHandler* _homeHandler = nullptr;
+#endif
       State _state = State::NETWORK_DISABLED;
       StateCallback _callback = nullptr;
       DNSServer* _dnsServer = nullptr;
@@ -229,19 +243,15 @@ namespace Mycila {
       uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
       uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
       Config _config;
-#ifndef ESP8266
-      WiFiEventId_t _wifiEventListenerId = 0;
-#endif
       bool _blocking = true;
       bool _autoRestart = true;
       bool _autoSave = false;
-      AsyncCallbackWebHandler* _scanHandler = nullptr;
-      AsyncCallbackWebHandler* _connectHandler = nullptr;
-      AsyncCallbackWebHandler* _homeHandler = nullptr;
 #ifdef ESP8266
       WiFiEventHandler onStationModeGotIP;
       WiFiEventHandler onStationModeDHCPTimeout;
       WiFiEventHandler onStationModeDisconnected;
+#else
+      WiFiEventId_t _wifiEventListenerId = 0;
 #endif
 
     private:

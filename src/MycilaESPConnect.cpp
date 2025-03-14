@@ -317,7 +317,9 @@ void Mycila::ESPConnect::end() {
   WiFi.disconnect(true, true);
   WiFi.mode(WIFI_MODE_NULL);
   _stopAP();
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
   _httpd = nullptr;
+#endif
 }
 
 void Mycila::ESPConnect::loop() {
@@ -439,6 +441,7 @@ void Mycila::ESPConnect::clearConfiguration() {
   preferences.end();
 }
 
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
 void Mycila::ESPConnect::toJson(const JsonObject& root) const {
   root["ip_address"] = getIPAddress().toString();
   root["ip_address_ap"] = getIPAddress(Mycila::ESPConnect::Mode::AP).toString();
@@ -455,6 +458,7 @@ void Mycila::ESPConnect::toJson(const JsonObject& root) const {
   root["wifi_signal"] = getWiFiSignalQuality();
   root["wifi_ssid"] = getWiFiSSID();
 }
+#endif
 
 void Mycila::ESPConnect::_setState(Mycila::ESPConnect::State state) {
   if (_state == state)
@@ -712,6 +716,7 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
 }
 
 void Mycila::ESPConnect::_disableCaptivePortal() {
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
   if (_homeHandler == nullptr)
     return;
 
@@ -719,11 +724,11 @@ void Mycila::ESPConnect::_disableCaptivePortal() {
 
   WiFi.scanDelete();
 
-#ifndef ESPCONNECT_NO_MDNS
-  #ifndef ESP8266
+  #ifndef ESPCONNECT_NO_MDNS
+    #ifndef ESP8266
   mdns_service_remove("_http", "_tcp");
+    #endif
   #endif
-#endif
 
   _httpd->end();
   _httpd->onNotFound(nullptr);
@@ -742,6 +747,7 @@ void Mycila::ESPConnect::_disableCaptivePortal() {
     _httpd->removeHandler(_homeHandler);
     _homeHandler = nullptr;
   }
+#endif
 }
 
 void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
