@@ -333,7 +333,7 @@ void Mycila::ESPConnect::loop() {
   // start captive portal when network enabled but not in ap mode and no wifi info and no ethernet
   // portal wil be interrupted when network connected
 #ifndef ESPCONNECT_ETH_SUPPORT
-  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && _config.wifiSSID.empty()) {
+  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && !_config.wifiSSID.length()) {
     _startAP();
   }
 #endif
