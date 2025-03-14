@@ -166,6 +166,9 @@ namespace Mycila {
 
       // Returns the current configuration loaded or passed from begin() or from captive portal
       const Config& getConfig() const { return _config; }
+      // Set the current configuration
+      void setConfig(const Config& config) { _config = config; }
+
       // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
       const std::string& getConfiguredWiFiSSID() const { return _config.wifiSSID; }
       // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
