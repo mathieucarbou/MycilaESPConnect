@@ -28,7 +28,13 @@
 #include "esp_eth.h"
 #include "esp_system.h"
 
-#include <string>
+#ifdef ESPCONNECT_NO_STD_STRING
+  #include <WString.h>
+  #define ESPCONNECT_STRING String
+#else
+  #include <string>
+  #define ESPCONNECT_STRING std::string
+#endif
 
 #ifndef ETH_PHY_ADDR
 #define ETH_PHY_ADDR 0
@@ -120,7 +126,7 @@ class ETHClass {
     uint8_t subnetCIDR();
 
     uint8_t* macAddress(uint8_t* mac);
-    std::string macAddress();
+    ESPCONNECT_STRING std::string macAddress();
 
     friend class WiFiClient;
     friend class WiFiServer;

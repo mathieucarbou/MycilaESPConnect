@@ -41,8 +41,6 @@
 #include "lwip/dns.h"
 #include "lwip/err.h"
 
-#include <string>
-
 extern void tcpipInit();
 extern void add_esp_interface_netif(esp_interface_t interface, esp_netif_t* esp_netif); /* from WiFiGeneric */
 
@@ -755,7 +753,7 @@ uint8_t* ETHClass::macAddress(uint8_t* mac) {
   return mac;
 }
 
-std::string ETHClass::macAddress(void) {
+ESPCONNECT_STRING ETHClass::macAddress(void) {
   uint8_t mac[6] = {0, 0, 0, 0, 0, 0};
   char macStr[18] = {0};
   macAddress(mac);

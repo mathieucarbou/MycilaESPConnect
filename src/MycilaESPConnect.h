@@ -13,7 +13,13 @@
   #include <ESPAsyncWebServer.h>
 #endif
 
-#include <string>
+#ifdef ESPCONNECT_NO_STD_STRING
+  #include <WString.h>
+  #define ESPCONNECT_STRING String
+#else
+  #include <string>
+  #define ESPCONNECT_STRING std::string
+#endif
 
 #define ESPCONNECT_VERSION          "7.2.2"
 #define ESPCONNECT_VERSION_MAJOR    7
@@ -89,9 +95,9 @@ namespace Mycila {
 
       typedef struct {
           // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
-          std::string wifiSSID;
+          ESPCONNECT_STRING wifiSSID;
           // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
-          std::string wifiPassword;
+          ESPCONNECT_STRING wifiPassword;
           // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
           bool apMode;
           // Static IP configuration to use (if any)
@@ -145,29 +151,29 @@ namespace Mycila {
 
       bool isConnected() const { return getIPAddress()[0] != 0; }
 
-      std::string getMACAddress() const { return getMACAddress(getMode()); }
-      std::string getMACAddress(Mode mode) const;
+      ESPCONNECT_STRING getMACAddress() const { return getMACAddress(getMode()); }
+      ESPCONNECT_STRING getMACAddress(Mode mode) const;
 
       // Returns the IP address of the current Ethernet, WiFi, or IP address of the AP or captive portal, or empty if not available
       IPAddress getIPAddress() const { return getIPAddress(getMode()); }
       IPAddress getIPAddress(Mode mode) const;
 
       // Returns the configured WiFi SSID or the configured SSID of the AP or captive portal, or empty if not available, depending on the current mode
-      std::string getWiFiSSID() const;
+      ESPCONNECT_STRING getWiFiSSID() const;
       // Returns the BSSID of the current WiFi, or BSSID of the AP or captive portal, or empty if not available
-      std::string getWiFiBSSID() const;
+      ESPCONNECT_STRING getWiFiBSSID() const;
       // Returns the RSSI of the current WiFi, or -1 if not available
       int8_t getWiFiRSSI() const;
       // Returns the signal quality (percentage from 0 to 100) of the current WiFi, or -1 if not available
       int8_t getWiFiSignalQuality() const;
 
       // the hostname passed from begin()
-      const std::string& getHostname() const { return _hostname; }
+      const ESPCONNECT_STRING& getHostname() const { return _hostname; }
 
       // SSID name used for the captive portal or in AP mode
-      const std::string& getAccessPointSSID() const { return _apSSID; }
+      const ESPCONNECT_STRING& getAccessPointSSID() const { return _apSSID; }
       // Password used for the captive portal or in AP mode
-      const std::string& getAccessPointPassword() const { return _apPassword; }
+      const ESPCONNECT_STRING& getAccessPointPassword() const { return _apPassword; }
 
       // Returns the current immutable configuration loaded or passed from begin() or from captive portal
       const Config& getConfig() const { return _config; }
@@ -177,9 +183,9 @@ namespace Mycila {
       void setConfig(const Config& config) { _config = config; }
 
       // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
-      const std::string& getConfiguredWiFiSSID() const { return _config.wifiSSID; }
+      const ESPCONNECT_STRING& getConfiguredWiFiSSID() const { return _config.wifiSSID; }
       // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
-      const std::string& getConfiguredWiFiPassword() const { return _config.wifiPassword; }
+      const ESPCONNECT_STRING& getConfiguredWiFiPassword() const { return _config.wifiPassword; }
       // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
       bool hasConfiguredAPMode() const { return _config.apMode; }
 
@@ -237,9 +243,9 @@ namespace Mycila {
       StateCallback _callback = nullptr;
       DNSServer* _dnsServer = nullptr;
       int64_t _lastTime = -1;
-      std::string _hostname;
-      std::string _apSSID;
-      std::string _apPassword;
+      ESPCONNECT_STRING _hostname;
+      ESPCONNECT_STRING _apSSID;
+      ESPCONNECT_STRING _apPassword;
       uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
       uint32_t _portalTimeout = ESPCONNECT_PORTAL_TIMEOUT;
       Config _config;

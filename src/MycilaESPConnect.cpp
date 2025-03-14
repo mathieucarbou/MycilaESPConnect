@@ -5,7 +5,6 @@
 #include "MycilaESPConnect.h"
 
 #include <cstdio>
-#include <string>
 
 #ifdef ESP8266
   #ifndef ESPCONNECT_NO_MDNS
@@ -138,8 +137,8 @@ Mycila::ESPConnect::Mode Mycila::ESPConnect::getMode() const {
   }
 }
 
-std::string Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mode) const {
-  std::string mac;
+ESPCONNECT_STRING Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mode) const {
+  ESPCONNECT_STRING mac;
 
   switch (mode) {
     case Mycila::ESPConnect::Mode::AP:
@@ -158,7 +157,7 @@ std::string Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mode) con
       break;
   }
 
-  if (!mac.empty() && mac != "00:00:00:00:00:00")
+  if (mac.length() && mac != "00:00:00:00:00:00")
     return mac;
 
 #ifdef ESP8266
@@ -220,7 +219,7 @@ IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) const 
   }
 }
 
-std::string Mycila::ESPConnect::getWiFiSSID() const {
+ESPCONNECT_STRING Mycila::ESPConnect::getWiFiSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
     case WIFI_MODE_APSTA:
@@ -232,7 +231,7 @@ std::string Mycila::ESPConnect::getWiFiSSID() const {
   }
 }
 
-std::string Mycila::ESPConnect::getWiFiBSSID() const {
+ESPCONNECT_STRING Mycila::ESPConnect::getWiFiBSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
     case WIFI_MODE_APSTA:
@@ -344,7 +343,7 @@ void Mycila::ESPConnect::loop() {
 #ifdef ESPCONNECT_ETH_SUPPORT
     _startEthernet();
 #endif
-    if (!_config.wifiSSID.empty())
+    if (_config.wifiSSID.length())
       _startSTA();
   }
 
@@ -364,7 +363,7 @@ void Mycila::ESPConnect::loop() {
 
   // timeout portal if we failed to connect to WiFi (we got a SSID) and portal duration is passed
   // in order to restart and try again to connect to the configured WiFi
-  if (_state == Mycila::ESPConnect::State::PORTAL_STARTED && !_config.wifiSSID.empty() && _durationPassed(_portalTimeout)) {
+  if (_state == Mycila::ESPConnect::State::PORTAL_STARTED && _config.wifiSSID.length() && _durationPassed(_portalTimeout)) {
     _setState(Mycila::ESPConnect::State::PORTAL_TIMEOUT);
   }
 
@@ -583,7 +582,7 @@ void Mycila::ESPConnect::_startAP() {
 
   WiFi.mode(_config.apMode ? WIFI_AP : WIFI_AP_STA);
 
-  if (_apPassword.empty() || _apPassword.length() < 8) {
+  if (!_apPassword.length() || _apPassword.length() < 8) {
     // Disabling invalid Access Point password which must be at least 8 characters long when set
     WiFi.softAP(_apSSID.c_str(), "");
   } else
@@ -671,15 +670,15 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
       } else {
-        std::string ssid;
-        std::string password;
+        ESPCONNECT_STRING ssid;
+        ESPCONNECT_STRING password;
         if (request->hasParam("ssid", true))
           ssid = request->getParam("ssid", true)->value().c_str();
         if (request->hasParam("password", true))
           password = request->getParam("password", true)->value().c_str();
-        if (ssid.empty())
+        if (!ssid.length())
           return request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
-        if (ssid.length() > 32 || password.length() > 64 || (!password.empty() && password.length() < 8))
+        if (ssid.length() > 32 || password.length() > 64 || (password.length() && password.length() < 8))
           return request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
         _config.wifiSSID = ssid;
         _config.wifiPassword = password;
