@@ -39,8 +39,6 @@ jobs:
             --recursive \
             --filter=-whitespace/line_length,-whitespace/braces,-whitespace/comments,-runtime/indentation_namespace,-whitespace/indent,-readability/braces,-whitespace/newline,-readability/todo,-build/c++11 \
             --exclude=src/espconnect_webpage.h \
-            --exclude=src/backport/ETHClass.h \
-            --exclude=src/backport/ETHClass.cpp \
             src
 
   platformio-ci-esp32:
@@ -176,7 +174,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [arduino-2, arduino-3, arduino-3-latest]
+        platform: [arduino-3, arduino-3-latest]
         board: [esp32-poe, wt32-eth01, lilygo-eth-lite-s3]
 
     steps:

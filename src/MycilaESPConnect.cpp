@@ -33,12 +33,8 @@
 #if defined(ESPCONNECT_ETH_SUPPORT)
   #if defined(ETH_PHY_SPI_SCK) && defined(ETH_PHY_SPI_MISO) && defined(ETH_PHY_SPI_MOSI) && defined(ETH_PHY_CS) && defined(ETH_PHY_IRQ) && defined(ETH_PHY_RST)
     #define ESPCONNECT_ETH_SPI_SUPPORT 1
-    #if ESP_IDF_VERSION_MAJOR >= 5
-      #include <ETH.h>
-      #include <SPI.h>
-    #else
-      #include "backport/ETHClass.h"
-    #endif
+    #include <ETH.h>
+    #include <SPI.h>
   #else
     #include <ETH.h>
   #endif
@@ -496,13 +492,9 @@ void Mycila::ESPConnect::_startEthernet() {
   bool success = true;
 
   #if defined(ESPCONNECT_ETH_SPI_SUPPORT)
-    #if ESP_IDF_VERSION_MAJOR >= 5
   // https://github.com/espressif/arduino-esp32/tree/master/libraries/Ethernet/examples
   SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
   success = ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI);
-    #else
-  success = ETH.beginSPI(ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_SPI_SCK, ETH_PHY_CS, ETH_PHY_RST, ETH_PHY_IRQ);
-    #endif
   #else
   success = ETH.begin();
   #endif
