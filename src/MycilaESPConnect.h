@@ -5,7 +5,12 @@
 #pragma once
 
 #include <DNSServer.h>
-#include <WiFi.h>
+
+#ifdef ESP8266
+  #include <ESP8266WiFi.h>
+#else
+  #include <WiFi.h>
+#endif
 
 #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
   #include <ArduinoJson.h>
