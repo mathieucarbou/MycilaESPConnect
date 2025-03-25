@@ -30,6 +30,7 @@ He is making great Arduino libraries.
   - [Ethernet Support](#ethernet-support)
   - [Logo](#logo)
   - [mDNS](#mdns)
+  - [Compile Flags](#compile-flags)
 
 ## Changes
 
@@ -241,3 +242,11 @@ If not provided, the logo won't appear in the Captive Portal.
 
 mDNS takes quite a lot of space in flash (about 25KB).
 You can disable it by setting `-D ESPCONNECT_NO_MDNS`.
+
+### Compile Flags
+
+- `-D ESPCONNECT_NO_MDNS`: disable mDNS
+- `-D ESPCONNECT_DEBUG`: enable debug logs on ESP8266
+- `-D ESPCONNECT_NO_CAPTIVE_PORTAL`: disable Captive Portal and ESPAsyncWebServer dependency
+- `-D ESPCONNECT_NO_STD_STRING`: use Arduino `String` instead of `std::string`
+- `-D ESPCONNECT_NO_LOGGING`: disable logging
