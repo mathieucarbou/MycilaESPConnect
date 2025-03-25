@@ -58,7 +58,7 @@ He is making great Arduino libraries.
 2 flavors of `begin()` methods:
 
 1. `espConnect.begin("hostname", "ssid", "password")` / `espConnect.begin("hostname", "ssid")`
-2. `espConnect.begin("hostname", "ssid", "password", Mycila::ESPConnect::Config)` where config is `{.wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
+2. `espConnect.begin("ssid", "password", Mycila::ESPConnect::Config)` where config is `{.hostname = ..., .wifiSSID = ..., .wifiPassword = ..., .apMode = ...}`
 
 The first flavors will automatically handle the persistance of user choices and reload them at startup.
 
@@ -147,12 +147,13 @@ espConnect.setIPConfig(ipConfig);
 
   // load config from external system
   Mycila::ESPConnect::Config config = {
+    .hostname = "arduino",
     .wifiSSID = ...,
     .wifiPassword = ...,
     .apMode = ...
   };
 
-  espConnect.begin("arduino", "Captive Portal SSID", "", config);
+  espConnect.begin("Captive Portal SSID", "", config);
 ```
 
 ### ESP8266 Specifics

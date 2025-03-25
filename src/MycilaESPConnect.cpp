@@ -257,14 +257,14 @@ void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const c
   _autoSave = true;
   Config config;
   loadConfiguration(config);
-  begin(hostname, apSSID, apPassword, config);
+  config.hostname = hostname == nullptr ? "" : hostname;
+  begin(apSSID, apPassword, config);
 }
 
-void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const char* apPassword, const Mycila::ESPConnect::Config& config) {
+void Mycila::ESPConnect::begin(const char* apSSID, const char* apPassword, const Mycila::ESPConnect::Config& config) {
   if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
-  _hostname = hostname;
   _apSSID = apSSID;
   _apPassword = apPassword;
   _config = config; // copy values
@@ -397,6 +397,8 @@ void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
     config.ipConfig.gateway.fromString(preferences.getString("gateway"));
   if (preferences.isKey("dns"))
     config.ipConfig.dns.fromString(preferences.getString("dns"));
+  if (preferences.isKey("hostname"))
+    config.hostname = preferences.getString("hostname").c_str();
   preferences.end();
   LOGD(TAG, " - AP: %d", config.apMode);
   LOGD(TAG, " - SSID: %s", config.wifiSSID.c_str());
@@ -404,6 +406,7 @@ void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
   LOGD(TAG, " - Subnet: %s", config.ipConfig.subnet.toString().c_str());
   LOGD(TAG, " - Gateway: %s", config.ipConfig.gateway.toString().c_str());
   LOGD(TAG, " - DNS: %s", config.ipConfig.dns.toString().c_str());
+  LOGD(TAG, " - Hostname: %s", config.hostname.c_str());
 }
 
 void Mycila::ESPConnect::saveConfiguration(const Mycila::ESPConnect::Config& config) {
@@ -414,6 +417,7 @@ void Mycila::ESPConnect::saveConfiguration(const Mycila::ESPConnect::Config& con
   LOGD(TAG, " - Subnet: %s", config.ipConfig.subnet.toString().c_str());
   LOGD(TAG, " - Gateway: %s", config.ipConfig.gateway.toString().c_str());
   LOGD(TAG, " - DNS: %s", config.ipConfig.dns.toString().c_str());
+  LOGD(TAG, " - Hostname: %s", config.hostname.c_str());
   Preferences preferences;
   preferences.begin("espconnect", false);
   preferences.putBool("ap", config.apMode);
@@ -423,6 +427,7 @@ void Mycila::ESPConnect::saveConfiguration(const Mycila::ESPConnect::Config& con
   preferences.putString("subnet", config.ipConfig.subnet.toString().c_str());
   preferences.putString("gateway", config.ipConfig.gateway.toString().c_str());
   preferences.putString("dns", config.ipConfig.dns.toString().c_str());
+  preferences.putString("hostname", config.hostname.c_str());
   preferences.end();
 }
 
@@ -440,6 +445,7 @@ void Mycila::ESPConnect::toJson(const JsonObject& root) const {
   root["ip_address_ap"] = getIPAddress(Mycila::ESPConnect::Mode::AP).toString();
   root["ip_address_eth"] = getIPAddress(Mycila::ESPConnect::Mode::ETH).toString();
   root["ip_address_sta"] = getIPAddress(Mycila::ESPConnect::Mode::STA).toString();
+  root["hostname"] = _config.hostname.c_str();
   root["mac_address"] = getMACAddress();
   root["mac_address_ap"] = getMACAddress(Mycila::ESPConnect::Mode::AP);
   root["mac_address_eth"] = getMACAddress(Mycila::ESPConnect::Mode::ETH);
@@ -526,7 +532,7 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
 #endif
 
-  WiFi.setHostname(_hostname.c_str());
+  WiFi.setHostname(_config.hostname.c_str());
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
@@ -559,12 +565,12 @@ void Mycila::ESPConnect::_startAP() {
   LOGI(TAG, "Starting Access Point...");
 
 #ifndef ESP8266
-  WiFi.softAPsetHostname(_hostname.c_str());
+  WiFi.softAPsetHostname(_config.hostname.c_str());
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
   WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
 #endif
 
-  WiFi.setHostname(_hostname.c_str());
+  WiFi.setHostname(_config.hostname.c_str());
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
@@ -744,7 +750,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_ETH_START:
       if (ETH.linkUp()) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_START", getStateName());
-        ETH.setHostname(_hostname.c_str());
+        ETH.setHostname(_config.hostname.c_str());
       }
       break;
 
@@ -756,7 +762,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
         }
         _lastTime = -1;
   #ifndef ESPCONNECT_NO_MDNS
-        MDNS.begin(_hostname.c_str());
+        MDNS.begin(_config.hostname.c_str());
   #endif
         _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
       }
@@ -774,7 +780,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
         _lastTime = -1;
 #ifndef ESPCONNECT_NO_MDNS
-        MDNS.begin(_hostname.c_str());
+        MDNS.begin(_config.hostname.c_str());
 #endif
         _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
       }
@@ -800,7 +806,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 
     case ARDUINO_EVENT_WIFI_AP_START:
 #ifndef ESPCONNECT_NO_MDNS
-      MDNS.begin(_hostname.c_str());
+      MDNS.begin(_config.hostname.c_str());
 #endif
       if (_state == Mycila::ESPConnect::State::AP_STARTING) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());

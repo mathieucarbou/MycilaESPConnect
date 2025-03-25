@@ -99,6 +99,8 @@ namespace Mycila {
       } IPConfig;
 
       typedef struct {
+          // Hostname of the ESP, loaded from config or set from begin()
+          ESPCONNECT_STRING hostname;
           // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
           ESPCONNECT_STRING wifiSSID;
           // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
@@ -134,7 +136,7 @@ namespace Mycila {
       // 3. If STA mode fails, or empty WiFi credentials were passed, starts the captive portal
       //
       // Using this method will NOT auto-load or auto-save any configuration
-      void begin(const char* hostname, const char* apSSID, const char* apPassword, const Config& config); // NOLINT
+      void begin(const char* apSSID, const char* apPassword, const Config& config); // NOLINT
 
       // loop() method to be called from main loop()
       void loop();
@@ -173,7 +175,7 @@ namespace Mycila {
       int8_t getWiFiSignalQuality() const;
 
       // the hostname passed from begin()
-      const ESPCONNECT_STRING& getHostname() const { return _hostname; }
+      const ESPCONNECT_STRING& getHostname() const { return _config.hostname; }
 
       // SSID name used for the captive portal or in AP mode
       const ESPCONNECT_STRING& getAccessPointSSID() const { return _apSSID; }
@@ -248,7 +250,6 @@ namespace Mycila {
       StateCallback _callback = nullptr;
       DNSServer* _dnsServer = nullptr;
       int64_t _lastTime = -1;
-      ESPCONNECT_STRING _hostname;
       ESPCONNECT_STRING _apSSID;
       ESPCONNECT_STRING _apPassword;
       uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;

@@ -77,6 +77,7 @@ void setup() {
   Preferences preferences;
   preferences.begin("app", true);
   Mycila::ESPConnect::Config config = {
+    .hostname = "arduino",
     .wifiSSID = (preferences.isKey("ssid") ? preferences.getString("ssid", emptyString) : emptyString).c_str(),
     .wifiPassword = (preferences.isKey("password") ? preferences.getString("password", emptyString) : emptyString).c_str(),
     .apMode = preferences.isKey("ap") ? preferences.getBool("ap", false) : false};
@@ -87,7 +88,7 @@ void setup() {
   Serial.printf("wifiSSID: %s\n", config.wifiSSID.c_str());
   Serial.printf("wifiPassword: %s\n", config.wifiPassword.c_str());
 
-  espConnect.begin("arduino", "Captive Portal SSID", "", config);
+  espConnect.begin("Captive Portal SSID", "", config);
 
   Serial.println("====> setup() completed...");
 }
