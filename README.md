@@ -43,7 +43,7 @@ He is making great Arduino libraries.
 - **Flexible Configuration:** ESPConnect can either control the configuration persistence for you or let you do it
 - **mDNS / DNS Support**
 - **Ethernet support**
-- **Ready for Arduino 3 (ESP-IDF 5.1)**
+- **Ready for Arduino 3 (ESP-IDF >= 5.1)**
 - **ESP8266 support** (except for Ethernet)
 - **Supports Static IP configuration**
 

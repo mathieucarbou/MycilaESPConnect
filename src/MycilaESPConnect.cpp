@@ -635,11 +635,7 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
 
         // we have some results
         for (int i = 0; i < n; ++i) {
-  #if ARDUINOJSON_VERSION_MAJOR == 6
-          JsonObject entry = json.createNestedObject();
-  #else
-            JsonObject entry = json.add<JsonObject>();
-  #endif
+          JsonObject entry = json.add<JsonObject>();
           entry["name"] = WiFi.SSID(i);
           entry["rssi"] = WiFi.RSSI(i);
           entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
