@@ -26,7 +26,7 @@
   #define ESPCONNECT_STRING std::string
 #endif
 
-#define ESPCONNECT_VERSION          "8.1.0"
+#define ESPCONNECT_VERSION          "9.0.0"
 #define ESPCONNECT_VERSION_MAJOR    8
 #define ESPCONNECT_VERSION_MINOR    1
 #define ESPCONNECT_VERSION_REVISION 0
