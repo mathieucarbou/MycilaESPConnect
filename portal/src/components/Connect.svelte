@@ -2,6 +2,7 @@
   import { onMount, createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
 
+  export let bssid;
   export let ssid;
   export let open;
   export let ap_mode;
@@ -11,9 +12,10 @@
   async function connect(){
     loading = true;
     let formData = new FormData();
-    formData.append('ssid', ssid);
-    formData.append('password', password);
-    formData.append('ap_mode', ap_mode);
+    formData.append('bssid', bssid || "");
+    formData.append('ssid', ssid || "");
+    formData.append('password', password || "");
+    formData.append('ap_mode', ap_mode || false);
     const res = await fetch(`/espconnect/connect`, { method: 'POST', body: new URLSearchParams(formData) });
 		if (res.status === 200) {
       dispatch('success');
@@ -64,7 +66,7 @@
       </div>
       <div class="row">
         <div class="column column-100">
-          <input type="text" placeholder="SSID" id="ssid" value={ssid} disabled={loading} autocomplete="off" required>
+          <input type="text" placeholder="SSID" id="ssid" value={ssid} disabled={loading} autocomplete="off" required readonly>
         </div>
       </div>
       {#if !open}

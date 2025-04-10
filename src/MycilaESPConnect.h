@@ -101,6 +101,8 @@ namespace Mycila {
       typedef struct {
           // Hostname of the ESP, loaded from config or set from begin()
           ESPCONNECT_STRING hostname;
+          // BSSID of the WiFi to connect to, useful in mesh networks to reconnect to the same AP.
+          ESPCONNECT_STRING wifiBSSID;
           // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
           ESPCONNECT_STRING wifiSSID;
           // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
@@ -189,6 +191,8 @@ namespace Mycila {
       // Set the current configuration
       void setConfig(const Config& config) { _config = config; }
 
+      // BSSID name to connect to, loaded from config or set from begin(), or from the captive portal
+      const ESPCONNECT_STRING& getConfiguredWiFiBSSID() const { return _config.wifiBSSID; }
       // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
       const ESPCONNECT_STRING& getConfiguredWiFiSSID() const { return _config.wifiSSID; }
       // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal

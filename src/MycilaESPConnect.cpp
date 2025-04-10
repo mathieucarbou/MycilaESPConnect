@@ -27,6 +27,12 @@
   #include <esp_mac.h>
 #endif
 
+#ifdef ESP8266
+  #include "./esp8266/MacAddress.h"
+#else
+  #include <MacAddress.h>
+#endif
+
 #include <Preferences.h>
 #include <functional>
 
@@ -384,23 +390,35 @@ void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
   LOGD(TAG, "Loading config...");
   Preferences preferences;
   preferences.begin("espconnect", true);
+  // ap
   config.apMode = preferences.isKey("ap") ? preferences.getBool("ap", false) : false;
+  // bssid
+  if (preferences.isKey("bssid"))
+    config.wifiBSSID = preferences.getString("bssid").c_str();
+  // ssid
   if (preferences.isKey("ssid"))
     config.wifiSSID = preferences.getString("ssid").c_str();
+  // password
   if (preferences.isKey("password"))
     config.wifiPassword = preferences.getString("password").c_str();
+  // ip
   if (preferences.isKey("ip"))
     config.ipConfig.ip.fromString(preferences.getString("ip"));
+  // subnet
   if (preferences.isKey("subnet"))
     config.ipConfig.subnet.fromString(preferences.getString("subnet"));
+  // gateway
   if (preferences.isKey("gateway"))
     config.ipConfig.gateway.fromString(preferences.getString("gateway"));
+  // dns
   if (preferences.isKey("dns"))
     config.ipConfig.dns.fromString(preferences.getString("dns"));
+  // hostname
   if (preferences.isKey("hostname"))
     config.hostname = preferences.getString("hostname").c_str();
   preferences.end();
   LOGD(TAG, " - AP: %d", config.apMode);
+  LOGD(TAG, " - BSSID: %s", config.wifiBSSID.c_str());
   LOGD(TAG, " - SSID: %s", config.wifiSSID.c_str());
   LOGD(TAG, " - IP: %s", config.ipConfig.ip.toString().c_str());
   LOGD(TAG, " - Subnet: %s", config.ipConfig.subnet.toString().c_str());
@@ -421,6 +439,7 @@ void Mycila::ESPConnect::saveConfiguration(const Mycila::ESPConnect::Config& con
   Preferences preferences;
   preferences.begin("espconnect", false);
   preferences.putBool("ap", config.apMode);
+  preferences.putString("bssid", config.wifiBSSID.c_str());
   preferences.putString("ssid", config.wifiSSID.c_str());
   preferences.putString("password", config.wifiPassword.c_str());
   preferences.putString("ip", config.ipConfig.ip.toString().c_str());
@@ -551,8 +570,17 @@ void Mycila::ESPConnect::_startSTA() {
   }
 #endif
 
-  LOGD(TAG, "Connecting to SSID: %s...", _config.wifiSSID.c_str());
-  WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str());
+  if (_config.wifiBSSID.length()) {
+    LOGI(TAG, "Connecting to SSID: %s with BSSID: %s", _config.wifiSSID.c_str(), _config.wifiBSSID.c_str());
+
+    MacAddress bssid(MACType::MAC6);
+    bssid.fromString(_config.wifiBSSID.c_str());
+
+    WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str(), 0, bssid);
+  } else {
+    LOGI(TAG, "Connecting to SSID: %s", _config.wifiSSID.c_str());
+    WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str());
+  }
 
   _lastTime = millis();
 
@@ -642,6 +670,7 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
         // we have some results
         for (int i = 0; i < n; ++i) {
           JsonObject entry = json.add<JsonObject>();
+          entry["bssid"] = WiFi.BSSIDstr(i);
           entry["name"] = WiFi.SSID(i);
           entry["rssi"] = WiFi.RSSI(i);
           entry["signal"] = _wifiSignalQuality(WiFi.RSSI(i));
@@ -662,16 +691,22 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
       } else {
+        ESPCONNECT_STRING bssid;
         ESPCONNECT_STRING ssid;
         ESPCONNECT_STRING password;
+        if (request->hasParam("bssid", true))
+          bssid = request->getParam("bssid", true)->value().c_str();
         if (request->hasParam("ssid", true))
           ssid = request->getParam("ssid", true)->value().c_str();
         if (request->hasParam("password", true))
           password = request->getParam("password", true)->value().c_str();
+        if (!bssid.length())
+          return request->send(400, "application/json", "{\"message\":\"Invalid BSSID\"}");
         if (!ssid.length())
           return request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
         if (ssid.length() > 32 || password.length() > 64 || (password.length() && password.length() < 8))
           return request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
+        _config.wifiBSSID = bssid;
         _config.wifiSSID = ssid;
         _config.wifiPassword = password;
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");

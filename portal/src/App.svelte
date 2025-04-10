@@ -15,6 +15,7 @@
 		selection: {
 			ap_mode: false,
 			selected: false,
+			bssid: '',
 			ssid: '',
 			open: false
 		},
@@ -34,22 +35,24 @@
 	function clearSelection() {
 		data.selection.selected = false;
 		data.selection.ap_mode = false;
+		data.selection.bssid = "";
 		data.selection.ssid = "";
 		data.selection.open = false;
 	}
 
 	function selectAccessPoint(event) {
-		data.selection.ssid = event.detail.ssid
-		data.selection.ap_mode = event.detail.ap_mode
+		data.selection.bssid = event.detail.bssid;
+		data.selection.ssid = event.detail.ssid;
+		data.selection.ap_mode = event.detail.ap_mode;
 		if(event.detail.open){
-			data.selection.open = true
+			data.selection.open = true;
 		}
 		data.selection.selected = true;
 	}
 
 	async function refresh (){ 
-		data.loading = true
-		await updateAccessPoints()
+		data.loading = true;
+		await updateAccessPoints();
 	}
 
 	async function updateAccessPoints() {
@@ -100,7 +103,7 @@
 						{#if !data.selection.selected}
 							<SelectScan access_points={data.access_points} on:refresh={refresh} on:select={selectAccessPoint} />
 						{:else}
-							<Connect ssid={data.selection.ssid} ap_mode={data.selection.ap_mode} open={data.selection.open} on:back={clearSelection} on:success={setConnectSuccess} on:error={setConnectError} />
+							<Connect bssid={data.selection.bssid} ssid={data.selection.ssid} ap_mode={data.selection.ap_mode} open={data.selection.open} on:back={clearSelection} on:success={setConnectSuccess} on:error={setConnectError} />
 						{/if}
 					{:else}
 							<Status success={data.connectStatus.success} />
@@ -174,7 +177,7 @@
 	}
 
 	.clickable-row{
-		padding: 1rem 0rem;
+		padding: 0rem 0rem;
 		border-bottom: 0.1rem solid #f4f5f6;
 		transition: background-color .5s cubic-bezier(0.215, 0.610, 0.355, 1), box-shadow .5s cubic-bezier(0.215, 0.610, 0.355, 1);
 		border-radius: .5rem;
