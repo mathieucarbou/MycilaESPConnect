@@ -27,10 +27,10 @@
   #include <esp_mac.h>
 #endif
 
-#ifdef ESP8266
-  #include "./esp8266/MacAddress.h"
-#else
+#if __has_include(<MacAddress.h>)
   #include <MacAddress.h>
+#else
+  #include "./backport/MacAddress.h"
 #endif
 
 #include <Preferences.h>
