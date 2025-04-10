@@ -122,7 +122,7 @@ espConnect.getConfig().ipConfig.dns.fromString("192.168.125.1");
   espConnect.listen([](__unused Mycila::ESPConnect::State previous, __unused Mycila::ESPConnect::State state) {
     switch (state) {
       case Mycila::ESPConnect::State::PORTAL_COMPLETE:
-        bool apMode = espConnect.hasConfiguredAPMode();
+        bool apMode = espConnect.getConfig().apMode;
         std::string wifiSSID = espConnect.getConfig().wifiSSID;
         std::string wifiPassword = espConnect.getConfig().wifiPassword;
         if (apMode) {
