@@ -176,9 +176,6 @@ namespace Mycila {
       // Returns the signal quality (percentage from 0 to 100) of the current WiFi, or -1 if not available
       int8_t getWiFiSignalQuality() const;
 
-      // the hostname passed from begin()
-      const ESPCONNECT_STRING& getHostname() const { return _config.hostname; }
-
       // SSID name used for the captive portal or in AP mode
       const ESPCONNECT_STRING& getAccessPointSSID() const { return _apSSID; }
       // Password used for the captive portal or in AP mode
@@ -190,22 +187,6 @@ namespace Mycila {
       Config& getConfig() { return _config; }
       // Set the current configuration
       void setConfig(const Config& config) { _config = config; }
-
-      // BSSID name to connect to, loaded from config or set from begin(), or from the captive portal
-      const ESPCONNECT_STRING& getConfiguredWiFiBSSID() const { return _config.wifiBSSID; }
-      // SSID name to connect to, loaded from config or set from begin(), or from the captive portal
-      const ESPCONNECT_STRING& getConfiguredWiFiSSID() const { return _config.wifiSSID; }
-      // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
-      const ESPCONNECT_STRING& getConfiguredWiFiPassword() const { return _config.wifiPassword; }
-      // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
-      bool hasConfiguredAPMode() const { return _config.apMode; }
-
-      // IP configuration used for WiFi or ETH
-      const IPConfig& getIPConfig() const { return _config.ipConfig; }
-      // Static IP configuration: by default, DHCP is used
-      // The static IP configuration applies to the WiFi STA connection, except if ETH is used for ETH board, then it applies only to the Ethernet connection.
-      void setIPConfig(const IPConfig& ipConfig) { _config.ipConfig = ipConfig; }
-
       // Maximum duration that the captive portal will be active before closing
       uint32_t getCaptivePortalTimeout() const { return _portalTimeout; }
       // Maximum duration that the captive portal will be active before closing
