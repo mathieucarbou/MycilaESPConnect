@@ -430,6 +430,7 @@ void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
 void Mycila::ESPConnect::saveConfiguration(const Mycila::ESPConnect::Config& config) {
   LOGD(TAG, "Saving config...");
   LOGD(TAG, " - AP: %d", config.apMode);
+  LOGD(TAG, " - BSSID: %s", config.wifiBSSID.c_str());
   LOGD(TAG, " - SSID: %s", config.wifiSSID.c_str());
   LOGD(TAG, " - IP: %s", config.ipConfig.ip.toString().c_str());
   LOGD(TAG, " - Subnet: %s", config.ipConfig.subnet.toString().c_str());
