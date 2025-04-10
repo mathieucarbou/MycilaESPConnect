@@ -107,14 +107,10 @@ void loop() {
 ### Set static IP
 
 ```cpp
-Mycila::ESPConnect::IPConfig ipConfig;
-
 ipConfig.ip.fromString("192.168.125.99");
-ipConfig.gateway.fromString("192.168.125.1");
-ipConfig.subnet.fromString("255.255.255.0");
-ipConfig.dns.fromString("192.168.125.1");
-
-espConnect.setIPConfig(ipConfig);
+espConnect.getConfig().ipConfig.gateway.fromString("192.168.125.1");
+espConnect.getConfig().ipConfig.subnet.fromString("255.255.255.0");
+espConnect.getConfig().ipConfig.dns.fromString("192.168.125.1");
 ```
 
 ### Use an external configuration system
@@ -127,8 +123,8 @@ espConnect.setIPConfig(ipConfig);
     switch (state) {
       case Mycila::ESPConnect::State::PORTAL_COMPLETE:
         bool apMode = espConnect.hasConfiguredAPMode();
-        std::string wifiSSID = espConnect.getConfiguredWiFiSSID();
-        std::string wifiPassword = espConnect.getConfiguredWiFiPassword();
+        std::string wifiSSID = espConnect.getConfig().wifiSSID;
+        std::string wifiPassword = espConnect.getConfig().wifiPassword;
         if (apMode) {
           Serial.println("====> Captive Portal: Access Point configured");
         } else {

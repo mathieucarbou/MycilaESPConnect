@@ -57,16 +57,15 @@ void setup() {
   Mycila::ESPConnect::IPConfig ipConfig;
   switch (random(0, 3)) {
     case 0:
-      ipConfig.ip.fromString("192.168.125.99");
-      ipConfig.gateway.fromString("192.168.125.1");
-      ipConfig.subnet.fromString("255.255.255.0");
-      ipConfig.dns.fromString("192.168.125.1");
-      espConnect.setIPConfig(ipConfig);
+      espConnect.getConfig().ipConfig.ip.fromString("192.168.125.99");
+      espConnect.getConfig().ipConfig.gateway.fromString("192.168.125.1");
+      espConnect.getConfig().ipConfig.subnet.fromString("255.255.255.0");
+      espConnect.getConfig().ipConfig.dns.fromString("192.168.125.1");
       espConnect.saveConfiguration();
       break;
 
     case 1:
-      espConnect.setIPConfig(Mycila::ESPConnect::IPConfig());
+      espConnect.getConfig().ipConfig = {};
       espConnect.saveConfiguration();
       break;
 

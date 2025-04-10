@@ -69,15 +69,13 @@ void loop() {
   }
 
   if (now - lastChange > 10000) {
-    if (espConnect.getIPConfig().ip == INADDR_NONE) {
-      Mycila::ESPConnect::IPConfig ipConfig;
-      ipConfig.ip.fromString("192.168.125.99");
-      ipConfig.gateway.fromString("192.168.125.1");
-      ipConfig.subnet.fromString("255.255.255.0");
-      ipConfig.dns.fromString("192.168.125.1");
-      espConnect.setIPConfig(ipConfig);
+    if (espConnect.getConfig().ipConfig.ip == INADDR_NONE) {
+      espConnect.getConfig().ipConfig.ip.fromString("192.168.125.99");
+      espConnect.getConfig().ipConfig.gateway.fromString("192.168.125.1");
+      espConnect.getConfig().ipConfig.subnet.fromString("255.255.255.0");
+      espConnect.getConfig().ipConfig.dns.fromString("192.168.125.1");
     } else {
-      espConnect.setIPConfig(Mycila::ESPConnect::IPConfig());
+      espConnect.getConfig().ipConfig = {};
     }
     lastChange = millis();
   }

@@ -51,13 +51,12 @@ void setup() {
 
       case Mycila::ESPConnect::State::PORTAL_COMPLETE: {
         Serial.println("====> Captive Portal has ended, save the configuration...");
-        bool apMode = espConnect.hasConfiguredAPMode();
         Preferences preferences;
         preferences.begin("app", false);
-        preferences.putBool("ap", apMode);
-        if (!apMode) {
-          preferences.putString("ssid", espConnect.getConfiguredWiFiSSID().c_str());
-          preferences.putString("password", espConnect.getConfiguredWiFiPassword().c_str());
+        preferences.putBool("ap", espConnect.getConfig().apMode);
+        if (!espConnect.getConfig().apMode) {
+          preferences.putString("ssid", espConnect.getConfig().wifiSSID.c_str());
+          preferences.putString("password", espConnect.getConfig().wifiPassword.c_str());
         }
         preferences.end();
         break;
