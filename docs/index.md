@@ -20,7 +20,7 @@ This library is based on the UI from [https://github.com/ayushsharma82/ESPConnec
 I highly recommend looking at all OSS projects (and products) from [@ayushsharma82](https://github.com/ayushsharma82).
 He is making great Arduino libraries.
 
-- [Changes](#changes)
+- [Features](#features)
 - [Usage](#usage)
   - [API](#api)
   - [Blocking mode](#blocking-mode)
@@ -32,20 +32,21 @@ He is making great Arduino libraries.
   - [mDNS](#mdns)
   - [Compile Flags](#compile-flags)
 
-## Changes
+## Features
 
-- **Logo**: user is responsible to provide a logo at this path: `/logo`
-- **AP Mode**: a new choice is added to the captive portal so that the user can remain in AP mode
+- **Logo**: user is responsible to provide a logo at this path: `/logo`, otherwise no logo will be displayed
+- **AP Mode**: a choice is added to the captive portal so that the user can remain in AP mode
 - **Network State Machine**: a better state machine is implemented to handle switching between Captive Portal, AP Mode and STA mode
 - **New API**: API has been completely rewritten
 - **Callback**: Listen to Network State changes
 - **Blocking and Non-blocking modes**: ESPConnect can be configured to loop and wait for the user to complete the Captive Portal steps, or the app can continue working in the background and the Captive Portal will be launched as needed.
 - **Flexible Configuration:** ESPConnect can either control the configuration persistence for you or let you do it
 - **mDNS / DNS Support**
-- **Ethernet support**
-- **Ready for Arduino 3 (ESP-IDF >= 5.1)**
-- **ESP8266 support** (except for Ethernet)
+- **Ethernet support** (only for ESP32)
+- **Arduino 3 ready**
+- **ESP32 and ESP8266 support**
 - **Supports Static IP configuration**
+- **Supports auto-save and reload of configuration**
 
 ## Usage
 
@@ -107,7 +108,7 @@ void loop() {
 ### Set static IP
 
 ```cpp
-espConnect.getConfig().ipConfig.ip.fromString("192.168.125.99");
+ipConfig.ip.fromString("192.168.125.99");
 espConnect.getConfig().ipConfig.gateway.fromString("192.168.125.1");
 espConnect.getConfig().ipConfig.subnet.fromString("255.255.255.0");
 espConnect.getConfig().ipConfig.dns.fromString("192.168.125.1");
