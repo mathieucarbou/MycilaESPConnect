@@ -406,9 +406,6 @@ void Mycila::ESPConnect::loop() {
         _restartDelay = 0;
         _autoRestart = false;
       }
-      // We wait for the restart to be done
-      // and we don't want to restart again
-      return;
     }
   }
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
