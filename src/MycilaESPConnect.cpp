@@ -376,29 +376,44 @@ void Mycila::ESPConnect::loop() {
     _disableCaptivePortal();
   }
 
-  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE || _state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
-    
+  if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
+    LOGW(TAG, "Portal timeout, restarting ESP...");
+    _stopAP();
+    ESP.restart();
+  }
+
+  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
     if (_autoRestart) {
-      if (!_restartPending) {
-        // Initialiser le timeout non bloquant
-        LOGW(TAG, "Restart in %d ms...", _restartDelay);
-        _restartPending = true;
-        _restartTime = millis();
-      } else if (millis() - _restartTime >= _restartDelay) {
-        // Le délai est écoulé, on peut redémarrer
+      if (_restartRequestTime != 0) {
+        // init timeout 
+        LOGW(TAG, "Restart in %d ms...", _restartRequestTime);
+        _restartDelay = millis();
+        if(_preRestartCallback)
+          _preRestartCallback();
+      } else if (millis() - _restartDelay >= _restartRequestTime) {
+        // delay is over restart
+        if (_restartCallback)
+          _restartCallback();
         LOGW(TAG, "Auto Restart of ESP...");
         _stopAP();
-        delay(200);
-        // We stop the AP and wait for the restart to be done
+        
+        // We stop the AP and restart to be done
         ESP.restart();
+      } else if (_restartRequestTime == 0) {
+        // if the delay is set to zero, we skip the restart
+        // and we don't want to restart again
+        LOGW(TAG, "Restart delay is set to zero, skipping restart."); 
+        _restartDelay = 0;
+        _autoRestart = false;
       }
       // We wait for the restart to be done
       // and we don't want to restart again
       return;
-    } else
+    }
+  }
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
   }
-}
+
 
 void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
   LOGD(TAG, "Loading config...");
