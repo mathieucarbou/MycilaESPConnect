@@ -377,10 +377,24 @@ void Mycila::ESPConnect::loop() {
   }
 
   if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE || _state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
-    _stopAP();
+    
     if (_autoRestart) {
-      LOGW(TAG, "Auto Restart of ESP...");
-      ESP.restart();
+      if (!_restartPending) {
+        // Initialiser le timeout non bloquant
+        LOGW(TAG, "Restart in %d ms...", _restartDelay);
+        _restartPending = true;
+        _restartTime = millis();
+      } else if (millis() - _restartTime >= _restartDelay) {
+        // Le délai est écoulé, on peut redémarrer
+        LOGW(TAG, "Auto Restart of ESP...");
+        _stopAP();
+        delay(200);
+        // We stop the AP and wait for the restart to be done
+        ESP.restart();
+      }
+      // We wait for the restart to be done
+      // and we don't want to restart again
+      return;
     } else
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
   }

@@ -267,5 +267,8 @@ namespace Mycila {
 
     private:
       static int8_t _wifiSignalQuality(int32_t rssi);
+      bool _restartPending = false;
+      unsigned long _restartTime = 0;
+      const unsigned long _restartDelay = 3000;
   };
 } // namespace Mycila
