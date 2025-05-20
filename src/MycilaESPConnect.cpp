@@ -223,15 +223,15 @@ IPAddress Mycila::ESPConnect::getIPv6Address(Mycila::ESPConnect::Mode mode) cons
   const wifi_mode_t wifiMode = WiFi.getMode();
   switch (mode) {
     case Mycila::ESPConnect::Mode::AP:
-      return wifiMode == WIFI_MODE_AP || wifiMode == WIFI_MODE_APSTA ? WiFi.softAPIP() : IPAddress();
+      return IN6ADDR_ANY;
     case Mycila::ESPConnect::Mode::STA:
-      return wifiMode == WIFI_MODE_STA ? WiFi.globalIPv6() : IPAddress();
+      return wifiMode == WIFI_MODE_STA ? WiFi.globalIPv6() : IN6ADDR_ANY;
 #ifdef ESPCONNECT_ETH_SUPPORT
     case Mycila::ESPConnect::Mode::ETH:
-      return ETH.linkUp() ? ETH.localIP() : IPAddress();
+      return ETH.linkUp() ? ETH.globalIPv6() : IN6ADDR_ANY;
 #endif
     default:
-      return IPAddress();
+      return IN6ADDR_ANY;
   }
 }
 
