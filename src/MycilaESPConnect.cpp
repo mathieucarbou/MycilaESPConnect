@@ -378,24 +378,23 @@ void Mycila::ESPConnect::loop() {
 
   if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT || _state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
     if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
-        LOGW(TAG, "Portal timeout, restarting ESP...");
+      LOGW(TAG, "Portal timeout, restarting ESP...");
+      _stopAP();
+      ESP.restart();
+    } else if (_autoRestart) {
+      if (_restartRequestTime == 0) {
+        // init timeout
+        _restartRequestTime = millis();
+      } else if (millis() - _restartRequestTime >= _restartDelay) {
+        // delay is over restart
+        LOGW(TAG, "Auto Restart of ESP...");
         _stopAP();
         ESP.restart();
-    } else if (_autoRestart) {
-        if (_restartRequestTime == 0) {
-            // init timeout 
-            _restartRequestTime = millis();
-        } else if (millis() - _restartRequestTime >= _restartDelay ) {
-            // delay is over restart
-            LOGW(TAG, "Auto Restart of ESP...");
-            _stopAP();
-            ESP.restart();
-        } 
-    }
-} else 
-    _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+      }
+    } else
+      _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+  }
 }
-
 
 void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
   LOGD(TAG, "Loading config...");
