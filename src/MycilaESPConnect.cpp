@@ -219,6 +219,22 @@ IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) const 
   }
 }
 
+IPAddress Mycila::ESPConnect::getIPv6Address(Mycila::ESPConnect::Mode mode) const {
+  const wifi_mode_t wifiMode = WiFi.getMode();
+  switch (mode) {
+    case Mycila::ESPConnect::Mode::AP:
+      return wifiMode == WIFI_MODE_AP || wifiMode == WIFI_MODE_APSTA ? WiFi.softAPIP() : IPAddress();
+    case Mycila::ESPConnect::Mode::STA:
+      return wifiMode == WIFI_MODE_STA ? WiFi.globalIPv6() : IPAddress();
+#ifdef ESPCONNECT_ETH_SUPPORT
+    case Mycila::ESPConnect::Mode::ETH:
+      return ETH.linkUp() ? ETH.localIP() : IPAddress();
+#endif
+    default:
+      return IPAddress();
+  }
+}
+
 ESPCONNECT_STRING Mycila::ESPConnect::getWiFiSSID() const {
   switch (WiFi.getMode()) {
     case WIFI_MODE_AP:
@@ -558,6 +574,7 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.setAutoReconnect(true);
 
   WiFi.mode(WIFI_STA);
+  WiFi.enableIPv6();
 
 #ifndef ESPCONNECT_ETH_SUPPORT
   if (_config.ipConfig.ip) {
@@ -851,6 +868,10 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
         _setState(Mycila::ESPConnect::State::PORTAL_STARTED);
       }
+      break;
+
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
+      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
       break;
 
     default:

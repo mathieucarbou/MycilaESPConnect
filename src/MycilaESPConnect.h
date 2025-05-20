@@ -166,6 +166,7 @@ namespace Mycila {
       // Returns the IP address of the current Ethernet, WiFi, or IP address of the AP or captive portal, or empty if not available
       IPAddress getIPAddress() const { return getIPAddress(getMode()); }
       IPAddress getIPAddress(Mode mode) const;
+      IPAddress getIPv6Address(Mode mode) const;
 
       // Returns the configured WiFi SSID or the configured SSID of the AP or captive portal, or empty if not available, depending on the current mode
       ESPCONNECT_STRING getWiFiSSID() const;
