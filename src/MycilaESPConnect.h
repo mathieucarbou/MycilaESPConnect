@@ -220,27 +220,11 @@ namespace Mycila {
       // when using auto-load and save of configuration, this method can clear saved states.
       void clearConfiguration();
 
-      // Get the scheduled restart time
-      uint32_t getrestartRequestTime() const { return _restartRequestTime; }
-
-      // Set the scheduled restart time
-      void setRestartRequestTime(uint32_t time) {
-        _restartRequestTime = time;
-        if (time == 0) {
-          _restartDelay = 0;
-        }
-      }
-
       // Get the delay before a restart occurs
       uint32_t getRestartDelay() const { return _restartDelay; }
+      // Set the delay before a restart occurs in ms
+      void setRestartDelay(uint32_t delay) { _restartDelay = delay; }
 
-      //set callback to be called when the ESP is restarted
-      using RestartCallback = std::function<void()>;
-      void setRestartCallback(RestartCallback cb) { _restartCallback = cb; }
-
-      //set callback to be called when the restart is set up
-      using PreRestartCallback = std::function<void()>;
-      void setPreRestartCallback(PreRestartCallback cb) { _preRestartCallback = cb; }
 #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       void toJson(const JsonObject& root) const;
 #endif
@@ -289,8 +273,6 @@ namespace Mycila {
     private:
       static int8_t _wifiSignalQuality(int32_t rssi);
       uint32_t _restartRequestTime = 0;
-      uint32_t _restartDelay = 0;
-      RestartCallback _restartCallback = nullptr;
-      PreRestartCallback _preRestartCallback = nullptr;
+      uint32_t _restartDelay = 1000;
   };
 } // namespace Mycila

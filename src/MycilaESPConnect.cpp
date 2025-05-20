@@ -376,40 +376,25 @@ void Mycila::ESPConnect::loop() {
     _disableCaptivePortal();
   }
 
-  if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
-    LOGW(TAG, "Portal timeout, restarting ESP...");
-    _stopAP();
-    ESP.restart();
-  }
-
-  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
-    if (_autoRestart) {
-      if (_restartRequestTime != 0) {
-        // init timeout 
-        LOGW(TAG, "Restart in %d ms...", _restartRequestTime);
-        _restartDelay = millis();
-        if(_preRestartCallback)
-          _preRestartCallback();
-      } else if (millis() - _restartDelay >= _restartRequestTime) {
-        // delay is over restart
-        if (_restartCallback)
-          _restartCallback();
-        LOGW(TAG, "Auto Restart of ESP...");
+  if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT || _state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
+    if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
+        LOGW(TAG, "Portal timeout, restarting ESP...");
         _stopAP();
-        
-        // We stop the AP and restart to be done
         ESP.restart();
-      } else if (_restartRequestTime == 0) {
-        // if the delay is set to zero, we skip the restart
-        // and we don't want to restart again
-        LOGW(TAG, "Restart delay is set to zero, skipping restart."); 
-        _restartDelay = 0;
-        _autoRestart = false;
-      }
+    } else if (_autoRestart) {
+        if (_restartRequestTime == 0) {
+            // init timeout 
+            _restartRequestTime = millis();
+        } else if (millis() - _restartRequestTime >= _restartDelay ) {
+            // delay is over restart
+            LOGW(TAG, "Auto Restart of ESP...");
+            _stopAP();
+            ESP.restart();
+        } 
     }
-  }
-      _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
-  }
+} else 
+    _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+}
 
 
 void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {
