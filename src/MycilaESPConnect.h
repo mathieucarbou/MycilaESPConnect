@@ -7,6 +7,7 @@
 #include <DNSServer.h>
 
 #ifdef ESP8266
+  #define ESPCONNECT_NO_MUTEX 1
   #include <ESP8266WiFi.h>
 #else
   #include <WiFi.h>
@@ -24,6 +25,10 @@
 #else
   #include <string>
   #define ESPCONNECT_STRING std::string
+#endif
+
+#ifndef ESPCONNECT_NO_MUTEX
+  #include <mutex>
 #endif
 
 #define ESPCONNECT_VERSION          "10.0.1"
@@ -277,5 +282,8 @@ namespace Mycila {
       static int8_t _wifiSignalQuality(int32_t rssi);
       uint32_t _restartRequestTime = 0;
       uint32_t _restartDelay = 1000;
+#ifndef ESPCONNECT_NO_MUTEX
+      std::mutex _mutex;
+#endif
   };
 } // namespace Mycila
