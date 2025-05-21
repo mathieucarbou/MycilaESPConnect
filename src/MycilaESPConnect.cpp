@@ -220,19 +220,23 @@ IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) const 
 }
 
 IPAddress Mycila::ESPConnect::getIPv6Address(Mycila::ESPConnect::Mode mode) const {
+#ifndef ESP8266
   const wifi_mode_t wifiMode = WiFi.getMode();
   switch (mode) {
     case Mycila::ESPConnect::Mode::AP:
       return IN6ADDR_ANY;
     case Mycila::ESPConnect::Mode::STA:
       return wifiMode == WIFI_MODE_STA ? WiFi.globalIPv6() : IN6ADDR_ANY;
-#ifdef ESPCONNECT_ETH_SUPPORT
+  #ifdef ESPCONNECT_ETH_SUPPORT
     case Mycila::ESPConnect::Mode::ETH:
       return ETH.linkUp() ? ETH.globalIPv6() : IN6ADDR_ANY;
-#endif
+  #endif
     default:
       return IN6ADDR_ANY;
   }
+#else
+  return IPAddress();
+#endif
 }
 
 ESPCONNECT_STRING Mycila::ESPConnect::getWiFiSSID() const {
@@ -574,7 +578,9 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.setAutoReconnect(true);
 
   WiFi.mode(WIFI_STA);
+#ifndef ESP8266
   WiFi.enableIPv6();
+#endif
 
 #ifndef ESPCONNECT_ETH_SUPPORT
   if (_config.ipConfig.ip) {
@@ -839,6 +845,12 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
       }
       break;
 
+#ifndef ESP8266
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
+      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
+      break;
+#endif
+
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
       if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
@@ -868,10 +880,6 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_AP_START", getStateName());
         _setState(Mycila::ESPConnect::State::PORTAL_STARTED);
       }
-      break;
-
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
-      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
       break;
 
     default:
