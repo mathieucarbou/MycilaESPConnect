@@ -376,14 +376,22 @@ void Mycila::ESPConnect::loop() {
     _disableCaptivePortal();
   }
 
-  if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT || _state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
-    if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
-      LOGW(TAG, "Portal timeout, restarting ESP...");
-      _stopAP();
+  if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
+    LOGW(TAG, "Portal timeout!");
+    _stopAP();
+    if (_autoRestart) {
+      LOGW(TAG, "Restarting ESP...");
       ESP.restart();
-    } else if (_autoRestart) {
-      if (_restartRequestTime == 0) {
-        // init timeout
+    } else {
+      // try to reconnect again with configured settings
+      _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+    }
+  }
+
+  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
+    if (_autoRestart) {
+      if (!_restartRequestTime) {
+        // init _restartRequestTime if not already set to teh time when the portal completed
         _restartRequestTime = millis();
       } else if (millis() - _restartRequestTime >= _restartDelay) {
         // delay is over restart
@@ -391,8 +399,11 @@ void Mycila::ESPConnect::loop() {
         _stopAP();
         ESP.restart();
       }
-    } else
+    } else {
+      _stopAP();
+      // try to reconnect again with new configured settings
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+    }
   }
 }
 
