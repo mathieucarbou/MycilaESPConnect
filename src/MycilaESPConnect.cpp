@@ -345,6 +345,10 @@ void Mycila::ESPConnect::loop() {
   if (_dnsServer != nullptr)
     _dnsServer->processNextRequest();
 
+#ifndef ESPCONNECT_NO_MUTEX
+  std::lock_guard<std::mutex> lock(_mutex);
+#endif
+
   // first check if we have to enter AP mode
   if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && _config.apMode) {
     _startAP();
@@ -396,13 +400,34 @@ void Mycila::ESPConnect::loop() {
     _disableCaptivePortal();
   }
 
-  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE || _state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
+  if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
+    LOGW(TAG, "Portal timeout!");
     _stopAP();
     if (_autoRestart) {
-      LOGW(TAG, "Auto Restart of ESP...");
+      LOGW(TAG, "Restarting ESP...");
       ESP.restart();
-    } else
+    } else {
+      // try to reconnect again with configured settings
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+    }
+  }
+
+  if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
+    if (_autoRestart) {
+      if (!_restartRequestTime) {
+        // init _restartRequestTime if not already set to teh time when the portal completed
+        _restartRequestTime = millis();
+      } else if (millis() - _restartRequestTime >= _restartDelay) {
+        // delay is over restart
+        LOGW(TAG, "Auto Restart of ESP...");
+        _stopAP();
+        ESP.restart();
+      }
+    } else {
+      _stopAP();
+      // try to reconnect again with new configured settings
+      _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
+    }
   }
 }
 
@@ -804,6 +829,10 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
   if (_state == Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
+#ifndef ESPCONNECT_NO_MUTEX
+  std::lock_guard<std::mutex> lock(_mutex);
+#endif
+
   switch (event) {
 #ifdef ESPCONNECT_ETH_SUPPORT
     case ARDUINO_EVENT_ETH_START:
@@ -836,21 +865,23 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
       LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP: %s", getStateName(), WiFi.localIP().toString().c_str());
-#ifndef ESPCONNECT_NO_MDNS
-      MDNS.begin(_config.hostname.c_str());
-#endif
       if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
         _lastTime = -1;
         _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
       }
+#ifndef ESPCONNECT_NO_MDNS
+      MDNS.begin(_config.hostname.c_str());
+#endif
       break;
 
 #ifndef ESP8266
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
-      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
-      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
-        _lastTime = -1;
-        _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
+      if (WiFi.globalIPv6() != IN6ADDR_ANY) {
+        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
+        if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
+          _lastTime = -1;
+          _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
+        }
       }
       break;
 #endif
@@ -867,7 +898,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
         // we have to move to state disconnected only if we are not connected to ethernet
 #ifdef ESPCONNECT_ETH_SUPPORT
         if (ETH.linkUp() && ETH.localIP()[0] != 0)
-          return;
+          break;
 #endif
         _setState(Mycila::ESPConnect::State::NETWORK_DISCONNECTED);
       }

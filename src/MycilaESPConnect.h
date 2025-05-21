@@ -7,6 +7,7 @@
 #include <DNSServer.h>
 
 #ifdef ESP8266
+  #define ESPCONNECT_NO_MUTEX 1
   #include <ESP8266WiFi.h>
 #else
   #include <WiFi.h>
@@ -24,6 +25,10 @@
 #else
   #include <string>
   #define ESPCONNECT_STRING std::string
+#endif
+
+#ifndef ESPCONNECT_NO_MUTEX
+  #include <mutex>
 #endif
 
 #define ESPCONNECT_VERSION          "10.0.1"
@@ -223,6 +228,11 @@ namespace Mycila {
       // when using auto-load and save of configuration, this method can clear saved states.
       void clearConfiguration();
 
+      // Get the delay before a restart occurs
+      uint32_t getRestartDelay() const { return _restartDelay; }
+      // Set the delay before a restart occurs in ms
+      void setRestartDelay(uint32_t delay) { _restartDelay = delay; }
+
 #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       void toJson(const JsonObject& root) const;
 #endif
@@ -270,5 +280,10 @@ namespace Mycila {
 
     private:
       static int8_t _wifiSignalQuality(int32_t rssi);
+      uint32_t _restartRequestTime = 0;
+      uint32_t _restartDelay = 1000;
+#ifndef ESPCONNECT_NO_MUTEX
+      std::mutex _mutex;
+#endif
   };
 } // namespace Mycila
