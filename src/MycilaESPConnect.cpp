@@ -835,12 +835,12 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 #endif
 
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
-        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP", getStateName());
-        _lastTime = -1;
+      LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP: %s", getStateName(), WiFi.localIP().toString().c_str());
 #ifndef ESPCONNECT_NO_MDNS
-        MDNS.begin(_config.hostname.c_str());
+      MDNS.begin(_config.hostname.c_str());
 #endif
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
+        _lastTime = -1;
         _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
       }
       break;
@@ -848,6 +848,10 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 #ifndef ESP8266
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
       LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
+        _lastTime = -1;
+        _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
+      }
       break;
 #endif
 
