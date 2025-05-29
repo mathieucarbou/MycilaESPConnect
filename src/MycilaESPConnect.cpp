@@ -219,7 +219,27 @@ IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) const 
   }
 }
 
-IPAddress Mycila::ESPConnect::getIPv6Address(Mycila::ESPConnect::Mode mode) const {
+IPAddress Mycila::ESPConnect::getLinkLocalIPv6Address(Mycila::ESPConnect::Mode mode) const {
+#ifndef ESP8266
+  const wifi_mode_t wifiMode = WiFi.getMode();
+  switch (mode) {
+    case Mycila::ESPConnect::Mode::AP:
+      return IN6ADDR_ANY;
+    case Mycila::ESPConnect::Mode::STA:
+      return wifiMode == WIFI_MODE_STA ? WiFi.linkLocalIPv6() : IN6ADDR_ANY;
+  #ifdef ESPCONNECT_ETH_SUPPORT
+    case Mycila::ESPConnect::Mode::ETH:
+      return ETH.linkUp() ? ETH.linkLocalIPv6() : IN6ADDR_ANY;
+  #endif
+    default:
+      return IN6ADDR_ANY;
+  }
+#else
+  return IPAddress();
+#endif
+}
+
+IPAddress Mycila::ESPConnect::getGlobalIPv6Address(Mycila::ESPConnect::Mode mode) const {
 #ifndef ESP8266
   const wifi_mode_t wifiMode = WiFi.getMode();
   switch (mode) {
@@ -507,8 +527,12 @@ void Mycila::ESPConnect::clearConfiguration() {
 void Mycila::ESPConnect::toJson(const JsonObject& root) const {
   root["ip_address"] = getIPAddress().toString();
   root["ip_address_ap"] = getIPAddress(Mycila::ESPConnect::Mode::AP).toString();
-  root["ip_address_eth"] = getIPAddress(Mycila::ESPConnect::Mode::ETH).toString();
-  root["ip_address_sta"] = getIPAddress(Mycila::ESPConnect::Mode::STA).toString();
+  root["ip_address_eth_v4"] = getIPAddress(Mycila::ESPConnect::Mode::ETH).toString();
+  root["ip_address_sta_v4"] = getIPAddress(Mycila::ESPConnect::Mode::STA).toString();
+  root["ip_address_eth_v6_local"] = getLinkLocalIPv6Address(Mycila::ESPConnect::Mode::ETH).toString();
+  root["ip_address_sta_v6_local"] = getLinkLocalIPv6Address(Mycila::ESPConnect::Mode::STA).toString();
+  root["ip_address_eth_v6_global"] = getGlobalIPv6Address(Mycila::ESPConnect::Mode::ETH).toString();
+  root["ip_address_sta_v6_global"] = getGlobalIPv6Address(Mycila::ESPConnect::Mode::STA).toString();
   root["hostname"] = _config.hostname.c_str();
   root["mac_address"] = getMACAddress();
   root["mac_address_ap"] = getMACAddress(Mycila::ESPConnect::Mode::AP);
@@ -875,8 +899,12 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 
 #ifndef ESP8266
     case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
-      if (WiFi.globalIPv6() != IN6ADDR_ANY) {
-        LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: %s", getStateName(), WiFi.globalIPv6().toString().c_str());
+      if (WiFi.linkLocalIPv6() != IN6ADDR_ANY) {
+        if (WiFi.globalIPv6() == IN6ADDR_ANY) {
+          LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: Link-local: %s, global: <empty>", getStateName(), WiFi.linkLocalIPv6().toString().c_str());
+        } else {
+          LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: Link-local: %s, global: %s", getStateName(), WiFi.linkLocalIPv6().toString().c_str(), WiFi.globalIPv6().toString().c_str());
+        }
         if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
           _lastTime = -1;
           _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);

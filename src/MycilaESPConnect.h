@@ -172,8 +172,11 @@ namespace Mycila {
       IPAddress getIPAddress() const { return getIPAddress(getMode()); }
       IPAddress getIPAddress(Mode mode) const;
 
-      IPAddress getIPv6Address() const { return getIPv6Address(getMode()); }
-      IPAddress getIPv6Address(Mode mode) const;
+      IPAddress getLinkLocalIPv6Address() const { return getLinkLocalIPv6Address(getMode()); }
+      IPAddress getLinkLocalIPv6Address(Mode mode) const;
+
+      IPAddress getGlobalIPv6Address() const { return getGlobalIPv6Address(getMode()); }
+      IPAddress getGlobalIPv6Address(Mode mode) const;
 
       // Returns the configured WiFi SSID or the configured SSID of the AP or captive portal, or empty if not available, depending on the current mode
       ESPCONNECT_STRING getWiFiSSID() const;

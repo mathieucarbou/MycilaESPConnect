@@ -44,8 +44,9 @@ void setup() {
       case Mycila::ESPConnect::State::AP_STARTED:
         // serve your home page here
         server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-          return request->send(200, "text/plain", "Hello World!");
-        }).setFilter([](__unused AsyncWebServerRequest* request) { return espConnect.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
+                return request->send(200, "text/plain", "Hello World!");
+              })
+          .setFilter([](__unused AsyncWebServerRequest* request) { return espConnect.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
         server.begin();
         break;
 
@@ -58,7 +59,7 @@ void setup() {
     }
   });
 
-  espConnect.setConnectTimeout(20); // 20 seconds
+  espConnect.setConnectTimeout(20);       // 20 seconds
   espConnect.setCaptivePortalTimeout(40); // 30 seconds
   espConnect.setAutoRestart(true);
   espConnect.setBlocking(false);
@@ -70,6 +71,16 @@ void setup() {
   Serial.println("====> setup() completed...");
 }
 
+uint32_t last = 0;
+
 void loop() {
   espConnect.loop();
+
+  if (millis() - last > 5000) {
+    last = millis();
+    JsonDocument doc;
+    espConnect.toJson(doc.to<JsonObject>());
+    serializeJsonPretty(doc, Serial);
+    Serial.println();
+  }
 }
