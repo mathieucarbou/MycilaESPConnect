@@ -402,12 +402,12 @@ void Mycila::ESPConnect::loop() {
 
   if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
     LOGW(TAG, "Portal timeout!");
-    _stopAP();
     if (_autoRestart) {
       LOGW(TAG, "Restarting ESP...");
       ESP.restart();
     } else {
       // try to reconnect again with configured settings
+      _stopAP();
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
     }
   }
@@ -420,7 +420,6 @@ void Mycila::ESPConnect::loop() {
       } else if (millis() - _restartRequestTime >= _restartDelay) {
         // delay is over restart
         LOGW(TAG, "Auto Restart of ESP...");
-        _stopAP();
         ESP.restart();
       }
     } else {

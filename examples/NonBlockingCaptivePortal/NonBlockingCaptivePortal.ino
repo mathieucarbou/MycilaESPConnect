@@ -59,8 +59,8 @@ void setup() {
   });
 
   espConnect.setConnectTimeout(20); // 20 seconds
-  espConnect.setCaptivePortalTimeout(30); // 30 seconds
-  espConnect.setAutoRestart(false);
+  espConnect.setCaptivePortalTimeout(40); // 30 seconds
+  espConnect.setAutoRestart(true);
   espConnect.setBlocking(false);
 
   Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
