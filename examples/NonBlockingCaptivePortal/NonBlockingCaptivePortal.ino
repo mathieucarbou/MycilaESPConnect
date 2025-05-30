@@ -59,8 +59,8 @@ void setup() {
     }
   });
 
-  espConnect.setConnectTimeout(20);       // 20 seconds
-  espConnect.setCaptivePortalTimeout(40); // 30 seconds
+  espConnect.setConnectTimeout(20);
+  espConnect.setCaptivePortalTimeout(40);
   espConnect.setAutoRestart(true);
   espConnect.setBlocking(false);
 

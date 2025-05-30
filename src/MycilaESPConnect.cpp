@@ -365,10 +365,6 @@ void Mycila::ESPConnect::loop() {
   if (_dnsServer != nullptr)
     _dnsServer->processNextRequest();
 
-#ifndef ESPCONNECT_NO_MUTEX
-  std::lock_guard<std::mutex> lock(_mutex);
-#endif
-
   // first check if we have to enter AP mode
   if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && _config.apMode) {
     _startAP();
@@ -848,10 +844,6 @@ void Mycila::ESPConnect::_disableCaptivePortal() {
 void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
   if (_state == Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
-
-#ifndef ESPCONNECT_NO_MUTEX
-  std::lock_guard<std::mutex> lock(_mutex);
-#endif
 
   switch (event) {
 #ifdef ESPCONNECT_ETH_SUPPORT
