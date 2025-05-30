@@ -805,9 +805,6 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
   });
 
   _httpd->begin();
-  #ifndef ESPCONNECT_NO_MDNS
-  MDNS.addService("http", "tcp", 80);
-  #endif
 #endif
 
   _lastTime = millis();
