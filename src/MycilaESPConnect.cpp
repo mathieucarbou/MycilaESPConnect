@@ -902,10 +902,6 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
         } else {
           LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_GOT_IP6: Link-local: %s, global: %s", getStateName(), WiFi.linkLocalIPv6().toString().c_str(), WiFi.globalIPv6().toString().c_str());
         }
-        if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING || _state == Mycila::ESPConnect::State::NETWORK_RECONNECTING) {
-          _lastTime = -1;
-          _setState(Mycila::ESPConnect::State::NETWORK_CONNECTED);
-        }
       }
       break;
 #endif
