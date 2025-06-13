@@ -670,7 +670,7 @@ void Mycila::ESPConnect::_startAP() {
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
-  WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
+  WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
 
   WiFi.mode(_config.apMode ? WIFI_AP : WIFI_AP_STA);
 
@@ -794,6 +794,49 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
     });
   }
 
+  if (_connecttestHandler == nullptr)
+      _connecttestHandler = &_httpd->on("/connecttest.txt", [](AsyncWebServerRequest* request) {
+        request->redirect("http://logout.net");
+      });
+    if (_wpadHandler == nullptr)
+      _wpadHandler = &_httpd->on("/wpad.dat", [](AsyncWebServerRequest* request) {
+        request->send(404);
+      });
+    if (_generate204Handler == nullptr)
+      _generate204Handler = &_httpd->on("/generate_204", [](AsyncWebServerRequest* request) {
+        String ipAddress = WiFi.localIP().toString();
+        request->redirect(ipAddress.c_str());
+      });
+    if (_redirectHandler == nullptr)
+      _redirectHandler = &_httpd->on("/redirect", [](AsyncWebServerRequest* request) {
+        String ipAddress = WiFi.localIP().toString();
+        request->redirect(ipAddress.c_str());
+      });
+    if (_hotspotDetectHandler == nullptr)
+      _hotspotDetectHandler = &_httpd->on("/hotspot-detect.html", [](AsyncWebServerRequest* request) {
+        String ipAddress = WiFi.localIP().toString();
+        request->redirect(ipAddress.c_str());
+      });
+    if (_canonicalHandler == nullptr)
+      _canonicalHandler = &_httpd->on("/canonical.html", [](AsyncWebServerRequest* request) {
+        String ipAddress = WiFi.localIP().toString();
+        request->redirect(ipAddress.c_str());
+      });
+    if (_successHandler == nullptr)
+      _successHandler = &_httpd->on("/success.txt", [](AsyncWebServerRequest* request) {
+        request->send(200);
+      });
+    if (_ncsiHandler == nullptr)
+      _ncsiHandler = &_httpd->on("/ncsi.txt", [](AsyncWebServerRequest* request) {
+        String ipAddress = WiFi.localIP().toString();
+        request->redirect(ipAddress.c_str());
+      });
+    if (_startpageHandler == nullptr)
+      _startpageHandler = &_httpd->on("/startpage", [](AsyncWebServerRequest* request) {
+        String ipAddress = WiFi.localIP().toString();
+        request->redirect(ipAddress.c_str());
+      });
+
   _httpd->onNotFound([](AsyncWebServerRequest* request) {
     AsyncWebServerResponse* response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
     response->addHeader("Content-Encoding", "gzip");
@@ -837,6 +880,43 @@ void Mycila::ESPConnect::_disableCaptivePortal() {
   if (_homeHandler != nullptr) {
     _httpd->removeHandler(_homeHandler);
     _homeHandler = nullptr;
+  }
+
+  if (_connecttestHandler != nullptr) {
+    _httpd->removeHandler(_connecttestHandler);
+    _connecttestHandler = nullptr;
+  }
+  if (_wpadHandler != nullptr) {
+    _httpd->removeHandler(_wpadHandler);
+    _wpadHandler = nullptr;
+  }
+  if (_generate204Handler != nullptr) {
+    _httpd->removeHandler(_generate204Handler);
+    _generate204Handler = nullptr;
+  }
+  if (_redirectHandler != nullptr) {
+    _httpd->removeHandler(_redirectHandler);
+    _redirectHandler = nullptr;
+  }
+  if (_hotspotDetectHandler != nullptr) {
+    _httpd->removeHandler(_hotspotDetectHandler);
+    _hotspotDetectHandler = nullptr;
+  }
+  if (_canonicalHandler != nullptr) {
+    _httpd->removeHandler(_canonicalHandler);
+    _canonicalHandler = nullptr;
+  }
+  if (_successHandler != nullptr) {
+    _httpd->removeHandler(_successHandler);
+    _successHandler = nullptr;
+  }
+  if (_ncsiHandler != nullptr) {
+    _httpd->removeHandler(_ncsiHandler);
+    _ncsiHandler = nullptr;
+  }
+  if (_startpageHandler != nullptr) {
+    _httpd->removeHandler(_startpageHandler);
+    _startpageHandler = nullptr;
   }
 #endif
 }
