@@ -670,7 +670,7 @@ void Mycila::ESPConnect::_startAP() {
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
-  
+
   // Configure AP with specific IP range so devices recognize it as a captive portal
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
 
