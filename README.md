@@ -20,17 +20,20 @@ This library is based on the UI from [https://github.com/ayushsharma82/ESPConnec
 I highly recommend looking at all OSS projects (and products) from [@ayushsharma82](https://github.com/ayushsharma82).
 He is making great Arduino libraries.
 
-- [Features](#features)
-- [Usage](#usage)
-  - [API](#api)
-  - [Blocking mode](#blocking-mode)
-  - [Non-blocking mode](#non-blocking-mode)
-  - [Use an external configuration system](#use-an-external-configuration-system)
-  - [ESP8266 Specifics](#esp8266-specifics)
-  - [Ethernet Support](#ethernet-support)
-  - [Logo](#logo)
-  - [mDNS](#mdns)
-  - [Compile Flags](#compile-flags)
+- [MycilaESPConnect](#mycilaespconnect)
+  - [Features](#features)
+  - [Usage](#usage)
+    - [API](#api)
+    - [Blocking mode](#blocking-mode)
+    - [Non-blocking mode](#non-blocking-mode)
+    - [Set static IP](#set-static-ip)
+    - [Use an external configuration system](#use-an-external-configuration-system)
+    - [ESP8266 Specifics](#esp8266-specifics)
+    - [Ethernet Support](#ethernet-support)
+    - [Logo](#logo)
+    - [Captive Portal Detection Endpoints](#captive-portal-detection-endpoints)
+    - [mDNS](#mdns)
+    - [Compile Flags](#compile-flags)
 
 ## Features
 
@@ -235,6 +238,25 @@ You can customize the logo by providing a web handler for `/logo`:
 ```
 
 If not provided, the logo won't appear in the Captive Portal.
+### Captive Portal Detection Endpoints
+
+MycilaESPConnect implements multi-platform captive portal detection by providing specific endpoints that different operating systems use to test internet connectivity. When a device connects to the ESP32's WiFi network, it automatically performs these tests. If the responses don't match expectations (redirections instead of expected content), the system automatically triggers the captive portal interface.
+
+| **Endpoint** | **Operating System** | **Function** | **Action** | **Purpose** |
+|---|---|---|---|---|
+| `/connecttest.txt` | Microsoft Windows | Windows connectivity test | Redirects to `http://logout.net` | Triggers Windows captive portal detection |
+| `/wpad.dat` | All systems | Web Proxy Auto-Discovery Protocol | Returns 404 error | Indicates no proxy configuration is provided |
+| `/generate_204` | Android | Android connectivity test | Redirects to WiFi Access Point IP | Triggers captive portal when Android detects no internet |
+| `/redirect` | Generic | Generic redirect endpoint | Redirects to captive portal interface | Provides universal redirection endpoint |
+| `/hotspot-detect.html` | Apple iOS/macOS | Apple hotspot detection | Redirects to WiFi Access Point IP | Triggers captive portal when Apple devices detect connectivity issues |
+| `/canonical.html` | Ubuntu/Linux | Ubuntu/Linux connectivity test | Redirects to captive portal configuration page | Activates captive portal on Linux systems |
+| `/success.txt` | Microsoft | Microsoft connectivity success page | Returns 200 OK status | Indicates successful connection for Microsoft tests |
+| `/ncsi.txt` | Microsoft | Network Connectivity Status Indicator | Redirects to portal for configuration | Handles Microsoft network connectivity status indicator |
+| `/startpage` | Generic | Generic start page | Redirects to main captive portal interface | Provides generic entry point to portal |
+
+**Note**: This functionality can be disabled by setting the compile flag `-D ESPCONNECT_NO_COMPAT_CP`, which will save approximately 2KB of flash memory but may reduce captive portal detection reliability on some devices.
+
+This approach ensures a smooth user experience across all devices without manual intervention, automatically guiding users to the network configuration interface when they connect to the ESP32's access point.
 
 ### mDNS
 
@@ -248,3 +270,5 @@ You can disable it by setting `-D ESPCONNECT_NO_MDNS`.
 - `-D ESPCONNECT_NO_CAPTIVE_PORTAL`: disable Captive Portal and ESPAsyncWebServer dependency
 - `-D ESPCONNECT_NO_STD_STRING`: use Arduino `String` instead of `std::string`
 - `-D ESPCONNECT_NO_LOGGING`: disable logging
+- `-D ESPCONNECT_NO_COMPAT_CP`: disable better Captive Portal detection (about 2KB flash)
+

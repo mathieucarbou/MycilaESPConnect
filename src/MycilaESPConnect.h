@@ -241,6 +241,17 @@ namespace Mycila {
       AsyncCallbackWebHandler* _scanHandler = nullptr;
       AsyncCallbackWebHandler* _connectHandler = nullptr;
       AsyncCallbackWebHandler* _homeHandler = nullptr;
+      #ifndef ESPCONNECT_NO_COMPAT_CP
+      AsyncCallbackWebHandler* _connecttestHandler = nullptr;
+      AsyncCallbackWebHandler* _wpadHandler = nullptr;
+      AsyncCallbackWebHandler* _generate204Handler = nullptr;
+      AsyncCallbackWebHandler* _redirectHandler = nullptr;
+      AsyncCallbackWebHandler* _hotspotDetectHandler = nullptr;
+      AsyncCallbackWebHandler* _canonicalHandler = nullptr;
+      AsyncCallbackWebHandler* _successHandler = nullptr;
+      AsyncCallbackWebHandler* _ncsiHandler = nullptr;
+      AsyncCallbackWebHandler* _startpageHandler = nullptr;
+      #endif
 #endif
       State _state = State::NETWORK_DISABLED;
       StateCallback _callback = nullptr;

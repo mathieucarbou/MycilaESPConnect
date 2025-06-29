@@ -670,7 +670,9 @@ void Mycila::ESPConnect::_startAP() {
   WiFi.setSleep(false);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
-  WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
+
+  // Configure AP with specific IP range so devices recognize it as a captive portal
+  WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
 
   WiFi.mode(_config.apMode ? WIFI_AP : WIFI_AP_STA);
 
@@ -793,7 +795,61 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
       return _state == Mycila::ESPConnect::State::PORTAL_STARTED;
     });
   }
+#ifndef ESPCONNECT_NO_COMPAT_CP
+  // Microsoft Windows connectivity check - redirects to logout.net to trigger captive portal detection
+  if (_connecttestHandler == nullptr)
+    _connecttestHandler = &_httpd->on("/connecttest.txt", [](AsyncWebServerRequest* request) {
+      request->redirect("http://logout.net");
+    });
 
+  // Web Proxy Auto-Discovery Protocol - returns 404 as we don't provide proxy configuration
+  if (_wpadHandler == nullptr)
+    _wpadHandler = &_httpd->on("/wpad.dat", [](AsyncWebServerRequest* request) {
+      request->send(404);
+    });
+
+  // Android connectivity check - redirects to captive portal when no internet detected
+  if (_generate204Handler == nullptr)
+    _generate204Handler = &_httpd->on("/generate_204", [this](AsyncWebServerRequest* request) {
+      request->redirect((WiFi.softAPIP().toString()).c_str());
+    });
+
+  // Generic redirect endpoint - forwards to captive portal interface
+  if (_redirectHandler == nullptr)
+    _redirectHandler = &_httpd->on("/redirect", [this](AsyncWebServerRequest* request) {
+      request->redirect((WiFi.softAPIP().toString()).c_str());
+    });
+
+  // Apple iOS/macOS hotspot detection - redirects to captive portal when connectivity test fails
+  if (_hotspotDetectHandler == nullptr)
+    _hotspotDetectHandler = &_httpd->on("/hotspot-detect.html", [this](AsyncWebServerRequest* request) {
+      request->redirect((WiFi.softAPIP().toString()).c_str());
+    });
+
+  // Ubuntu/Linux connectivity check - redirects to captive portal configuration page
+  if (_canonicalHandler == nullptr)
+    _canonicalHandler = &_httpd->on("/canonical.html", [this](AsyncWebServerRequest* request) {
+      request->redirect((WiFi.softAPIP().toString()).c_str());
+    });
+
+  // Microsoft connectivity test success page - returns 200 OK to indicate successful connection
+  if (_successHandler == nullptr)
+    _successHandler = &_httpd->on("/success.txt", [](AsyncWebServerRequest* request) {
+      request->send(200);
+    });
+
+  // Microsoft Network Connectivity Status Indicator - redirects to portal for configuration
+  if (_ncsiHandler == nullptr)
+    _ncsiHandler = &_httpd->on("/ncsi.txt", [this](AsyncWebServerRequest* request) {
+      request->redirect((WiFi.softAPIP().toString()).c_str());
+    });
+
+  // Generic start page endpoint - redirects users to the main captive portal interface
+  if (_startpageHandler == nullptr)
+    _startpageHandler = &_httpd->on("/startpage", [this](AsyncWebServerRequest* request) {
+      request->redirect((WiFi.softAPIP().toString()).c_str());
+    });
+#endif
   _httpd->onNotFound([](AsyncWebServerRequest* request) {
     AsyncWebServerResponse* response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
     response->addHeader("Content-Encoding", "gzip");
@@ -838,6 +894,44 @@ void Mycila::ESPConnect::_disableCaptivePortal() {
     _httpd->removeHandler(_homeHandler);
     _homeHandler = nullptr;
   }
+#ifndef ESPCONNECT_NO_COMPAT_CP
+  if (_connecttestHandler != nullptr) {
+    _httpd->removeHandler(_connecttestHandler);
+    _connecttestHandler = nullptr;
+  }
+  if (_wpadHandler != nullptr) {
+    _httpd->removeHandler(_wpadHandler);
+    _wpadHandler = nullptr;
+  }
+  if (_generate204Handler != nullptr) {
+    _httpd->removeHandler(_generate204Handler);
+    _generate204Handler = nullptr;
+  }
+  if (_redirectHandler != nullptr) {
+    _httpd->removeHandler(_redirectHandler);
+    _redirectHandler = nullptr;
+  }
+  if (_hotspotDetectHandler != nullptr) {
+    _httpd->removeHandler(_hotspotDetectHandler);
+    _hotspotDetectHandler = nullptr;
+  }
+  if (_canonicalHandler != nullptr) {
+    _httpd->removeHandler(_canonicalHandler);
+    _canonicalHandler = nullptr;
+  }
+  if (_successHandler != nullptr) {
+    _httpd->removeHandler(_successHandler);
+    _successHandler = nullptr;
+  }
+  if (_ncsiHandler != nullptr) {
+    _httpd->removeHandler(_ncsiHandler);
+    _ncsiHandler = nullptr;
+  }
+  if (_startpageHandler != nullptr) {
+    _httpd->removeHandler(_startpageHandler);
+    _startpageHandler = nullptr;
+  }
+  #endif
 #endif
 }
 
