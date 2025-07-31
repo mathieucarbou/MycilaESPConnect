@@ -156,7 +156,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [arduino-3, arduino-3-latest]
+        # platform: [arduino-3, arduino-rc]
+        platform: [arduino-3]
         board: [esp32-poe, wt32-eth01, lilygo-eth-lite-s3]
 
     steps:
