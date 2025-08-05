@@ -92,6 +92,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
+          pip install --upgrade intelhex
 
       - run: PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
       - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci
@@ -137,6 +138,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
+          pip install --upgrade intelhex
 
       - run: PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
@@ -181,6 +183,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
+          pip install --upgrade intelhex
 
       - run: PLATFORMIO_SRC_DIR=examples/BlockingCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
       - run: PLATFORMIO_SRC_DIR=examples/NonBlockingCaptivePortal pio run -e ${{ matrix.board }}-${{ matrix.platform }}
