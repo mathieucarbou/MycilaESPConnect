@@ -671,8 +671,12 @@ void Mycila::ESPConnect::_startAP() {
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
 
-  // Configure AP with specific IP range so devices recognize it as a captive portal
-  WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
+  if (_config.apMode) {
+    WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
+  } else {
+    // Configure AP with specific IP range so devices recognize it as a captive portal
+    WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
+  }
 
   WiFi.mode(_config.apMode ? WIFI_AP : WIFI_AP_STA);
 
@@ -795,7 +799,7 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
       return _state == Mycila::ESPConnect::State::PORTAL_STARTED;
     });
   }
-#ifndef ESPCONNECT_NO_COMPAT_CP
+  #ifndef ESPCONNECT_NO_COMPAT_CP
   // Microsoft Windows connectivity check - redirects to logout.net to trigger captive portal detection
   if (_connecttestHandler == nullptr)
     _connecttestHandler = &_httpd->on("/connecttest.txt", [](AsyncWebServerRequest* request) {
@@ -849,7 +853,7 @@ void Mycila::ESPConnect::_enableCaptivePortal() {
     _startpageHandler = &_httpd->on("/startpage", [this](AsyncWebServerRequest* request) {
       request->redirect((WiFi.softAPIP().toString()).c_str());
     });
-#endif
+  #endif
   _httpd->onNotFound([](AsyncWebServerRequest* request) {
     AsyncWebServerResponse* response = request->beginResponse(200, "text/html", ESPCONNECT_HTML, sizeof(ESPCONNECT_HTML));
     response->addHeader("Content-Encoding", "gzip");
@@ -894,7 +898,7 @@ void Mycila::ESPConnect::_disableCaptivePortal() {
     _httpd->removeHandler(_homeHandler);
     _homeHandler = nullptr;
   }
-#ifndef ESPCONNECT_NO_COMPAT_CP
+  #ifndef ESPCONNECT_NO_COMPAT_CP
   if (_connecttestHandler != nullptr) {
     _httpd->removeHandler(_connecttestHandler);
     _connecttestHandler = nullptr;
