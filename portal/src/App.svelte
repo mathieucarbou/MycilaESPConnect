@@ -58,7 +58,12 @@
 	async function updateAccessPoints() {
 		const res = await fetch(`/espconnect/scan`);
 		if (res.status === 200) {
-			data.access_points = await res.json();
+			let accessPoints = await res.json();
+			
+			// Trier par RSSI (signal le plus fort en premier)
+			accessPoints.sort((a, b) => b.rssi - a.rssi);
+			
+			data.access_points = accessPoints;
 			data.loading = false;
 		}else if(res.status === 202) {
 			setTimeout(updateAccessPoints, 2000);
