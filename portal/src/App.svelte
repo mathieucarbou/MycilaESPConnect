@@ -60,7 +60,7 @@
 		if (res.status === 200) {
 			let accessPoints = await res.json();
 			
-			// Trier par RSSI (signal le plus fort en premier)
+			// Sort by RSSI (strongest signal first)
 			accessPoints.sort((a, b) => b.rssi - a.rssi);
 			
 			data.access_points = accessPoints;
