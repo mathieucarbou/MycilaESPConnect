@@ -65,6 +65,7 @@ namespace Mycila {
         // AP AP_STARTING => AP_STARTED
         AP_STARTED, // final state
 
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
         // NETWORK_ENABLED => PORTAL_STARTING
         // NETWORK_TIMEOUT => PORTAL_STARTING
         PORTAL_STARTING,
@@ -74,6 +75,7 @@ namespace Mycila {
         PORTAL_COMPLETE, // final state
         // PORTAL_STARTED => PORTAL_TIMEOUT
         PORTAL_TIMEOUT, // final state
+#endif
       };
 
       enum class Mode {
@@ -114,10 +116,11 @@ namespace Mycila {
       } Config;
 
     public:
-#ifdef ESPCONNECT_NO_CAPTIVE_PORTAL
-      ESPConnect() {}
-#else
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       explicit ESPConnect(AsyncWebServer& httpd) : _httpd(&httpd) {}
+      void toJson(const JsonObject& root) const;
+#else
+      ESPConnect() {}
 #endif
       ~ESPConnect() { end(); }
 
@@ -231,28 +234,7 @@ namespace Mycila {
       // when using auto-load and save of configuration, this method can clear saved states.
       void clearConfiguration();
 
-#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
-      void toJson(const JsonObject& root) const;
-#endif
-
     private:
-#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
-      AsyncWebServer* _httpd = nullptr;
-      AsyncCallbackWebHandler* _scanHandler = nullptr;
-      AsyncCallbackWebHandler* _connectHandler = nullptr;
-      AsyncCallbackWebHandler* _homeHandler = nullptr;
-      #ifndef ESPCONNECT_NO_COMPAT_CP
-      AsyncCallbackWebHandler* _connecttestHandler = nullptr;
-      AsyncCallbackWebHandler* _wpadHandler = nullptr;
-      AsyncCallbackWebHandler* _generate204Handler = nullptr;
-      AsyncCallbackWebHandler* _redirectHandler = nullptr;
-      AsyncCallbackWebHandler* _hotspotDetectHandler = nullptr;
-      AsyncCallbackWebHandler* _canonicalHandler = nullptr;
-      AsyncCallbackWebHandler* _successHandler = nullptr;
-      AsyncCallbackWebHandler* _ncsiHandler = nullptr;
-      AsyncCallbackWebHandler* _startpageHandler = nullptr;
-      #endif
-#endif
       State _state = State::NETWORK_DISABLED;
       StateCallback _callback = nullptr;
       DNSServer* _dnsServer = nullptr;
@@ -275,21 +257,42 @@ namespace Mycila {
       WiFiEventId_t _wifiEventListenerId = 0;
 #endif
 
-    private:
       void _setState(State state);
-      void _startSTA();
-      void _startAP();
-      void _stopAP();
-      void _enableCaptivePortal();
-      void _disableCaptivePortal();
       void _onWiFiEvent(WiFiEvent_t event);
       bool _durationPassed(uint32_t intervalSec);
-      void _scan();
+
+      void _startSTA();
+
+      void _startAP();
+      void _stopAP();
+
+      static int8_t _wifiSignalQuality(int32_t rssi);
+
 #ifdef ESPCONNECT_ETH_SUPPORT
       void _startEthernet();
 #endif
 
-    private:
-      static int8_t _wifiSignalQuality(int32_t rssi);
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
+      AsyncWebServer* _httpd = nullptr;
+      AsyncCallbackWebHandler* _scanHandler = nullptr;
+      AsyncCallbackWebHandler* _connectHandler = nullptr;
+      AsyncCallbackWebHandler* _homeHandler = nullptr;
+
+  #ifndef ESPCONNECT_NO_COMPAT_CP
+      AsyncCallbackWebHandler* _connecttestHandler = nullptr;
+      AsyncCallbackWebHandler* _wpadHandler = nullptr;
+      AsyncCallbackWebHandler* _generate204Handler = nullptr;
+      AsyncCallbackWebHandler* _redirectHandler = nullptr;
+      AsyncCallbackWebHandler* _hotspotDetectHandler = nullptr;
+      AsyncCallbackWebHandler* _canonicalHandler = nullptr;
+      AsyncCallbackWebHandler* _successHandler = nullptr;
+      AsyncCallbackWebHandler* _ncsiHandler = nullptr;
+      AsyncCallbackWebHandler* _startpageHandler = nullptr;
+  #endif
+
+      void _startCaptivePortal();
+      void _stopCaptivePortal();
+      void _scan();
+#endif
   };
 } // namespace Mycila

@@ -266,9 +266,7 @@ You can disable it by setting `-D ESPCONNECT_NO_MDNS`.
 ### Compile Flags
 
 - `-D ESPCONNECT_NO_MDNS`: disable mDNS
-- `-D ESPCONNECT_DEBUG`: enable debug logs on ESP8266
 - `-D ESPCONNECT_NO_CAPTIVE_PORTAL`: disable Captive Portal and ESPAsyncWebServer dependency
 - `-D ESPCONNECT_NO_STD_STRING`: use Arduino `String` instead of `std::string`
 - `-D ESPCONNECT_NO_LOGGING`: disable logging
 - `-D ESPCONNECT_NO_COMPAT_CP`: disable better Captive Portal detection (about 2KB flash)
-

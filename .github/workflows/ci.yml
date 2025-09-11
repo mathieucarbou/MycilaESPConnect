@@ -150,8 +150,7 @@ jobs:
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_STD_STRING" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_CAPTIVE_PORTAL" PLATFORMIO_SRC_DIR=examples/NoCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
       - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_NO_LOGGING" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
-      - run: PLATFORMIO_BUILD_FLAGS="-DESPCONNECT_DEBUG" PLATFORMIO_SRC_DIR=examples/AdvancedCaptivePortal PIO_BOARD=${{ matrix.board }} PIO_PLATFORM=${{ matrix.platform }} pio run -e ci-esp8266
-      
+
   platformio-eth:
     name: "pio:${{ matrix.board }}:${{ matrix.platform }}"
     runs-on: ubuntu-latest
