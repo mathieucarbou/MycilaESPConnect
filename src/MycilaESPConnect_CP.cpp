@@ -12,6 +12,9 @@ void Mycila::ESPConnect::_startCaptivePortal() {
   LOGI(TAG, "Starting Captive Portal...");
   _setState(Mycila::ESPConnect::State::PORTAL_STARTING);
 
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_MODE_NULL);
+
   #ifndef ESP8266
   WiFi.softAPsetHostname(_config.hostname.c_str());
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
@@ -25,7 +28,7 @@ void Mycila::ESPConnect::_startCaptivePortal() {
 
   // Configure AP with specific IP range so devices recognize it as a captive portal
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_MODE_AP);
 
   if (!_apPassword.length() || _apPassword.length() < 8) {
     // Disabling invalid Access Point password which must be at least 8 characters long when set
@@ -294,11 +297,11 @@ void Mycila::ESPConnect::toJson(const JsonObject& root) const {
 
 void Mycila::ESPConnect::_scan() {
   WiFi.scanDelete();
-#ifndef ESP8266
+  #ifndef ESP8266
   WiFi.scanNetworks(true, false, false, 500, 0, nullptr, nullptr);
-#else
+  #else
   WiFi.scanNetworks(true);
-#endif
+  #endif
 }
 
 #endif

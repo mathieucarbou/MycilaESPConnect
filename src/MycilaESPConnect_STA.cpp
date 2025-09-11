@@ -3,12 +3,15 @@
  * Copyright (C) 2023-2025 Mathieu Carbou
  */
 #include "MycilaESPConnect.h"
-#include "MycilaESPConnect_Logging.h"
 #include "MycilaESPConnect_Includes.h"
+#include "MycilaESPConnect_Logging.h"
 
 void Mycila::ESPConnect::_startSTA() {
   LOGI(TAG, "Starting WiFi...");
   _setState(Mycila::ESPConnect::State::NETWORK_CONNECTING);
+
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_MODE_NULL);
 
 #ifndef ESP8266
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
@@ -20,7 +23,8 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
 
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_MODE_APSTA);
+  WiFi.mode(WIFI_MODE_STA);
 #ifndef ESP8266
   WiFi.enableIPv6();
 #endif

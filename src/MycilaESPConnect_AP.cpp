@@ -3,12 +3,15 @@
  * Copyright (C) 2023-2025 Mathieu Carbou
  */
 #include "MycilaESPConnect.h"
-#include "MycilaESPConnect_Logging.h"
 #include "MycilaESPConnect_Includes.h"
+#include "MycilaESPConnect_Logging.h"
 
 void Mycila::ESPConnect::_startAP() {
   LOGI(TAG, "Starting Access Point...");
   _setState(Mycila::ESPConnect::State::AP_STARTING);
+
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_MODE_NULL);
 
 #ifndef ESP8266
   WiFi.softAPsetHostname(_config.hostname.c_str());
@@ -22,7 +25,7 @@ void Mycila::ESPConnect::_startAP() {
   WiFi.setAutoReconnect(false);
 
   WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_MODE_AP);
 
   if (!_apPassword.length() || _apPassword.length() < 8) {
     // Disabling invalid Access Point password which must be at least 8 characters long when set
