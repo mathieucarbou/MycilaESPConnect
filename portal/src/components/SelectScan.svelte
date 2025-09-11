@@ -29,7 +29,10 @@
             <div class="row flex-rows">
               <div class="column">
                 <div>🛜 &nbsp; <strong>{ap.signal}%</strong> &nbsp;➔&nbsp; { ap.name }</div>
-                <div class="text-muted text-sm" style="padding-left: 35px"><strong>BSSID:</strong> { ap.bssid }</div>
+                <div class="text-muted text-sm" style="padding-left: 35px">
+                  <strong>BSSID:</strong> { ap.bssid } &nbsp;•&nbsp; 
+                  <strong>RSSI:</strong> { ap.rssi } dBm
+                </div>
               </div>
               <div class="column w-auto">
                 {#if !ap.open}
