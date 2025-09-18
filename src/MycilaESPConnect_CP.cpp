@@ -87,22 +87,16 @@ void Mycila::ESPConnect::_startCaptivePortal() {
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
       } else {
-        ESPCONNECT_STRING bssid;
         ESPCONNECT_STRING ssid;
         ESPCONNECT_STRING password;
-        if (request->hasParam("bssid", true))
-          bssid = request->getParam("bssid", true)->value().c_str();
         if (request->hasParam("ssid", true))
           ssid = request->getParam("ssid", true)->value().c_str();
         if (request->hasParam("password", true))
           password = request->getParam("password", true)->value().c_str();
-        if (!bssid.length())
-          return request->send(400, "application/json", "{\"message\":\"Invalid BSSID\"}");
         if (!ssid.length())
           return request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
         if (ssid.length() > 32 || password.length() > 64 || (password.length() && password.length() < 8))
           return request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
-        _config.wifiBSSID = bssid;
         _config.wifiSSID = ssid;
         _config.wifiPassword = password;
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
