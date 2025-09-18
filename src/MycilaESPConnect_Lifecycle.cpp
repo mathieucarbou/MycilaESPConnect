@@ -105,7 +105,12 @@ void Mycila::ESPConnect::loop() {
     if (_config.wifiSSID.length()) {
       _startSTA();
     } else {
+  #if !defined(ESPCONNECT_NO_CAPTIVE_PORTAL)
       _startCaptivePortal();
+  #else
+      LOGE(TAG, "No SSID configured and captive portal disabled. Staying idle...");
+      _setState(Mycila::ESPConnect::State::NETWORK_DISABLED);
+  #endif
     }
     return;
 #endif
