@@ -83,27 +83,32 @@ void Mycila::ESPConnect::loop() {
   if (_dnsServer != nullptr)
     _dnsServer->processNextRequest();
 
-  // first check if we have to enter AP mode
-  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && _config.apMode) {
-    _startAP();
-  }
-
-  // NO AP mode...
-  // start captive portal when LAN enabled but not in ap mode and no wifi info and no ethernet
-  // portal wil be interrupted when LAN will be connected
-#if defined(ESPCONNECT_ETH_SUPPORT) && !defined(ESPCONNECT_NO_CAPTIVE_PORTAL)
-  if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED && !_config.wifiSSID.length()) {
-    _startCaptivePortal();
-  }
-#endif
-
-  // otherwise, tries to connect to WiFi or ethernet
+  // Network has just been enable ?
   if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED) {
+    // AP Mode has higher priority
+    if (_config.apMode) {
+      _startAP();
+      return;
+    }
+
+    // No AP mode ?
+
 #ifdef ESPCONNECT_ETH_SUPPORT
+    // If we have an ETH board, let's activate both ETH and WiFi if a SSID is configured
     _startEthernet();
-#endif
-    if (_config.wifiSSID.length())
+    if (_config.wifiSSID.length()) {
       _startSTA();
+    }
+    return;
+#else
+    // No ETH board ? Then just start WiFi if a SSID is configured, otherwise start captive portal directly
+    if (_config.wifiSSID.length()) {
+      _startSTA();
+    } else {
+      _startCaptivePortal();
+    }
+    return;
+#endif
   }
 
   // connection to WiFi or Ethernet times out ?
@@ -113,6 +118,7 @@ void Mycila::ESPConnect::loop() {
       WiFi.disconnect(true, true);
     }
     _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
+    return;
   }
 
   // start captive portal on connect timeout
@@ -123,11 +129,13 @@ void Mycila::ESPConnect::loop() {
     LOGW(TAG, "Connect timeout and captive portal disabled. Retrying to connect...");
     _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
 #endif
+    return;
   }
 
   // disconnect from network ? reconnect!
   if (_state == Mycila::ESPConnect::State::NETWORK_DISCONNECTED) {
     _setState(Mycila::ESPConnect::State::NETWORK_RECONNECTING);
+    return;
   }
 
 #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
@@ -135,6 +143,7 @@ void Mycila::ESPConnect::loop() {
   // in order to restart and try again to connect to the configured WiFi
   if (_state == Mycila::ESPConnect::State::PORTAL_STARTED && _config.wifiSSID.length() && _durationPassed(_portalTimeout)) {
     _setState(Mycila::ESPConnect::State::PORTAL_TIMEOUT);
+    return;
   }
 
   if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
@@ -147,6 +156,7 @@ void Mycila::ESPConnect::loop() {
       _stopAP();
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
     }
+    return;
   }
 
   if (_state == Mycila::ESPConnect::State::PORTAL_COMPLETE) {
@@ -164,6 +174,7 @@ void Mycila::ESPConnect::loop() {
       // try to reconnect again with new configured settings
       _setState(Mycila::ESPConnect::State::NETWORK_ENABLED);
     }
+    return;
   }
 #endif
 }
