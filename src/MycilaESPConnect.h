@@ -141,7 +141,7 @@ namespace Mycila {
       // 3. If STA mode fails, or empty WiFi credentials were passed, starts the captive portal
       //
       // Using this method will NOT auto-load or auto-save any configuration
-      void begin(const char* apSSID, const char* apPassword, const Config& config); // NOLINT
+      void begin(const char* apSSID, const char* apPassword, Config config); // NOLINT
 
       // loop() method to be called from main loop()
       void loop();
@@ -195,7 +195,7 @@ namespace Mycila {
       // Returns the current mutable configuration loaded or passed from begin() or from captive portal
       Config& getConfig() { return _config; }
       // Set the current configuration
-      void setConfig(const Config& config) { _config = config; }
+      void setConfig(Config config) { _config = std::move(config); }
       // Maximum duration that the captive portal will be active before closing
       uint32_t getCaptivePortalTimeout() const { return _portalTimeout; }
       // Maximum duration that the captive portal will be active before closing

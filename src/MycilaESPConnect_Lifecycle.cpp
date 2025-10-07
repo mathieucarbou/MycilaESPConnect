@@ -22,16 +22,16 @@ void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const c
   Config config;
   loadConfiguration(config);
   config.hostname = hostname == nullptr ? "" : hostname;
-  begin(apSSID, apPassword, config);
+  begin(apSSID, apPassword, std::move(config));
 }
 
-void Mycila::ESPConnect::begin(const char* apSSID, const char* apPassword, const Mycila::ESPConnect::Config& config) {
+void Mycila::ESPConnect::begin(const char* apSSID, const char* apPassword, Mycila::ESPConnect::Config config) {
   if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
 
   _apSSID = apSSID;
   _apPassword = apPassword;
-  _config = config; // copy values
+  _config = std::move(config);
 
 #ifdef ESP8266
   onStationModeGotIP = WiFi.onStationModeGotIP([this](__unused const WiFiEventStationModeGotIP& event) {
