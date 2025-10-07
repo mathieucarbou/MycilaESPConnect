@@ -18,6 +18,8 @@
   #include <ESPAsyncWebServer.h>
 #endif
 
+#include <utility>
+
 #ifdef ESPCONNECT_NO_STD_STRING
   #include <WString.h>
   #define ESPCONNECT_STRING String

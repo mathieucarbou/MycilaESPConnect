@@ -14,6 +14,8 @@
   #endif
 #endif
 
+#include <utility>
+
 void Mycila::ESPConnect::begin(const char* hostname, const char* apSSID, const char* apPassword) {
   if (_state != Mycila::ESPConnect::State::NETWORK_DISABLED)
     return;
