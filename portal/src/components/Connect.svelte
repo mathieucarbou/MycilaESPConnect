@@ -8,9 +8,11 @@
   export let ap_mode;
   let loading = false;
   let password = "";
+  let errorMessage = "";
 
   async function connect(){
     loading = true;
+    errorMessage = "";
     let formData = new FormData();
     formData.append('bssid', bssid || "");
     formData.append('ssid', ssid || "");
@@ -20,7 +22,14 @@
 		if (res.status === 200) {
       dispatch('success');
 		} else {
-      dispatch('error');
+      errorMessage = 'WiFi connection failed. Please verify your credentials.';
+      try {
+        const txt = await res.text();
+        if (txt) {
+          errorMessage = txt.trim().startsWith('{') ? (JSON.parse(txt).message || errorMessage) : txt;
+        }
+      } catch (e) { }
+      // Keep the form visible: do not dispatch('error') here
     }
     loading = false;
 		return res;
@@ -72,7 +81,16 @@
       {#if !open}
       <div class="row">
         <div class="column column-100">
-          <input type="text" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" required minlength="8">
+          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" required minlength="8">
+        </div>
+      </div>
+      {/if}
+      {#if errorMessage}
+      <div class="row">
+        <div class="column column-100">
+          <div class="error-box">
+            {errorMessage}
+          </div>
         </div>
       </div>
       {/if}
@@ -96,3 +114,14 @@
   </div>
 </form>
 {/if}
+
+<style>
+  .error-box{
+    background: #fde9e9;
+    color: #b00020;
+    border: 1px solid #f5c2c2;
+    padding: 0.75rem 1rem;
+    border-radius: .5rem;
+    margin-top: .5rem;
+  }
+</style>

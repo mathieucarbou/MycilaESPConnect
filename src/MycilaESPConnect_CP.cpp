@@ -28,7 +28,7 @@ void Mycila::ESPConnect::_startCaptivePortal() {
 
   // Configure AP with specific IP range so devices recognize it as a captive portal
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
-  WiFi.mode(WIFI_MODE_AP);
+  WiFi.mode(WIFI_MODE_APSTA);
 
   if (!_apPassword.length() || _apPassword.length() < 8) {
     // Disabling invalid Access Point password which must be at least 8 characters long when set
@@ -89,18 +89,24 @@ void Mycila::ESPConnect::_startCaptivePortal() {
       } else {
         ESPCONNECT_STRING ssid;
         ESPCONNECT_STRING password;
+        ESPCONNECT_STRING bssid;
         if (request->hasParam("ssid", true))
           ssid = request->getParam("ssid", true)->value().c_str();
         if (request->hasParam("password", true))
           password = request->getParam("password", true)->value().c_str();
+        if (request->hasParam("bssid", true))
+          bssid = request->getParam("bssid", true)->value().c_str();
         if (!ssid.length())
           return request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
         if (ssid.length() > 32 || password.length() > 64 || (password.length() && password.length() < 8))
           return request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
-        _config.wifiSSID = ssid;
-        _config.wifiPassword = password;
-        request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
-        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
+        if (_credentialTest.request != nullptr)
+          return request->send(409, "application/json", "{\"message\":\"A connection test is already in progress. Please wait.\"}");
+        // Try WiFi connection test before saving and closing portal
+        const uint32_t testTimeoutSec = 5; // reduced timeout to prevent watchdog issues
+        LOGI(TAG, "Testing WiFi credentials for SSID: %s", ssid.c_str());
+        _queueCredentialTest(request, ssid, password, bssid, testTimeoutSec);
+        return;
       }
     });
   }
@@ -188,9 +194,160 @@ void Mycila::ESPConnect::_startCaptivePortal() {
   _lastTime = millis();
 }
 
+void Mycila::ESPConnect::_queueCredentialTest(AsyncWebServerRequest* request, const ESPCONNECT_STRING& ssid, const ESPCONNECT_STRING& password, const ESPCONNECT_STRING& bssid, uint32_t timeoutSec) {
+  _resetCredentialTestContext();
+
+  _credentialTest.request = request;
+  _credentialTest.requestHolder = request->pause();
+  _credentialTest.ssid = ssid;
+  _credentialTest.password = password;
+  _credentialTest.bssid = bssid;
+  _credentialTest.timeoutSec = timeoutSec;
+  _credentialTest.previousMode = WiFi.getMode();
+
+  if (request->client() != nullptr) {
+    request->client()->setRxTimeout(timeoutSec + 5);
+  }
+
+  request->onDisconnect([this, request]() {
+    _handleCredentialTestCancellation(request);
+  });
+
+  _processCredentialTest();
+}
+
+void Mycila::ESPConnect::_processCredentialTest() {
+  if (_credentialTest.request == nullptr)
+    return;
+
+  if (!_credentialTest.started) {
+    if (_dnsServer != nullptr && !_credentialTest.dnsServerPaused) {
+      _dnsServer->stop();
+      _credentialTest.dnsServerPaused = true;
+    }
+
+    WiFi.persistent(false);
+    WiFi.setAutoReconnect(false);
+    WiFi.setSleep(false);
+
+  #ifndef ESP8266
+    WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+    WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
+  #endif
+
+    if (_credentialTest.previousMode == WIFI_MODE_AP || _credentialTest.previousMode == WIFI_MODE_APSTA) {
+      WiFi.mode(WIFI_MODE_APSTA);
+    } else {
+      WiFi.mode(WIFI_MODE_STA);
+    }
+
+    // Ensure any ongoing STA connection attempt is aborted before we start a new one
+    WiFi.disconnect(true);
+
+    if (_credentialTest.bssid.length()) {
+      MacAddress mac(MACType::MAC6);
+      mac.fromString(_credentialTest.bssid.c_str());
+      WiFi.begin(_credentialTest.ssid.c_str(), _credentialTest.password.c_str(), 0, mac);
+    } else {
+      WiFi.begin(_credentialTest.ssid.c_str(), _credentialTest.password.c_str());
+    }
+
+    _credentialTest.startMillis = millis();
+    _credentialTest.started = true;
+    return;
+  }
+
+  if (!_credentialTest.timeoutSec)
+    return;
+
+  if (WiFi.status() == WL_CONNECTED && WiFi.localIP()[0] != 0) {
+    LOGI(TAG, "WiFi connection test successful for SSID: %s", _credentialTest.ssid.c_str());
+    _completeCredentialTest(true, true);
+    return;
+  }
+
+  if (millis() - _credentialTest.startMillis >= _credentialTest.timeoutSec * 1000UL) {
+    LOGW(TAG, "WiFi connection test failed for SSID: %s", _credentialTest.ssid.c_str());
+    _completeCredentialTest(false, true);
+  }
+}
+
+void Mycila::ESPConnect::_handleCredentialTestCancellation(AsyncWebServerRequest* request) {
+  if (_credentialTest.request != request)
+    return;
+
+  LOGW(TAG, "Client disconnected before WiFi test completion.");
+  _credentialTest.requestHolder.reset();
+  _credentialTest.request = nullptr;
+  _completeCredentialTest(false, false);
+}
+
+void Mycila::ESPConnect::_completeCredentialTest(bool success, bool sendResponse) {
+  if (_credentialTest.started) {
+    if (!success)
+      WiFi.disconnect(true);
+
+    if (_credentialTest.previousMode == WIFI_MODE_AP) {
+      WiFi.mode(WIFI_MODE_AP);
+    } else if (_credentialTest.previousMode == WIFI_MODE_APSTA) {
+      WiFi.mode(WIFI_MODE_APSTA);
+    } else if (_credentialTest.previousMode == WIFI_MODE_STA) {
+      WiFi.mode(WIFI_MODE_STA);
+    } else {
+      WiFi.mode(WIFI_MODE_NULL);
+    }
+
+    _credentialTest.started = false;
+  }
+
+  if (_credentialTest.dnsServerPaused && _dnsServer != nullptr) {
+    _dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
+    _dnsServer->start(53, "*", WiFi.softAPIP());
+    _credentialTest.dnsServerPaused = false;
+  }
+
+  AsyncWebServerRequest* request = nullptr;
+  if (!_credentialTest.requestHolder.expired()) {
+    if (auto locked = _credentialTest.requestHolder.lock()) {
+      request = locked.get();
+    }
+  }
+  if (request == nullptr) {
+    sendResponse = false;
+  }
+
+  const ESPCONNECT_STRING ssid = _credentialTest.ssid;
+  const ESPCONNECT_STRING password = _credentialTest.password;
+  const ESPCONNECT_STRING bssid = _credentialTest.bssid;
+
+  if (sendResponse && request != nullptr) {
+    _credentialTest.request = nullptr;
+    _credentialTest.requestHolder.reset();
+    if (success) {
+      _config.wifiSSID = ssid;
+      _config.wifiPassword = password;
+      _config.wifiBSSID = bssid;
+      request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
+      _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
+    } else {
+      request->send(400, "application/json", "{\"message\":\"WiFi connection failed. Check the password and try again.\"}");
+    }
+  }
+
+  _credentialTest.requestHolder.reset();
+  _credentialTest.request = nullptr;
+  _resetCredentialTestContext();
+}
+
+void Mycila::ESPConnect::_resetCredentialTestContext() {
+  _credentialTest = CredentialTestContext();
+}
+
 void Mycila::ESPConnect::_stopCaptivePortal() {
   LOGI(TAG, "Stopping Captive Portal...");
   _lastTime = -1;
+
+  _completeCredentialTest(false, false);
 
   WiFi.softAPdisconnect(true);
 

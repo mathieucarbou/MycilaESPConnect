@@ -85,6 +85,10 @@ void Mycila::ESPConnect::loop() {
   if (_dnsServer != nullptr)
     _dnsServer->processNextRequest();
 
+#ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
+  _processCredentialTest();
+#endif
+
   // Network has just been enable ?
   if (_state == Mycila::ESPConnect::State::NETWORK_ENABLED) {
     // AP Mode has higher priority
