@@ -26,7 +26,7 @@ void Mycila::ESPConnect::_startEthernet() {
 
   #if defined(ESPCONNECT_ETH_SPI_SUPPORT)
   // https://github.com/espressif/arduino-esp32/tree/master/libraries/Ethernet/examples
-  SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
+  SPI.begin(ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI, ETH_PHY_CS);
   success = ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI);
   #else
   success = ETH.begin();
