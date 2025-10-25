@@ -203,8 +203,6 @@ void Mycila::ESPConnect::_stopCaptivePortal() {
   if (_homeHandler == nullptr)
     return;
 
-  LOGI(TAG, "Disable Captive Portal...");
-
   WiFi.scanDelete();
 
   _httpd->end();
