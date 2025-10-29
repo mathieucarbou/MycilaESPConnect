@@ -231,6 +231,9 @@ void Mycila::ESPConnect::_startCredentialTest() {
     Config* underTest = static_cast<Config*>(request->_tempObject);
     LOGI(TAG, "Testing WiFi credentials for SSID=%s, BSSID=%s", underTest->wifiSSID.c_str(), underTest->wifiBSSID.c_str());
 
+    // Before trying to connect, make sure DNS server is stopped
+    // Note: we do not restart it because we have already captured the device so the captive portal is already opened
+    // No need also to delete: it will be deleted when stopping the captive portal
     _dnsServer->stop();
 
     WiFi.persistent(false);
@@ -270,9 +273,6 @@ void Mycila::ESPConnect::_processCredentialTest() {
         _config.wifiSSID = std::move(underTest->wifiSSID);
         _config.wifiPassword = std::move(underTest->wifiPassword);
         _config.wifiBSSID = std::move(underTest->wifiBSSID);
-        // Clean up Config object
-        delete underTest;
-        request->_tempObject = nullptr;
         request->send(200, "application/json", "{\"message\":\"Configuration saved.\"}");
         _stopCredentialTest();
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
@@ -297,8 +297,10 @@ void Mycila::ESPConnect::_stopCaptivePortal() {
   LOGI(TAG, "Stopping Captive Portal...");
   _lastTime = -1;
 
+  // In case we have to early stop the captive portal, notify the user first
   if (auto request = _pausedRequest.lock()) {
     request->send(400, "application/json", "{\"message\":\"Captive Portal stopped.\"}");
+    _stopCredentialTest();
   }
 
   if (_dnsServer != nullptr) {
