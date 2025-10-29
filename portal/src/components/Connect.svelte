@@ -123,5 +123,6 @@
     padding: 0.75rem 1rem;
     border-radius: .5rem;
     margin-top: .5rem;
+    margin-bottom: .5rem;
   }
 </style>
