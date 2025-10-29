@@ -18,6 +18,7 @@
   #include <ESPAsyncWebServer.h>
 #endif
 
+#include <memory>
 #include <utility>
 
 #ifdef ESPCONNECT_NO_STD_STRING
@@ -276,9 +277,13 @@ namespace Mycila {
 
 #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       AsyncWebServer* _httpd = nullptr;
+      // HTTP handlers
       AsyncCallbackWebHandler* _scanHandler = nullptr;
       AsyncCallbackWebHandler* _connectHandler = nullptr;
       AsyncCallbackWebHandler* _homeHandler = nullptr;
+      // WiFi connection test
+      AsyncWebServerRequestPtr _pausedRequest;
+      bool _credentialTestInProgress = false;
 
   #ifndef ESPCONNECT_NO_COMPAT_CP
       AsyncCallbackWebHandler* _connecttestHandler = nullptr;
@@ -294,7 +299,12 @@ namespace Mycila {
 
       void _startCaptivePortal();
       void _stopCaptivePortal();
+      // scan WiFi networks
       void _scan();
+      // test WiFi credentials
+      void _startCredentialTest();
+      void _processCredentialTest();
+      void _stopCredentialTest();
 #endif
   };
 } // namespace Mycila

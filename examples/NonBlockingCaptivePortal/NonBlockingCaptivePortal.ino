@@ -80,7 +80,7 @@ void loop() {
     last = millis();
     JsonDocument doc;
     espConnect.toJson(doc.to<JsonObject>());
-    serializeJsonPretty(doc, Serial);
+    serializeJson(doc, Serial);
     Serial.println();
   }
 }

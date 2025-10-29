@@ -8,11 +8,14 @@
   #include "MycilaESPConnect_Logging.h"
   #include "espconnect_webpage.h"
 
+  #include <utility> // NOLINT
+
 void Mycila::ESPConnect::_startCaptivePortal() {
   LOGI(TAG, "Starting Captive Portal...");
   _setState(Mycila::ESPConnect::State::PORTAL_STARTING);
 
-  WiFi.disconnect(true);
+  if (WiFi.isConnected())
+    WiFi.disconnect(true);
   WiFi.mode(WIFI_MODE_NULL);
 
   #ifndef ESP8266
@@ -28,7 +31,7 @@ void Mycila::ESPConnect::_startCaptivePortal() {
 
   // Configure AP with specific IP range so devices recognize it as a captive portal
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
-  WiFi.mode(WIFI_MODE_AP);
+  WiFi.mode(WIFI_MODE_APSTA);
 
   if (!_apPassword.length() || _apPassword.length() < 8) {
     // Disabling invalid Access Point password which must be at least 8 characters long when set
@@ -81,27 +84,62 @@ void Mycila::ESPConnect::_startCaptivePortal() {
   }
 
   if (_connectHandler == nullptr) {
-    _connectHandler = &_httpd->on("/espconnect/connect", HTTP_POST, [&](AsyncWebServerRequest* request) {
+    _connectHandler = &_httpd->on("/espconnect/connect", HTTP_POST, [this](AsyncWebServerRequest* request) {
       _config.apMode = request->hasParam("ap_mode", true) && request->getParam("ap_mode", true)->value() == "true";
+
+      // AP mode ? Set and return - no need to test WiFi credentials
       if (_config.apMode) {
         request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
-      } else {
-        ESPCONNECT_STRING ssid;
-        ESPCONNECT_STRING password;
-        if (request->hasParam("ssid", true))
-          ssid = request->getParam("ssid", true)->value().c_str();
-        if (request->hasParam("password", true))
-          password = request->getParam("password", true)->value().c_str();
-        if (!ssid.length())
-          return request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
-        if (ssid.length() > 32 || password.length() > 64 || (password.length() && password.length() < 8))
-          return request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
-        _config.wifiSSID = ssid;
-        _config.wifiPassword = password;
-        request->send(200, "application/json", "{\"message\":\"Configuration Saved.\"}");
-        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
+        return;
       }
+
+      // WiFi mode - read credentials
+      // save credentials for testing in request temp object
+      // Use new instead of malloc to properly construct Config members (strings)
+      Config* underTest = new Config();
+
+      // read params
+      if (request->hasParam("ssid", true))
+        underTest->wifiSSID = request->getParam("ssid", true)->value().c_str();
+      if (request->hasParam("password", true))
+        underTest->wifiPassword = request->getParam("password", true)->value().c_str();
+      if (request->hasParam("bssid", true))
+        underTest->wifiBSSID = request->getParam("bssid", true)->value().c_str();
+
+      // validate
+      if (!underTest->wifiSSID.length()) {
+        delete underTest;
+        request->send(400, "application/json", "{\"message\":\"Invalid SSID\"}");
+        return;
+      }
+      if (underTest->wifiSSID.length() > 32 || underTest->wifiPassword.length() > 64 || (underTest->wifiPassword.length() && underTest->wifiPassword.length() < 8)) {
+        delete underTest;
+        request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
+        return;
+      }
+      if (_pausedRequest.use_count()) {
+        delete underTest;
+        request->send(409, "application/json", "{\"message\":\"A connection test is already in progress. Please wait.\"}");
+        return;
+      }
+
+      // store data for future use
+      request->_tempObject = underTest;
+
+      // register a handler that will be called when request disconnects,
+      // so either upon completion or upon timeout
+      request->onDisconnect([this, request]() {
+        // Clean up Config object if allocated
+        if (request->_tempObject != nullptr) {
+          delete static_cast<Config*>(request->_tempObject);
+          request->_tempObject = nullptr;
+        }
+        _stopCredentialTest();
+      });
+
+      // pause request and start test (through the loop)
+      _pausedRequest = request->pause();
     });
   }
 
@@ -188,17 +226,89 @@ void Mycila::ESPConnect::_startCaptivePortal() {
   _lastTime = millis();
 }
 
+void Mycila::ESPConnect::_startCredentialTest() {
+  if (auto request = _pausedRequest.lock()) {
+    Config* underTest = static_cast<Config*>(request->_tempObject);
+    LOGI(TAG, "Testing WiFi credentials for SSID=%s, BSSID=%s", underTest->wifiSSID.c_str(), underTest->wifiBSSID.c_str());
+
+    _dnsServer->stop();
+
+    WiFi.persistent(false);
+    WiFi.setAutoReconnect(false);
+    WiFi.setSleep(false);
+
+    if (underTest->wifiBSSID.length()) {
+      MacAddress bssid(MACType::MAC6);
+      bssid.fromString(underTest->wifiBSSID.c_str());
+      WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str(), 0, bssid);
+    } else {
+      WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str());
+    }
+
+    _credentialTestInProgress = true;
+
+  } else {
+    // should never happen except if request is aborted at the same time we go there
+    LOGE(TAG, "No paused request found for WiFi credential test.");
+  }
+}
+
+void Mycila::ESPConnect::_processCredentialTest() {
+  if (auto request = _pausedRequest.lock()) {
+    switch (WiFi.status()) {
+      case WL_NO_SSID_AVAIL:
+      case WL_CONNECT_FAILED:
+      case WL_CONNECTION_LOST: {
+        LOGW(TAG, "WiFi credentials test failed with error: %d", WiFi.status());
+        request->send(400, "application/json", "{\"message\":\"WiFi connection failed. Check the SSID and password and try again.\"}");
+        _stopCredentialTest();
+        break;
+      }
+      case WL_CONNECTED: {
+        LOGI(TAG, "WiFi credentials test successful!");
+        Config* underTest = static_cast<Config*>(request->_tempObject);
+        _config.wifiSSID = std::move(underTest->wifiSSID);
+        _config.wifiPassword = std::move(underTest->wifiPassword);
+        _config.wifiBSSID = std::move(underTest->wifiBSSID);
+        // Clean up Config object
+        delete underTest;
+        request->_tempObject = nullptr;
+        request->send(200, "application/json", "{\"message\":\"Configuration saved.\"}");
+        _stopCredentialTest();
+        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
+        break;
+      }
+      default:
+        break;
+    }
+
+  } else {
+    // should never happen except if request is aborted at the same time we go there
+    LOGE(TAG, "No paused request found for WiFi credential test.");
+  }
+}
+
+void Mycila::ESPConnect::_stopCredentialTest() {
+  _credentialTestInProgress = false;
+  _pausedRequest.reset();
+}
+
 void Mycila::ESPConnect::_stopCaptivePortal() {
   LOGI(TAG, "Stopping Captive Portal...");
   _lastTime = -1;
 
-  WiFi.softAPdisconnect(true);
+  if (auto request = _pausedRequest.lock()) {
+    request->send(400, "application/json", "{\"message\":\"Captive Portal stopped.\"}");
+  }
 
   if (_dnsServer != nullptr) {
     _dnsServer->stop();
     delete _dnsServer;
     _dnsServer = nullptr;
   }
+
+  WiFi.disconnect(true);
+  WiFi.softAPdisconnect(true);
 
   if (_homeHandler == nullptr)
     return;

@@ -146,11 +146,31 @@ void Mycila::ESPConnect::loop() {
   }
 
 #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
-  // timeout portal if we failed to connect to WiFi (we got a SSID) and portal duration is passed
-  // in order to restart and try again to connect to the configured WiFi
-  if (_state == Mycila::ESPConnect::State::PORTAL_STARTED && _config.wifiSSID.length() && _durationPassed(_portalTimeout)) {
-    _setState(Mycila::ESPConnect::State::PORTAL_TIMEOUT);
-    return;
+  if (_state == Mycila::ESPConnect::State::PORTAL_STARTED) {
+    // timeout portal if we failed to connect to WiFi (we got a SSID) and portal duration is passed
+    // in order to restart and try again to connect to the configured WiFi
+    if (_config.wifiSSID.length() && _durationPassed(_portalTimeout)) {
+      _setState(Mycila::ESPConnect::State::PORTAL_TIMEOUT);
+      return;
+    }
+
+    // Start WiFi credential test if we are in PORTAL_STARTED state and we have a paused request and not already testing credentials
+    if (_pausedRequest.use_count() && !_credentialTestInProgress) {
+      _startCredentialTest();
+      return;
+    }
+
+    // Process WiFi credential test results if we are in PORTAL_STARTED and we are currently testing credentials
+    if (_pausedRequest.use_count() && _credentialTestInProgress) {
+      _processCredentialTest();
+      return;
+    }
+
+    // Stop WiFi credential test if we are in PORTAL_STARTED and we are currently testing credentials but the connection times out (10 sec)
+    if (!_pausedRequest.use_count() && _credentialTestInProgress) {
+      _stopCredentialTest();
+      return;
+    }
   }
 
   if (_state == Mycila::ESPConnect::State::PORTAL_TIMEOUT) {
