@@ -272,7 +272,9 @@ void Mycila::ESPConnect::_processCredentialTest() {
         Config* underTest = static_cast<Config*>(request->_tempObject);
         _config.wifiSSID = std::move(underTest->wifiSSID);
         _config.wifiPassword = std::move(underTest->wifiPassword);
-        _config.wifiBSSID = std::move(underTest->wifiBSSID);
+        // Do not save bssid otherwise it will prevent the ESP to connect to another satellite in a mesh network.
+        // This is up to the user to update the config if it needs to be fixed
+        // _config.wifiBSSID = std::move(underTest->wifiBSSID);
         request->send(200, "application/json", "{\"message\":\"Configuration saved.\"}");
         _stopCredentialTest();
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
