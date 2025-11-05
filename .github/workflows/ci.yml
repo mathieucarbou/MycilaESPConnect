@@ -49,15 +49,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.32/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.33/platform-espressif32.zip
             board: esp32dev
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.32/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.33/platform-espressif32.zip
             board: esp32-s2-saola-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.32/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.33/platform-espressif32.zip
             board: esp32-s3-devkitc-1
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.32/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.33/platform-espressif32.zip
             board: esp32-c3-devkitc-02
-          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.32/platform-espressif32.zip
+          - platform: https://github.com/pioarduino/platform-espressif32/releases/download/55.03.33/platform-espressif32.zip
             board: esp32-c6-devkitc-1
 
           - platform: https://github.com/pioarduino/platform-espressif32/releases/download/54.03.20-rc2/platform-espressif32.zip
