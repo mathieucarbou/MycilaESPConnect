@@ -28,7 +28,7 @@ jobs:
       - name: Pyhton
         uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.13"
 
       - name: cpplint
         run: |
@@ -86,7 +86,7 @@ jobs:
       - name: Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.13"
 
       - name: Build
         run: |
@@ -132,7 +132,7 @@ jobs:
       - name: Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.13"
 
       - name: Build
         run: |
@@ -176,7 +176,7 @@ jobs:
       - name: Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.13"
 
       - name: Build
         run: |
