@@ -23,7 +23,6 @@ void Mycila::ESPConnect::_startSTA() {
   WiFi.persistent(false);
   WiFi.setAutoReconnect(true);
 
-  WiFi.mode(WIFI_MODE_APSTA);
   WiFi.mode(WIFI_MODE_STA);
 #ifndef ESP8266
   WiFi.enableIPv6();
