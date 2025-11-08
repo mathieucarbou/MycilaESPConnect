@@ -44,10 +44,14 @@ Mycila::ESPConnect::Mode Mycila::ESPConnect::getMode() const {
     case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
     case Mycila::ESPConnect::State::NETWORK_RECONNECTING:
 #ifdef ESPCONNECT_ETH_SUPPORT
-      if (ETH.linkUp() && ETH.localIP()[0] != 0)
+      if (ETH.hasIP())
         return Mycila::ESPConnect::Mode::ETH;
 #endif
+#ifdef ESP8266
       if (WiFi.localIP()[0] != 0)
+#else
+      if (WiFi.STA.hasIP())
+#endif
         return Mycila::ESPConnect::Mode::STA;
       return Mycila::ESPConnect::Mode::NONE;
     default:
@@ -67,7 +71,7 @@ ESPCONNECT_STRING Mycila::ESPConnect::getMACAddress(Mycila::ESPConnect::Mode mod
       break;
 #ifdef ESPCONNECT_ETH_SUPPORT
     case Mycila::ESPConnect::Mode::ETH:
-      if (ETH.linkUp())
+      if (ETH.hasIP())
         mac = ETH.macAddress().c_str();
       break;
 #endif
@@ -130,7 +134,7 @@ IPAddress Mycila::ESPConnect::getIPAddress(Mycila::ESPConnect::Mode mode) const 
       return wifiMode == WIFI_MODE_STA ? WiFi.localIP() : IPAddress();
 #ifdef ESPCONNECT_ETH_SUPPORT
     case Mycila::ESPConnect::Mode::ETH:
-      return ETH.linkUp() ? ETH.localIP() : IPAddress();
+      return ETH.hasIP() ? ETH.localIP() : IPAddress();
 #endif
     default:
       return IPAddress();
@@ -147,7 +151,7 @@ IPAddress Mycila::ESPConnect::getLinkLocalIPv6Address(Mycila::ESPConnect::Mode m
       return wifiMode == WIFI_MODE_STA ? WiFi.linkLocalIPv6() : IN6ADDR_ANY;
   #ifdef ESPCONNECT_ETH_SUPPORT
     case Mycila::ESPConnect::Mode::ETH:
-      return ETH.linkUp() ? ETH.linkLocalIPv6() : IN6ADDR_ANY;
+      return ETH.hasLinkLocalIPv6() ? ETH.linkLocalIPv6() : IN6ADDR_ANY;
   #endif
     default:
       return IN6ADDR_ANY;
@@ -167,7 +171,7 @@ IPAddress Mycila::ESPConnect::getGlobalIPv6Address(Mycila::ESPConnect::Mode mode
       return wifiMode == WIFI_MODE_STA ? WiFi.globalIPv6() : IN6ADDR_ANY;
   #ifdef ESPCONNECT_ETH_SUPPORT
     case Mycila::ESPConnect::Mode::ETH:
-      return ETH.linkUp() ? ETH.globalIPv6() : IN6ADDR_ANY;
+      return ETH.hasGlobalIPv6() ? ETH.globalIPv6() : IN6ADDR_ANY;
   #endif
     default:
       return IN6ADDR_ANY;

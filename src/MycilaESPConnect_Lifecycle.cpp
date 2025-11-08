@@ -233,7 +233,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
   switch (event) {
 #ifdef ESPCONNECT_ETH_SUPPORT
     case ARDUINO_EVENT_ETH_START:
-      if (ETH.linkUp()) {
+      if (ETH.hasIP()) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_START", getStateName());
         ETH.setHostname(_config.hostname.c_str());
       }
@@ -256,7 +256,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
       }
       break;
     case ARDUINO_EVENT_ETH_DISCONNECTED:
-      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTED && WiFi.localIP()[0] == 0) {
+      if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTED && !WiFi.STA.hasIP()) {
         LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_ETH_DISCONNECTED", getStateName());
         _setState(Mycila::ESPConnect::State::NETWORK_DISCONNECTED);
       }
@@ -302,7 +302,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 
         // we have to move to state disconnected only if we are not connected to ethernet with LAN
 #ifdef ESPCONNECT_ETH_SUPPORT
-        if (ETH.linkUp() && ETH.localIP()[0] != 0)
+        if (ETH.hasIP())
           break;
 #endif
         _setState(Mycila::ESPConnect::State::NETWORK_DISCONNECTED);

@@ -15,14 +15,11 @@
   #define ARDUINO_EVENT_WIFI_STA_LOST_IP      WIFI_EVENT_STAMODE_DHCP_TIMEOUT
   #define ARDUINO_EVENT_WIFI_STA_DISCONNECTED WIFI_EVENT_STAMODE_DISCONNECTED
   #define ARDUINO_EVENT_WIFI_AP_START         WIFI_EVENT_SOFTAPMODE_STACONNECTED
+
+  #include "./backport/MacAddress.h"
 #else
   #include <esp_mac.h>
-#endif
-
-#if __has_include(<MacAddress.h>)
   #include <MacAddress.h>
-#else
-  #include "./backport/MacAddress.h"
 #endif
 
 #include <Preferences.h>
