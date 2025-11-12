@@ -153,7 +153,7 @@ namespace Mycila {
       void end();
 
       // Listen for network state change
-      void listen(StateCallback callback) { _callback = callback; }
+      void listen(StateCallback callback) { _callback = std::move(callback); }
 
       // Returns the current network state
       State getState() const { return _state; }
