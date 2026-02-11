@@ -95,6 +95,7 @@ void Mycila::ESPConnect::_startCaptivePortal() {
       }
 
       // WiFi mode - read credentials
+      const bool manual = request->hasParam("manual", true) && request->getParam("manual", true)->value() == "true";
       // save credentials for testing in request temp object
       // Use new instead of malloc to properly construct Config members (strings)
       Config* underTest = new Config();
@@ -118,6 +119,15 @@ void Mycila::ESPConnect::_startCaptivePortal() {
         request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
         return;
       }
+      if (manual) {
+        _config.wifiSSID = std::move(underTest->wifiSSID);
+        _config.wifiPassword = std::move(underTest->wifiPassword);
+        delete underTest;
+        request->send(200, "application/json", "{\"message\":\"Configuration saved.\"}");
+        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
+        return;
+      }
+
       if (_pausedRequest.use_count()) {
         delete underTest;
         request->send(409, "application/json", "{\"message\":\"A connection test is already in progress. Please wait.\"}");
