@@ -10,7 +10,8 @@
 		loading: true,
 		connectStatus: {
 			sent: false,
-			success: true
+			success: true,
+			manual: false
 		},
 		selection: {
 			ap_mode: false,
@@ -26,11 +27,13 @@
 	function setConnectSuccess(){
 		data.connectStatus.sent = true;
 		data.connectStatus.success = true;
+		data.connectStatus.manual = data.selection.manual;
 	}
 
 	function setConnectError(){
 		data.connectStatus.sent = true;
 		data.connectStatus.success = false;
+		data.connectStatus.manual = data.selection.manual;
 	}
 
 	function clearSelection() {
@@ -112,7 +115,7 @@
 							<Connect bssid={data.selection.bssid} ssid={data.selection.ssid} ap_mode={data.selection.ap_mode} open={data.selection.open} manual={data.selection.manual} on:back={clearSelection} on:success={setConnectSuccess} on:error={setConnectError} />
 						{/if}
 					{:else}
-							<Status success={data.connectStatus.success} />
+							<Status success={data.connectStatus.success} manual={data.connectStatus.manual} />
 					{/if}
 				{/if}
 			</div>

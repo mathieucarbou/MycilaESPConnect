@@ -123,7 +123,7 @@ void Mycila::ESPConnect::_startCaptivePortal() {
         _config.wifiSSID = std::move(underTest->wifiSSID);
         _config.wifiPassword = std::move(underTest->wifiPassword);
         delete underTest;
-        request->send(200, "application/json", "{\"message\":\"Configuration saved.\"}");
+        request->send(200, "application/json", "{\"message\":\"Configuration saved without validation.\"}");
         _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
         return;
       }

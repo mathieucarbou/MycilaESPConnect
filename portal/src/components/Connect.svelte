@@ -10,6 +10,11 @@
   let loading = false;
   let password = "";
   let errorMessage = "";
+  let openLocal = open;
+
+  $: if (!manual) {
+    openLocal = open;
+  }
 
   async function connect(){
     loading = true;
@@ -80,13 +85,20 @@
           <input type="text" placeholder="SSID" id="ssid" bind:value={ssid} disabled={loading} autocomplete="off" required readonly={!manual}>
         </div>
       </div>
-      {#if !open}
+      {#if manual}
       <div class="row">
         <div class="column column-100">
-          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" minlength="8">
-          <div class="text-muted text-sm" style="margin-top: .5rem;">
-            Leave empty for open networks.
-          </div>
+          <label class="checkbox">
+            <input type="checkbox" bind:checked={openLocal} disabled={loading} on:change={() => { if (openLocal) password = ""; }}>
+            <span>Open network (no password)</span>
+          </label>
+        </div>
+      </div>
+      {/if}
+      {#if !openLocal}
+      <div class="row">
+        <div class="column column-100">
+          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" minlength={!openLocal ? 8 : null} required={!openLocal}>
         </div>
       </div>
       {/if}
