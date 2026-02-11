@@ -6,9 +6,15 @@
   export let ssid;
   export let open;
   export let ap_mode;
+  export let manual = false;
   let loading = false;
   let password = "";
   let errorMessage = "";
+  let openLocal = open;
+
+  $: if (!manual) {
+    openLocal = open;
+  }
 
   async function connect(){
     loading = true;
@@ -18,21 +24,31 @@
     formData.append('ssid', ssid || "");
     formData.append('password', password || "");
     formData.append('ap_mode', ap_mode || false);
-    const res = await fetch(`/espconnect/connect`, { method: 'POST', body: new URLSearchParams(formData) });
-		if (res.status === 200) {
-      dispatch('success');
-		} else {
-      errorMessage = 'WiFi connection failed. Please verify your credentials.';
+    formData.append('manual', manual || false);
+    try {
+      const res = await fetch(`/espconnect/connect`, { method: 'POST', body: new URLSearchParams(formData) });
+      let apiMessage = "";
       try {
         const txt = await res.text();
         if (txt) {
-          errorMessage = txt.trim().startsWith('{') ? (JSON.parse(txt).message || errorMessage) : txt;
+          const trimmed = txt.trim();
+          apiMessage = trimmed.startsWith('{') ? (JSON.parse(trimmed).message || "") : trimmed;
         }
       } catch (e) { }
-      // Keep the form visible: do not dispatch('error') here
+
+      if (res.status === 200) {
+        dispatch('success', { message: apiMessage });
+      } else {
+        errorMessage = apiMessage || 'WiFi connection failed. Please verify your credentials.';
+        // Keep the form visible: do not dispatch('error') here
+      }
+      loading = false;
+      return res;
+    } catch (e) {
+      errorMessage = 'Network error. Please try again.';
+      loading = false;
+      return null;
     }
-    loading = false;
-		return res;
   }
 
   function back(){
@@ -75,13 +91,23 @@
       </div>
       <div class="row">
         <div class="column column-100">
-          <input type="text" placeholder="SSID" id="ssid" value={ssid} disabled={loading} autocomplete="off" required readonly>
+          <input type="text" placeholder="SSID" id="ssid" bind:value={ssid} disabled={loading} autocomplete="off" required readonly={!manual}>
         </div>
       </div>
-      {#if !open}
+      {#if manual}
       <div class="row">
         <div class="column column-100">
-          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" required minlength="8">
+          <label class="checkbox">
+            <input type="checkbox" bind:checked={openLocal} disabled={loading} on:change={() => { if (openLocal) password = ""; }}>
+            <span>Open network (no password)</span>
+          </label>
+        </div>
+      </div>
+      {/if}
+      {#if !openLocal}
+      <div class="row">
+        <div class="column column-100">
+          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" minlength={!openLocal ? 8 : null} required={!openLocal}>
         </div>
       </div>
       {/if}

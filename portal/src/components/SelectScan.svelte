@@ -21,6 +21,18 @@
           </div>
         </div>
       </div>
+      <div class="row clickable-row" on:click={() => dispatch('select', { ap_mode: false, bssid: "", ssid: "", open: false, manual: true })}>
+        <div class="column">
+          <div class="container">
+            <div class="row flex-rows">
+              <div class="column">
+                ✍️ Enter manually
+              </div>
+              <div class="column w-auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
       {#if access_points.length > 0}
       {#each access_points as ap}
       <div class="row clickable-row" on:click={() => dispatch('select', { bssid: ap.bssid, ssid: ap.name, open: ap.open })}>

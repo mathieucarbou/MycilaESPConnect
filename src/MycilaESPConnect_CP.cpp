@@ -118,6 +118,16 @@ void Mycila::ESPConnect::_startCaptivePortal() {
         request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
         return;
       }
+
+      if (request->hasParam("manual", true) && request->getParam("manual", true)->value() == "true") {
+        _config.wifiSSID = std::move(underTest->wifiSSID);
+        _config.wifiPassword = std::move(underTest->wifiPassword);
+        delete underTest;
+        request->send(200, "application/json", "{\"message\":\"Configuration saved without validation.\"}");
+        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
+        return;
+      }
+
       if (_pausedRequest.use_count()) {
         delete underTest;
         request->send(409, "application/json", "{\"message\":\"A connection test is already in progress. Please wait.\"}");
