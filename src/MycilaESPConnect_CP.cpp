@@ -95,7 +95,6 @@ void Mycila::ESPConnect::_startCaptivePortal() {
       }
 
       // WiFi mode - read credentials
-      const bool manual = request->hasParam("manual", true) && request->getParam("manual", true)->value() == "true";
       // save credentials for testing in request temp object
       // Use new instead of malloc to properly construct Config members (strings)
       Config* underTest = new Config();
