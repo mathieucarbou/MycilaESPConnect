@@ -258,7 +258,7 @@ void Mycila::ESPConnect::_startCredentialTest() {
       WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str());
     }
 
-    _credentialTestInProgress = true;
+    _credentialTestInProgress = millis();
 
   } else {
     // should never happen except if request is aborted at the same time we go there
@@ -273,6 +273,7 @@ void Mycila::ESPConnect::_processCredentialTest() {
       case WL_CONNECT_FAILED:
       case WL_CONNECTION_LOST: {
         LOGW(TAG, "WiFi credentials test failed with error: %d", WiFi.status());
+        _scan();
         request->send(400, "application/json", "{\"message\":\"WiFi connection failed. Check the SSID and password and try again.\"}");
         _stopCredentialTest();
         break;
@@ -301,7 +302,7 @@ void Mycila::ESPConnect::_processCredentialTest() {
 }
 
 void Mycila::ESPConnect::_stopCredentialTest() {
-  _credentialTestInProgress = false;
+  _credentialTestInProgress = 0;
   _pausedRequest.reset();
 }
 

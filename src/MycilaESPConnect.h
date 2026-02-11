@@ -283,7 +283,8 @@ namespace Mycila {
       AsyncCallbackWebHandler* _homeHandler = nullptr;
       // WiFi connection test
       AsyncWebServerRequestPtr _pausedRequest;
-      bool _credentialTestInProgress = false;
+      // timestamp of when the credential test started, or 0 if no test in progress
+      uint32_t _credentialTestInProgress = 0;
 
   #ifndef ESPCONNECT_NO_COMPAT_CP
       AsyncCallbackWebHandler* _connecttestHandler = nullptr;
