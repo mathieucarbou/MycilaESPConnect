@@ -119,7 +119,8 @@ void Mycila::ESPConnect::_startCaptivePortal() {
         request->send(400, "application/json", "{\"message\":\"Credentials exceed character limit of 32 & 64 respectively, or password lower than 8 characters.\"}");
         return;
       }
-      if (manual) {
+
+      if (request->hasParam("manual", true) && request->getParam("manual", true)->value() == "true") {
         _config.wifiSSID = std::move(underTest->wifiSSID);
         _config.wifiPassword = std::move(underTest->wifiPassword);
         delete underTest;
