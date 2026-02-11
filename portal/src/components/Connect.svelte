@@ -6,6 +6,7 @@
   export let ssid;
   export let open;
   export let ap_mode;
+  export let manual = false;
   let loading = false;
   let password = "";
   let errorMessage = "";
@@ -75,13 +76,16 @@
       </div>
       <div class="row">
         <div class="column column-100">
-          <input type="text" placeholder="SSID" id="ssid" value={ssid} disabled={loading} autocomplete="off" required readonly>
+          <input type="text" placeholder="SSID" id="ssid" bind:value={ssid} disabled={loading} autocomplete="off" required readonly={!manual}>
         </div>
       </div>
       {#if !open}
       <div class="row">
         <div class="column column-100">
-          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" required minlength="8">
+          <input type="password" placeholder="WiFi Password" id="password" bind:value={password} disabled={loading} autocomplete="off" minlength="8">
+          <div class="text-muted text-sm" style="margin-top: .5rem;">
+            Leave empty for open networks.
+          </div>
         </div>
       </div>
       {/if}

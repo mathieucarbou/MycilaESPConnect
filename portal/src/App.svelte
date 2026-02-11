@@ -17,7 +17,8 @@
 			selected: false,
 			bssid: '',
 			ssid: '',
-			open: false
+			open: false,
+			manual: false
 		},
 		access_points: []
 	}
@@ -38,15 +39,15 @@
 		data.selection.bssid = "";
 		data.selection.ssid = "";
 		data.selection.open = false;
+		data.selection.manual = false;
 	}
 
 	function selectAccessPoint(event) {
 		data.selection.bssid = event.detail.bssid;
 		data.selection.ssid = event.detail.ssid;
 		data.selection.ap_mode = event.detail.ap_mode;
-		if(event.detail.open){
-			data.selection.open = true;
-		}
+		data.selection.open = !!event.detail.open;
+		data.selection.manual = !!event.detail.manual;
 		data.selection.selected = true;
 	}
 
@@ -108,7 +109,7 @@
 						{#if !data.selection.selected}
 							<SelectScan access_points={data.access_points} on:refresh={refresh} on:select={selectAccessPoint} />
 						{:else}
-							<Connect bssid={data.selection.bssid} ssid={data.selection.ssid} ap_mode={data.selection.ap_mode} open={data.selection.open} on:back={clearSelection} on:success={setConnectSuccess} on:error={setConnectError} />
+							<Connect bssid={data.selection.bssid} ssid={data.selection.ssid} ap_mode={data.selection.ap_mode} open={data.selection.open} manual={data.selection.manual} on:back={clearSelection} on:success={setConnectSuccess} on:error={setConnectError} />
 						{/if}
 					{:else}
 							<Status success={data.connectStatus.success} />
@@ -119,7 +120,7 @@
 	</div>
 </div>
 
-<style type="text/scss" global>
+<style lang="scss" global>
 	$color-primary: #353a41;
 	$color-secondary: #202327;
 	$color-muted: #626770;
