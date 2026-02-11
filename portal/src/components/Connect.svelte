@@ -25,21 +25,30 @@
     formData.append('password', password || "");
     formData.append('ap_mode', ap_mode || false);
     formData.append('manual', manual || false);
-    const res = await fetch(`/espconnect/connect`, { method: 'POST', body: new URLSearchParams(formData) });
-		if (res.status === 200) {
-      dispatch('success');
-		} else {
-      errorMessage = 'WiFi connection failed. Please verify your credentials.';
+    try {
+      const res = await fetch(`/espconnect/connect`, { method: 'POST', body: new URLSearchParams(formData) });
+      let apiMessage = "";
       try {
         const txt = await res.text();
         if (txt) {
-          errorMessage = txt.trim().startsWith('{') ? (JSON.parse(txt).message || errorMessage) : txt;
+          const trimmed = txt.trim();
+          apiMessage = trimmed.startsWith('{') ? (JSON.parse(trimmed).message || "") : trimmed;
         }
       } catch (e) { }
-      // Keep the form visible: do not dispatch('error') here
+
+      if (res.status === 200) {
+        dispatch('success', { message: apiMessage });
+      } else {
+        errorMessage = apiMessage || 'WiFi connection failed. Please verify your credentials.';
+        // Keep the form visible: do not dispatch('error') here
+      }
+      loading = false;
+      return res;
+    } catch (e) {
+      errorMessage = 'Network error. Please try again.';
+      loading = false;
+      return null;
     }
-    loading = false;
-		return res;
   }
 
   function back(){

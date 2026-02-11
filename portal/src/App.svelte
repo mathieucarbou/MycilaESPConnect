@@ -11,7 +11,8 @@
 		connectStatus: {
 			sent: false,
 			success: true,
-			manual: false
+			manual: false,
+			message: ""
 		},
 		selection: {
 			ap_mode: false,
@@ -24,16 +25,18 @@
 		access_points: []
 	}
 
-	function setConnectSuccess(){
+	function setConnectSuccess(event){
 		data.connectStatus.sent = true;
 		data.connectStatus.success = true;
 		data.connectStatus.manual = data.selection.manual;
+		data.connectStatus.message = (event && event.detail && event.detail.message) ? event.detail.message : "";
 	}
 
 	function setConnectError(){
 		data.connectStatus.sent = true;
 		data.connectStatus.success = false;
 		data.connectStatus.manual = data.selection.manual;
+		data.connectStatus.message = "";
 	}
 
 	function clearSelection() {
@@ -115,7 +118,7 @@
 							<Connect bssid={data.selection.bssid} ssid={data.selection.ssid} ap_mode={data.selection.ap_mode} open={data.selection.open} manual={data.selection.manual} on:back={clearSelection} on:success={setConnectSuccess} on:error={setConnectError} />
 						{/if}
 					{:else}
-							<Status success={data.connectStatus.success} manual={data.connectStatus.manual} />
+							<Status success={data.connectStatus.success} manual={data.connectStatus.manual} message={data.connectStatus.message} />
 					{/if}
 				{/if}
 			</div>
