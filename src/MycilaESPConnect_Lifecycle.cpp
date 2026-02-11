@@ -161,7 +161,8 @@ void Mycila::ESPConnect::loop() {
     }
 
     // Process WiFi credential test results if we are in PORTAL_STARTED and we are currently testing credentials
-    if (_pausedRequest.use_count() && _credentialTestInProgress) {
+    // Note: this 5 sec delay is to avoid reading the WiFi status code that will not yet be updated after the begin call
+    if (_pausedRequest.use_count() && _credentialTestInProgress && (millis() - _credentialTestInProgress >= 5000)) {
       _processCredentialTest();
       return;
     }
