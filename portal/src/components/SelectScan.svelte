@@ -26,7 +26,7 @@
           <div class="container">
             <div class="row flex-rows">
               <div class="column">
-                Manual SSID
+                ✍️ Enter manually
               </div>
               <div class="column w-auto"></div>
             </div>
