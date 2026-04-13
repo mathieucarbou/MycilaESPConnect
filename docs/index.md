@@ -10,7 +10,6 @@
 
 [![Build](https://github.com/mathieucarbou/MycilaESPConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/mathieucarbou/MycilaESPConnect/actions/workflows/ci.yml)
 [![GitHub latest commit](https://badgen.net/github/last-commit/mathieucarbou/MycilaESPConnect)](https://GitHub.com/mathieucarbou/MycilaESPConnect/commit/)
-[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/mathieucarbou/MycilaESPConnect)
 
 Simple & Easy Network Manager for ESP32 with WiFi, Ethernet and Captive Portal support
 
