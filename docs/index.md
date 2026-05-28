@@ -21,6 +21,11 @@ He is making great Arduino libraries.
 
 - [MycilaESPConnect](#mycilaespconnect)
   - [Features](#features)
+  - [Installation](#installation)
+    - [PlatformIO](#platformio)
+    - [Arduino IDE](#arduino-ide)
+    - [Compile Flags](#compile-flags)
+    - [mDNS](#mdns)
   - [Usage](#usage)
     - [API](#api)
     - [Blocking mode](#blocking-mode)
@@ -31,8 +36,6 @@ He is making great Arduino libraries.
     - [Ethernet Support](#ethernet-support)
     - [Logo](#logo)
     - [Captive Portal Detection Endpoints](#captive-portal-detection-endpoints)
-    - [mDNS](#mdns)
-    - [Compile Flags](#compile-flags)
 
 ## Features
 
@@ -49,6 +52,89 @@ He is making great Arduino libraries.
 - **ESP32 and ESP8266 support**
 - **Supports Static IP configuration**
 - **Supports auto-save and reload of configuration**
+
+## Installation
+
+### PlatformIO
+
+Add the library to your `platformio.ini` with its required dependencies:
+
+**ESP32 (WiFi only):**
+
+```ini
+[env:esp32dev]
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.38/platform-espressif32.zip
+board = esp32dev
+framework = arduino
+lib_compat_mode = strict
+lib_ldf_mode = chain
+lib_deps =
+  mathieucarbou/MycilaESPConnect @ ^10.6.0
+  ESP32Async/AsyncTCP @ ^3.4.10
+  ESP32Async/ESPAsyncWebServer @ ^3.11.0
+  bblanchon/ArduinoJson @ ^7.4.3
+```
+
+**ESP32 (with Ethernet support):**
+
+```ini
+[env:esp32-eth]
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.38/platform-espressif32.zip
+board = esp32dev
+framework = arduino
+build_flags =
+  -D ESPCONNECT_ETH_SUPPORT
+lib_compat_mode = strict
+lib_ldf_mode = chain
+lib_deps =
+  mathieucarbou/MycilaESPConnect @ ^10.6.0
+  ESP32Async/AsyncTCP @ ^3.4.10
+  ESP32Async/ESPAsyncWebServer @ ^3.11.0
+  bblanchon/ArduinoJson @ ^7.4.3
+```
+
+**ESP8266:**
+
+```ini
+[env:esp8266]
+platform = espressif8266
+board = huzzah
+framework = arduino
+lib_compat_mode = strict
+lib_ldf_mode = chain
+lib_deps =
+  mathieucarbou/MycilaESPConnect @ ^10.6.0
+  ESP32Async/ESPAsyncTCP @ ^2.0.0
+  ESP32Async/ESPAsyncWebServer @ ^3.11.0
+  bblanchon/ArduinoJson @ ^7.4.3
+  vshymanskyy/Preferences @ ^2.1.0
+```
+
+> **Note:** `ESPAsyncWebServer` and `ArduinoJson` are mandatory. `AsyncTCP` (or `ESPAsyncTCP` on ESP8266) must be provided separately as a transport layer. `Preferences` is only needed on ESP8266 when using the built-in configuration persistence.
+>
+> **ESP32 platform:** The official `espressif32` platform dropped Arduino support. Use the [pioarduino](https://github.com/pioarduino/platform-espressif32) fork instead, as shown above.
+
+### Arduino IDE
+
+Search for **MycilaESPConnect** in the Arduino Library Manager and install it along with its dependencies:
+
+- [ESP32Async/ESPAsyncWebServer](https://github.com/ESP32Async/ESPAsyncWebServer)
+- [ESP32Async/AsyncTCP](https://github.com/ESP32Async/AsyncTCP) (ESP32) or [ESP32Async/ESPAsyncTCP](https://github.com/ESP32Async/ESPAsyncTCP) (ESP8266)
+- [bblanchon/ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+- [vshymanskyy/Preferences](https://github.com/vshymanskyy/Preferences) _(ESP8266 only, for config persistence)_
+
+### Compile Flags
+
+- `-D ESPCONNECT_NO_MDNS`: disable mDNS
+- `-D ESPCONNECT_NO_CAPTIVE_PORTAL`: disable Captive Portal and ESPAsyncWebServer dependency
+- `-D ESPCONNECT_NO_STD_STRING`: use Arduino `String` instead of `std::string`
+- `-D ESPCONNECT_NO_LOGGING`: disable logging
+- `-D ESPCONNECT_NO_COMPAT_CP`: disable better Captive Portal detection (about 2KB flash)
+
+### mDNS
+
+mDNS takes quite a lot of space in flash (about 25KB).
+You can disable it by setting `-D ESPCONNECT_NO_MDNS`.
 
 ## Usage
 
@@ -257,16 +343,3 @@ MycilaESPConnect implements multi-platform captive portal detection by providing
 **Note**: This functionality can be disabled by setting the compile flag `-D ESPCONNECT_NO_COMPAT_CP`, which will save approximately 2KB of flash memory but may reduce captive portal detection reliability on some devices.
 
 This approach ensures a smooth user experience across all devices without manual intervention, automatically guiding users to the network configuration interface when they connect to the ESP32's access point.
-
-### mDNS
-
-mDNS takes quite a lot of space in flash (about 25KB).
-You can disable it by setting `-D ESPCONNECT_NO_MDNS`.
-
-### Compile Flags
-
-- `-D ESPCONNECT_NO_MDNS`: disable mDNS
-- `-D ESPCONNECT_NO_CAPTIVE_PORTAL`: disable Captive Portal and ESPAsyncWebServer dependency
-- `-D ESPCONNECT_NO_STD_STRING`: use Arduino `String` instead of `std::string`
-- `-D ESPCONNECT_NO_LOGGING`: disable logging
-- `-D ESPCONNECT_NO_COMPAT_CP`: disable better Captive Portal detection (about 2KB flash)
