@@ -71,7 +71,7 @@ Add the library to your `platformio.ini` with its required dependencies:
 
 ```ini
 [env:esp32dev]
-platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.38/platform-espressif32.zip
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.39/platform-espressif32.zip
 board = esp32dev
 framework = arduino
 lib_compat_mode = strict
@@ -87,7 +87,7 @@ lib_deps =
 
 ```ini
 [env:esp32-eth]
-platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.38/platform-espressif32.zip
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.39/platform-espressif32.zip
 board = esp32dev
 framework = arduino
 build_flags =
