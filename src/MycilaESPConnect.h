@@ -262,7 +262,8 @@ namespace Mycila {
 
       void _setState(State state);
       void _onWiFiEvent(WiFiEvent_t event);
-      bool _durationPassed(uint32_t intervalSec);
+      bool _durationPassed(uint32_t intervalSec, bool reset = true);
+      bool _connectionTimeout();
 
       void _startSTA();
 

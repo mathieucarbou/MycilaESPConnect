@@ -116,12 +116,17 @@ void Mycila::ESPConnect::loop() {
   }
 
   // connection to WiFi or Ethernet times out ?
-  if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout)) {
+  if (_connectionTimeout()) {
+    // Connecting phase timed out: stop WiFi and Ethernet and go back to NETWORK_TIMEOUT state
+    WiFi.setAutoReconnect(false);
     if (WiFi.getMode() != WIFI_MODE_NULL) {
+      LOGW(TAG, "Connection timeout and WiFi is still active: forcing disconnect...");
       WiFi.config(static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000));
       WiFi.disconnect(true, true);
+    } else {
+      _lastTime = -1;
+      _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
     }
-    _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
     return;
   }
 
@@ -286,9 +291,24 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      // try to reconnect to WiFi only if we have a SSID configured
+      // try to reconnect to WiFi:
+      // - if we have a SSID configured
+      // - and if we are not in a first connecting phase that timed out
       if (_config.wifiSSID.length()) {
-        WiFi.reconnect();
+        // when connecting timed out, prevent WiFi from reconnecting automatically as soon as we can
+        if (_connectionTimeout()) {
+          // log event
+          if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+            LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_DISCONNECTED", getStateName());
+          } else {
+            LOGD(TAG, "[%s] WiFiEvent: ARDUINO_EVENT_WIFI_STA_LOST_IP", getStateName());
+          }
+          LOGD(TAG, "[%s] Immediately preventing WiFi from reconnecting automatically", getStateName());
+          WiFi.setAutoReconnect(false);
+        } else {
+          // Ensure WiFi is trying to reconnect (required for older Arduino versions or platforms)
+          WiFi.reconnect();
+        }
       }
       if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTED) {
         // log event
@@ -326,10 +346,16 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
   }
 }
 
-bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec) {
+bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec, bool reset) {
   if (_lastTime >= 0 && millis() - static_cast<uint32_t>(_lastTime) >= intervalSec * 1000) {
-    _lastTime = -1;
+    if (reset) {
+      _lastTime = -1;
+    }
     return true;
   }
   return false;
+}
+
+bool Mycila::ESPConnect::_connectionTimeout() {
+  return _state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout, false);
 }
