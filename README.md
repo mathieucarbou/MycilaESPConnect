@@ -77,7 +77,7 @@ framework = arduino
 lib_compat_mode = strict
 lib_ldf_mode = chain
 lib_deps =
-  mathieucarbou/MycilaESPConnect @ ^10.6.0
+  mathieucarbou/MycilaESPConnect @ ^10.6.1
   ESP32Async/AsyncTCP @ ^3.4.10
   ESP32Async/ESPAsyncWebServer @ ^3.11.2
   bblanchon/ArduinoJson @ ^7.4.3
@@ -95,7 +95,7 @@ build_flags =
 lib_compat_mode = strict
 lib_ldf_mode = chain
 lib_deps =
-  mathieucarbou/MycilaESPConnect @ ^10.6.0
+  mathieucarbou/MycilaESPConnect @ ^10.6.1
   ESP32Async/AsyncTCP @ ^3.4.10
   ESP32Async/ESPAsyncWebServer @ ^3.11.2
   bblanchon/ArduinoJson @ ^7.4.3
@@ -111,7 +111,7 @@ framework = arduino
 lib_compat_mode = strict
 lib_ldf_mode = chain
 lib_deps =
-  mathieucarbou/MycilaESPConnect @ ^10.6.0
+  mathieucarbou/MycilaESPConnect @ ^10.6.1
   ESP32Async/ESPAsyncTCP @ ^2.0.0
   ESP32Async/ESPAsyncWebServer @ ^3.11.2
   bblanchon/ArduinoJson @ ^7.4.3
