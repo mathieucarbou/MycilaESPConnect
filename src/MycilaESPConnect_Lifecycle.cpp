@@ -245,7 +245,7 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_ETH_GOT_IP:
   #ifndef ESPCONNECT_NO_CAPTIVE_PORTAL
       if (_state == Mycila::ESPConnect::State::PORTAL_STARTING || _state == Mycila::ESPConnect::State::PORTAL_STARTED) {
-        _stopCaptivePortal();
+        _setState(Mycila::ESPConnect::State::PORTAL_COMPLETE);
       }
   #endif
       if (_state != Mycila::ESPConnect::State::NETWORK_CONNECTED && _state != Mycila::ESPConnect::State::NETWORK_DISABLED && _state != Mycila::ESPConnect::State::AP_STARTING && _state != Mycila::ESPConnect::State::AP_STARTED) {
