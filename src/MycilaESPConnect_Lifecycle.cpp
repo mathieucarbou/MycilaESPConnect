@@ -117,15 +117,19 @@ void Mycila::ESPConnect::loop() {
 
   // connection to WiFi or Ethernet times out ?
   if (_connectionTimeout()) {
-    // Connecting phase timed out: stop WiFi and Ethernet and go back to NETWORK_TIMEOUT state
-    WiFi.setAutoReconnect(false);
-    if (WiFi.getMode() != WIFI_MODE_NULL) {
-      LOGW(TAG, "Connection timeout and WiFi is still active: forcing disconnect...");
-      WiFi.config(static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000));
-      WiFi.disconnect(true, true);
-    } else {
-      _lastTime = -1;
-      _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
+    // Re-check the state before acting: the WiFi event task might have completed
+    // the connection between the timeout evaluation above and the actions below (see #71)
+    if (_state == Mycila::ESPConnect::State::NETWORK_CONNECTING) {
+      // Connecting phase timed out: stop WiFi and Ethernet and go back to NETWORK_TIMEOUT state
+      WiFi.setAutoReconnect(false);
+      if (WiFi.getMode() != WIFI_MODE_NULL) {
+        LOGW(TAG, "Connection timeout and WiFi is still active: forcing disconnect...");
+        WiFi.config(static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000), static_cast<uint32_t>(0x00000000));
+        WiFi.disconnect(true, true);
+      } else {
+        _lastTime = -1;
+        _setState(Mycila::ESPConnect::State::NETWORK_TIMEOUT);
+      }
     }
     return;
   }
@@ -347,7 +351,12 @@ void Mycila::ESPConnect::_onWiFiEvent(WiFiEvent_t event) {
 }
 
 bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec, bool reset) {
-  if (_lastTime >= 0 && millis() - static_cast<uint32_t>(_lastTime) >= intervalSec * 1000) {
+  // Single snapshot of _lastTime: it can be reset to -1 at any moment by the WiFi
+  // event task (i.e. on ARDUINO_EVENT_WIFI_STA_GOT_IP). Reading it twice could tear:
+  // the first read would validate the timestamp and the second one would read -1,
+  // wrapping the elapsed time computation and producing a false timeout (see #71)
+  const int64_t lastTime = _lastTime;
+  if (lastTime >= 0 && millis() - static_cast<uint32_t>(lastTime) >= intervalSec * 1000) {
     if (reset) {
       _lastTime = -1;
     }
@@ -357,5 +366,9 @@ bool Mycila::ESPConnect::_durationPassed(uint32_t intervalSec, bool reset) {
 }
 
 bool Mycila::ESPConnect::_connectionTimeout() {
-  return _state == Mycila::ESPConnect::State::NETWORK_CONNECTING && _durationPassed(_connectTimeout, false);
+  // Check the state again after the duration test: the connection can be completed
+  // at any moment by the WiFi event task, even while the timeout is being evaluated (see #71)
+  return _state == Mycila::ESPConnect::State::NETWORK_CONNECTING
+      && _durationPassed(_connectTimeout, false)
+      && _state == Mycila::ESPConnect::State::NETWORK_CONNECTING;
 }

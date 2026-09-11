@@ -238,10 +238,13 @@ namespace Mycila {
       void clearConfiguration();
 
     private:
-      State _state = State::NETWORK_DISABLED;
+      // _state and _lastTime are written by both the main loop task and the WiFi
+      // event task (WiFi/ETH callbacks run outside of loop()): they are marked
+      // volatile and must always be read through a single snapshot (see issue #71)
+      volatile State _state = State::NETWORK_DISABLED;
+      volatile int64_t _lastTime = -1;
       StateCallback _callback = nullptr;
       DNSServer* _dnsServer = nullptr;
-      int64_t _lastTime = -1;
       ESPCONNECT_STRING _apSSID;
       ESPCONNECT_STRING _apPassword;
       uint32_t _connectTimeout = ESPCONNECT_CONNECTION_TIMEOUT;
