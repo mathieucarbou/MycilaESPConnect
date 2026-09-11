@@ -113,7 +113,7 @@ namespace Mycila {
           // Password for the WiFi to connect to, loaded from config or set from begin(), or from the captive portal
           ESPCONNECT_STRING wifiPassword;
           // whether we need to set the ESP to stay in AP mode or not, loaded from config, begin(), or from captive portal
-          bool apMode;
+          bool apMode = false;
           // Static IP configuration to use (if any)
           IPConfig ipConfig;
       } Config;
