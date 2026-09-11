@@ -251,9 +251,13 @@ void Mycila::ESPConnect::_startCredentialTest() {
     WiFi.setSleep(false);
 
     if (underTest->wifiBSSID.length()) {
-      MacAddress bssid(MACType::MAC6);
-      bssid.fromString(underTest->wifiBSSID.c_str());
-      WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str(), 0, bssid);
+      uint8_t bssid[6];
+      if (_parseBSSID(underTest->wifiBSSID.c_str(), bssid)) {
+        WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str(), 0, bssid);
+      } else {
+        LOGW(TAG, "Invalid BSSID '%s': falling back to SSID-only connection", underTest->wifiBSSID.c_str());
+        WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str());
+      }
     } else {
       WiFi.begin(underTest->wifiSSID.c_str(), underTest->wifiPassword.c_str());
     }

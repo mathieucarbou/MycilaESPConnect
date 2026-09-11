@@ -7,6 +7,7 @@
 #include "MycilaESPConnect_Logging.h"
 
 #include <cstdio>
+#include <cstring>
 
 static const char* NetworkStateNames[] = {
   "NETWORK_DISABLED",
@@ -216,6 +217,39 @@ int8_t Mycila::ESPConnect::getWiFiSignalQuality() const {
 int8_t Mycila::ESPConnect::_wifiSignalQuality(int32_t rssi) {
   int32_t s = map(rssi, -90, -30, 0, 100);
   return s > 100 ? 100 : (s < 0 ? 0 : s);
+}
+
+static int hexDigit(char c) {
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+  return -1;
+}
+
+bool Mycila::ESPConnect::_parseBSSID(const char* str, uint8_t* bssid) {
+  // Strict parsing of the exact "XX:XX:XX:XX:XX:XX" format (17 chars, NUL-terminated):
+  // 2 hex digits per octet, colons at fixed positions, no trailing input.
+  // sscanf is too lenient for this: "%2x" accepts single-digit octets ("0:00:00:00:00:00")
+  // and trailing input is ignored once all conversions succeed ("70:A7:41:72:01:26junk").
+  // Manual parsing also avoids libc format quirks across cores (%n, %hhx, -Wformat).
+  // The length is validated first so the indexed reads below can never go past the NUL
+  // terminator: short malformed strings (which can come directly from the captive portal
+  // form, e.g. "00:") are rejected and take the SSID-only fallback path.
+  if (strlen(str) != 17)
+    return false;
+  for (int i = 0; i < 6; i++) {
+    const int hi = hexDigit(str[i * 3]);
+    const int lo = hexDigit(str[i * 3 + 1]);
+    if (hi < 0 || lo < 0)
+      return false;
+    bssid[i] = static_cast<uint8_t>((hi << 4) | lo);
+    if (i < 5 && str[i * 3 + 2] != ':')
+      return false;
+  }
+  return true;
 }
 
 void Mycila::ESPConnect::loadConfiguration(Mycila::ESPConnect::Config& config) {

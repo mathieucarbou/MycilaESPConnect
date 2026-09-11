@@ -268,6 +268,11 @@ namespace Mycila {
       bool _durationPassed(uint32_t intervalSec, bool reset = true);
       bool _connectionTimeout();
 
+      // Safe BSSID parsing: bypasses MacAddress::fromString() which can crash
+      // on some cores because of an unterminated working buffer (espressif/arduino-esp32#12896).
+      // Returns true and fills bssid (6 bytes) if str is a valid "XX:XX:XX:XX:XX:XX" MAC, false otherwise.
+      static bool _parseBSSID(const char* str, uint8_t* bssid);
+
       void _startSTA();
 
       void _startAP();
