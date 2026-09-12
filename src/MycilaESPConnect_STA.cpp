@@ -41,12 +41,14 @@ void Mycila::ESPConnect::_startSTA() {
 #endif
 
   if (_config.wifiBSSID.length()) {
-    LOGI(TAG, "Connecting to SSID: %s with BSSID: %s", _config.wifiSSID.c_str(), _config.wifiBSSID.c_str());
-
-    MacAddress bssid(MACType::MAC6);
-    bssid.fromString(_config.wifiBSSID.c_str());
-
-    WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str(), 0, bssid);
+    uint8_t bssid[6];
+    if (_parseBSSID(_config.wifiBSSID.c_str(), bssid)) {
+      LOGI(TAG, "Connecting to SSID: %s with BSSID: %s", _config.wifiSSID.c_str(), _config.wifiBSSID.c_str());
+      WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str(), 0, bssid);
+    } else {
+      LOGW(TAG, "Invalid BSSID '%s': falling back to SSID-only connection", _config.wifiBSSID.c_str());
+      WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str());
+    }
   } else {
     LOGI(TAG, "Connecting to SSID: %s", _config.wifiSSID.c_str());
     WiFi.begin(_config.wifiSSID.c_str(), _config.wifiPassword.c_str());
