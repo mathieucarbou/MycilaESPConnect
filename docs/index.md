@@ -78,7 +78,7 @@ lib_compat_mode = strict
 lib_ldf_mode = chain
 lib_deps =
   mathieucarbou/MycilaESPConnect @ ^10.6.3
-  ESP32Async/AsyncTCP @ ^3.5.0
+  ESP32Async/AsyncTCP @ ^3.6.0
   ESP32Async/ESPAsyncWebServer @ ^3.12.1
   bblanchon/ArduinoJson @ ^7.4.3
 ```
@@ -96,7 +96,7 @@ lib_compat_mode = strict
 lib_ldf_mode = chain
 lib_deps =
   mathieucarbou/MycilaESPConnect @ ^10.6.3
-  ESP32Async/AsyncTCP @ ^3.5.0
+  ESP32Async/AsyncTCP @ ^3.6.0
   ESP32Async/ESPAsyncWebServer @ ^3.12.1
   bblanchon/ArduinoJson @ ^7.4.3
 ```
